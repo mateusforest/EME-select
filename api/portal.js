@@ -1,6 +1,7 @@
 import {createCloudApi} from '../server/cloud/api.mjs';
 let app;
 export default async function handler(req,res){
+ const url=new URL(req.url,'https://portal.internal');if(url.pathname==='/api/portal'&&url.searchParams.has('route'))req.url='/api/'+url.searchParams.get('route');
  try{app??=createCloudApi();await app.handle(req,res);}
  catch{res.setHeader('Cache-Control','no-store');res.statusCode=503;res.setHeader('Content-Type','application/json');res.end(JSON.stringify({error:'O serviço do portal está em configuração. Tente novamente em instantes.'}));}
 }

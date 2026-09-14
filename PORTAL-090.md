@@ -1,6 +1,6 @@
 # Portal 0.9 — Supabase e Vercel
 
-O portal publicado usa Supabase Auth para senhas, Postgres para cadastros e histórico e o bucket privado eme-property-photos para fotografias. A função api/[...path].js mantém os contratos do portal. As sessões são cookies HttpOnly, Secure e SameSite=Strict, com expiração e revogação no banco. As tabelas não têm acesso direto por anon/authenticated; a função valida a sessão, o responsável pelo cadastro e o papel antes de usar a credencial de servidor. A publicação usa somente uma projeção de campos públicos.
+O portal publicado usa Supabase Auth para senhas, Postgres para cadastros e histórico e o bucket privado eme-property-photos para fotografias. A função api/portal.js mantém os contratos do portal. As sessões são cookies HttpOnly, Secure e SameSite=Strict, com expiração e revogação no banco. As tabelas não têm acesso direto por anon/authenticated; a função valida a sessão, o responsável pelo cadastro e o papel antes de usar a credencial de servidor. A publicação usa somente uma projeção de campos públicos.
 
 ## Configuração de produção
 SUPABASE_URL, VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY e SUPABASE_SERVICE_ROLE_KEY já configurados na Vercel. Nunca expor a service role em variável VITE_.

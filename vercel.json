@@ -4,7 +4,17 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/portalselect", "destination": "/index.html" },
-    { "source": "/portalselect/:path*", "destination": "/index.html" }
+    {
+      "source": "/api/:path*",
+      "destination": "/api/portal?route=:path*"
+    },
+    {
+      "source": "/portalselect",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/portalselect/:path*",
+      "destination": "/index.html"
+    }
   ]
 }
