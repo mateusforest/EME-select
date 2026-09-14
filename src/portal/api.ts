@@ -10,7 +10,7 @@ export class ApiError extends Error { constructor(message: string, public status
 export async function api<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
   let response: Response;
   try { response = await fetch('/api' + path, { method, credentials:'same-origin', cache:'no-store', ...(method !== 'GET' ? { headers:{'Content-Type':'application/json'}, body:JSON.stringify(body ?? {}) } : {}) }); }
-  catch { throw new ApiError('Não foi possível conectar ao portal. Confira se o serviço local está aberto.',0); }
+  catch { throw new ApiError('Não foi possível conectar ao portal. Confira sua conexão e tente novamente.',0); }
   let value: T & { error?: string };
   try { value = await response.json(); } catch { throw new ApiError('O serviço do portal não respondeu corretamente. Tente novamente.',response.status); }
   if (!response.ok) throw new ApiError(value.error || 'Não foi possível concluir a operação.',response.status);
