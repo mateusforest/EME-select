@@ -1,0 +1,33 @@
+/* All environments share the same photographic interaction and navigation. */
+.scene-page--photographic .environment-selector nav{flex-wrap:wrap;gap:8px}
+.scene-page--photographic .environment-selector nav a{min-height:40px;display:flex;align-items:center;justify-content:center;padding:10px 18px;white-space:nowrap}
+.scene-page--photographic .selection-facts{display:flex;flex-wrap:wrap;gap:5px 14px}
+.scene-page--photographic .selection-facts>span{margin:0}
+.desktop-explore-menu{max-height:calc(100svh - 150px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.mobile-menu{max-height:calc(100svh - 110px);overflow-y:auto;overscroll-behavior:contain}
+.scene-page--photographic.scene-page--comercial .hero-copy h1,.scene-page--photographic.scene-page--terrenos .hero-copy h1,.scene-page--photographic.scene-page--industrial .hero-copy h1{font-size:clamp(35px,3.3vw,63px)}
+.scene-page--comercial .photographic-home__caption,.scene-page--terrenos .photographic-home__caption,.scene-page--industrial .photographic-home__caption{color:#314d3d;text-shadow:0 1px 8px #fff9}
+.scene-page--condominios .scene-location,.scene-page--condominios .photographic-home__caption{background:#f8f6efe6;padding:7px 10px;border-radius:3px;color:#34513f}
+@media(min-width:1001px){.scene-page--photographic .environment-selector{max-width:calc(100% - 260px)}}
+@media(max-width:1000px) and (min-width:601px){
+ .scene-page--photographic .environment-selector nav a{padding:10px 15px;font-size:10px}
+ .scene-page--photographic .hero-copy h1{white-space:normal}
+}
+@media(max-width:600px){
+ .scene-page.scene-page--spatial.scene-page--photographic{height:1100px;min-height:1100px}
+ .scene-page--photographic .environment-selector nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+ .scene-page--photographic .environment-selector nav a{padding:10px 0;font-size:10px;min-height:40px}
+ .photographic-home__controls{bottom:213px}
+ .photographic-home__hint{bottom:189px}
+ .scene-page--todos .photographic-home__hint,.scene-page--condominios .photographic-home__hint{font-size:9px;color:#34513f;background:#f8f6efe6;padding:5px 7px;border-radius:3px;max-width:calc(100% - 48px)}
+ .scene-page--spatial.scene-page--photographic .scene-selection{bottom:274px}
+ .scene-page--photographic.scene-page--comercial .hero-copy h1,.scene-page--photographic.scene-page--terrenos .hero-copy h1{font-size:clamp(26px,9vw,39px);line-height:1.14}
+ .scene-page--photographic.scene-page--industrial .hero-copy h1{font-size:clamp(25px,7.9vw,36px);line-height:1.14}
+ .scene-page--photographic.scene-page--condominios .hero-copy h1{font-size:clamp(25px,7.8vw,34px);line-height:1.16}
+ .scene-page--photographic.scene-page--todos .hero-copy h1{font-size:clamp(29px,9vw,39px)}
+ .scene-page--condominios .hero-copy h1 em{white-space:normal}
+ .scene-page--comercial .hero-copy h1 em,.scene-page--terrenos .hero-copy h1 em,.scene-page--industrial .hero-copy h1 em{white-space:normal}
+ .scene-page--photographic .search-filters{gap:12px}
+ .scene-page--photographic .search-filters>div{min-width:0}
+ .scene-page--photographic .search-filters select{max-width:142px;text-overflow:ellipsis}
+}

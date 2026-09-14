@@ -1,0 +1,86 @@
+[
+  {
+    "name": "imovel-1440",
+    "errors": [],
+    "documentWidth": 1440,
+    "viewportWidth": 1440,
+    "headings": [
+      "Apartamento com varanda",
+      "Curadoria EME",
+      "Documentação"
+    ],
+    "images": [
+      {
+        "src": "/assets/brand-lockup.png",
+        "loaded": true
+      },
+      {
+        "src": "/assets/interior-living.png",
+        "loaded": true
+      }
+    ],
+    "overflow": []
+  },
+  {
+    "name": "proprietarios-1440",
+    "errors": [],
+    "documentWidth": 1440,
+    "viewportWidth": 1440,
+    "headings": [
+      "Seu imóvel.Um olhar à altura.",
+      "Conhecemos o imóvel",
+      "Construímos uma leitura",
+      "Planejamos a apresentação",
+      "Todo lugar tem uma história."
+    ],
+    "images": [
+      {
+        "src": "/assets/brand-lockup.png",
+        "loaded": true
+      }
+    ],
+    "overflow": []
+  },
+  {
+    "name": "imovel-390",
+    "errors": [],
+    "documentWidth": 390,
+    "viewportWidth": 390,
+    "headings": [
+      "Apartamento com varanda",
+      "Curadoria EME",
+      "Documentação"
+    ],
+    "images": [
+      {
+        "src": "/assets/brand-lockup.png",
+        "loaded": true
+      },
+      {
+        "src": "/assets/interior-living.png",
+        "loaded": true
+      }
+    ],
+    "overflow": []
+  },
+  {
+    "name": "proprietarios-390",
+    "errors": [],
+    "documentWidth": 390,
+    "viewportWidth": 390,
+    "headings": [
+      "Seu imóvel.Um olhar à altura.",
+      "Conhecemos o imóvel",
+      "Construímos uma leitura",
+      "Planejamos a apresentação",
+      "Todo lugar tem uma história."
+    ],
+    "images": [
+      {
+        "src": "/assets/brand-lockup.png",
+        "loaded": true
+      }
+    ],
+    "overflow": []
+  }
+]

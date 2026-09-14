@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>EME Select — apresentação</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: #F3EFE5; overflow: hidden; }
+    [data-composition-id="eme-select-dobra"] { width: 1920px; height: 1080px; position: relative; color: #173C32; background: #F3EFE5; overflow: hidden; }
+    .scene-content { display: flex; flex-direction: column; width: 100%; height: 100%; padding: 94px 140px 80px; gap: 58px; }
+    .topline { display: flex; justify-content: space-between; gap: 24px; font: 400 20px Arial, sans-serif; letter-spacing: .18em; text-transform: uppercase; }
+    .body { display: flex; align-items: center; gap: 110px; flex: 1; }
+    .brand-frame { position: relative; width: 560px; height: 560px; flex: 0 0 560px; perspective: 1400px; }
+    .brand-lockup { display: block; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
+    .fold { position: absolute; top: 0; width: 50.2%; height: 100%; background: #F3EFE5; opacity: 0; backface-visibility: hidden; }
+    .fold-left { left: 0; transform-origin: left center; transform: rotateY(-98deg); border-right: 1px solid #D9D3C5; }
+    .fold-right { right: 0; transform-origin: right center; transform: rotateY(98deg); border-left: 1px solid #D9D3C5; }
+    .copy { display: flex; flex-direction: column; gap: 26px; width: 950px; }
+    .copy p { margin: 0; max-width: 100%; font-family: Georgia, serif; font-size: 88px; line-height: 1.14; letter-spacing: -.045em; font-weight: 400; }
+    .copy .second-line { color: #536D60; }
+    .fine-rule { height: 1px; width: 100%; background: #D9D3C5; transform-origin: left center; }
+    .footer { display: flex; justify-content: space-between; gap: 36px; font: 400 20px Arial, sans-serif; letter-spacing: .08em; color: #536D60; }
+  </style>
+</head>
+<body>
+  <main id="eme-select-dobra" data-composition-id="eme-select-dobra" data-start="0" data-duration="4.8" data-width="1920" data-height="1080" aria-label="EME Select. Seu próximo lugar. Uma escolha especial.">
+    <section id="scene-intro" data-start="0" data-duration="4.8" data-track-index="0" class="scene-content clip">
+      <div class="topline"><span class="eyebrow">Lugares para viver melhor</span><span class="region">Rio Grande do Sul</span></div>
+      <div class="body">
+        <div class="brand-frame">
+          <img id="brand-lockup" class="brand-lockup" src="assets/brand-lockup.png" alt="EME Select, monograma M com uma dobra central">
+          <div class="fold fold-left" aria-hidden="true" data-layout-ignore></div>
+          <div class="fold fold-right" aria-hidden="true" data-layout-ignore></div>
+        </div>
+        <div class="copy">
+          <p class="first-line">Seu próximo lugar.</p>
+          <p class="second-line">Uma escolha especial.</p>
+        </div>
+      </div>
+      <div class="fine-rule" aria-hidden="true"></div>
+      <div class="footer"><span class="footer-left">Imóveis escolhidos com critério.</span><span class="footer-right">EME SELECT</span></div>
+    </section>
+  </main>
+  <script src="vendor/gsap.min.js"></script>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const emeIntro = gsap.timeline({ paused: true });
+    emeIntro.addLabel('abrir', 0.15);
+    emeIntro.from('.brand-lockup', { opacity: 0, duration: 0.7, ease: 'sine.out' }, 'abrir');
+    emeIntro.from('.fold-left', { rotationY: 0, opacity: 1, duration: 1.5, ease: 'power3.out' }, 'abrir');
+    emeIntro.from('.fold-right', { rotationY: 0, opacity: 1, duration: 1.65, ease: 'power3.out' }, 0.25);
+    emeIntro.from('.eyebrow', { opacity: 0, duration: 0.7, ease: 'sine.out' }, 0.45);
+    emeIntro.from('.region', { opacity: 0, x: 12, duration: 0.8, ease: 'power1.out' }, 0.6);
+    emeIntro.from('.first-line', { opacity: 0, y: 36, duration: 1.15, ease: 'power2.out' }, 0.65);
+    emeIntro.from('.second-line', { opacity: 0, x: 20, duration: 1.2, ease: 'power1.out' }, 0.9);
+    emeIntro.from('.footer-left', { opacity: 0, duration: 0.65, ease: 'power2.out' }, 1.25);
+    emeIntro.from('.footer-right', { opacity: 0, duration: 0.7, ease: 'circ.out' }, 1.4);
+    emeIntro.from('.fine-rule', { scaleX: 0, duration: 1.4, ease: 'sine.inOut' }, 1.3);
+    emeIntro.to('.fine-rule', { opacity: 0.64, duration: 0.8, ease: 'sine.inOut' }, 4);
+    window.__timelines['eme-select-dobra'] = emeIntro;
+  </script>
+</body>
+</html>

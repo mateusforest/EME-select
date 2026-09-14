@@ -1,0 +1,124 @@
+{
+  "results": [
+    {
+      "width": 1440,
+      "route": "/",
+      "status": 200,
+      "overflow": false,
+      "title": "Um olhar sobre toda a operação."
+    },
+    {
+      "width": 1440,
+      "route": "/avaliacoes",
+      "status": 200,
+      "overflow": false,
+      "title": "O próximo imóvel começa aqui."
+    },
+    {
+      "width": 1440,
+      "route": "/carteira",
+      "status": 200,
+      "overflow": false,
+      "title": "Uma coleção, muitos caminhos."
+    },
+    {
+      "width": 1440,
+      "route": "/relacionamento",
+      "status": 200,
+      "overflow": false,
+      "title": "Toda conversa merece continuidade."
+    },
+    {
+      "width": 1440,
+      "route": "/locacoes",
+      "status": 200,
+      "overflow": false,
+      "title": "Cuidar também é acompanhar."
+    },
+    {
+      "width": 1440,
+      "route": "/qualidade",
+      "status": 200,
+      "overflow": false,
+      "title": "Um padrão que se constrói em equipe."
+    },
+    {
+      "width": 1440,
+      "route": "/inteligencia",
+      "status": 200,
+      "overflow": false,
+      "title": "Inteligência em cada etapa."
+    },
+    {
+      "width": 1440,
+      "route": "/padrao",
+      "status": 200,
+      "overflow": false,
+      "title": "O que faz um imóvel ser EME."
+    },
+    {
+      "width": 390,
+      "route": "/",
+      "status": 200,
+      "overflow": false,
+      "title": "Um olhar sobre toda a operação."
+    },
+    {
+      "width": 390,
+      "route": "/avaliacoes",
+      "status": 200,
+      "overflow": false,
+      "title": "O próximo imóvel começa aqui."
+    },
+    {
+      "width": 390,
+      "route": "/carteira",
+      "status": 200,
+      "overflow": false,
+      "title": "Uma coleção, muitos caminhos."
+    },
+    {
+      "width": 390,
+      "route": "/relacionamento",
+      "status": 200,
+      "overflow": false,
+      "title": "Toda conversa merece continuidade."
+    },
+    {
+      "width": 390,
+      "route": "/locacoes",
+      "status": 200,
+      "overflow": false,
+      "title": "Cuidar também é acompanhar."
+    },
+    {
+      "width": 390,
+      "route": "/qualidade",
+      "status": 200,
+      "overflow": false,
+      "title": "Um padrão que se constrói em equipe."
+    },
+    {
+      "width": 390,
+      "route": "/inteligencia",
+      "status": 200,
+      "overflow": false,
+      "title": "Inteligência em cada etapa."
+    },
+    {
+      "width": 390,
+      "route": "/padrao",
+      "status": 200,
+      "overflow": false,
+      "title": "O que faz um imóvel ser EME."
+    }
+  ],
+  "errors": [],
+  "http": {
+    "slash": 200,
+    "nested": 200,
+    "missingAsset": 404,
+    "head": 200,
+    "post": 405
+  }
+}

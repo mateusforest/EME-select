@@ -1,0 +1,11 @@
+.brand.brand--marble{width:92px;display:flex;align-items:center;justify-content:center}
+.brand--marble .brand-monogram{display:block;width:92px;height:76px;object-fit:contain;flex-shrink:0}
+.site-header--tour .brand--marble .brand-monogram{filter:drop-shadow(0 1px 2px #ffffff55)}
+@media(max-width:1150px){
+ .brand.brand--marble{width:80px}
+ .brand--marble .brand-monogram{width:80px;height:66px}
+}
+@media(max-width:600px){
+ .brand.brand--marble{width:72px}
+ .brand--marble .brand-monogram{width:72px;height:60px}
+}

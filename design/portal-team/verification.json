@@ -1,0 +1,13 @@
+{
+  "checks": [
+    "Initial account and empty real workspace",
+    "Database-backed create, note, history, reload; no real data in localStorage",
+    "Administrator can create staff account",
+    "First-login password change and isolated broker portfolio",
+    "Assignment grants access to the intended broker",
+    "Suspension ends broker sessions",
+    "Logout and private database not publicly served",
+    "Demo remains separate and supports direct nested refresh"
+  ],
+  "errors": []
+}

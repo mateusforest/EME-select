@@ -1,0 +1,13 @@
+{
+  "checks": [
+    "Criteria and notes",
+    "High score blocked by pending checks",
+    "Human sign-offs",
+    "Mobile layout",
+    "Review queue",
+    "Acknowledged approval",
+    "Persisted decision",
+    "Reopening invalidates sign-offs"
+  ],
+  "errors": []
+}
