@@ -35,6 +35,8 @@ Banco SQLite privado, versão de esquema 3, com fotos em BLOB. `npm run backup:p
 
 Esta entrega funciona no servidor local `npm start` em `127.0.0.1:4191`. O build estático da Vercel **não executa esta API nem recebe o banco deste computador**. Para operação online compartilhada, ainda é necessário hospedar a API, configurar banco persistente, armazenamento, HTTPS, autenticação e backups no ambiente de produção. Não exponha este servidor local diretamente à internet.
 
+`vercel.json` encaminha `/portalselect` e suas páginas internas para `index.html`, permitindo acesso direto e recarga. A regra é restrita ao portal: `/api/*` e arquivos ausentes continuam retornando seu status real. Isso segue a orientação de [deep links para Vite na Vercel](https://vercel.com/docs/frameworks/frontend/vite#using-vite-to-make-spas). Quando o endpoint de sessão responde 404 fora da instalação local, a tela informa que o portal online está em preparação e oferece a demonstração, sem solicitar credenciais. Esta correção de rota não hospeda o backend. Verificação: `node scripts/verify-vercel-portal.mjs` após o build.
+
 Não foram implementados IA, análise jurídica automática, recebimento de documentos, administração financeira de locações, assinatura ou sincronização com portais externos. Campos preenchidos e aprovação humana não equivalem a certidão de regularidade.
 
 ## Verificação
