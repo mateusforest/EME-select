@@ -1,6 +1,10 @@
 # EME Select — estado da implementação
 
-## Atualização 0.7.0 — Curadoria e decisão
+## Atualização 0.8.0 — Cadastro e anúncio real
+
+O portal local agora recebe imóveis e fotos em `/portalselect/imoveis`, oferece prévia privada no padrão editorial do site e publica no catálogo do servidor após curadoria e confirmação do administrador. A galeria utiliza transições progressivas. Dados do proprietário ficam separados da divulgação. Consulte [PORTAL-080.md](PORTAL-080.md) para o fluxo, armazenamento e limites. A Vercel continua com frontend estático, sem conexão com o banco local.
+
+## Histórico 0.7.0 — Curadoria e decisão
 
 O dossiê real agora reúne notas com evidências, verificações humanas, pendências e decisão de entrada na carteira. A régua permanece explicitamente experimental. A aprovação exige administrador, revisão e motivo; não publica anúncios. Consulte [PORTAL-070.md](PORTAL-070.md). IA e consultas externas ainda não estão conectadas.
 
@@ -30,16 +34,16 @@ A apresentação opcional da marca foi construída em HyperFrames e GSAP, com re
 
 | Área | Situação desta versão |
 | --- | --- |
-| Catálogo | 18 registros ilustrativos em `src/data.ts`; sem sincronização de disponibilidade |
-| Backend e banco de dados | API local e SQLite privado para contas, avaliações e histórico; demais módulos pendentes |
+| Catálogo | Anúncios reais publicados pelo portal no servidor local; 18 exemplos preservados nos cenários, identificados como demonstrativos |
+| Backend e banco de dados | API local e SQLite privado para contas, avaliações, imóveis, fotos e histórico; sem hospedagem online da API |
 | Autenticação e painel da equipe | Contas individuais e permissões no servidor local em /portalselect; demonstração em /portalselect/demo |
 | Formulários | Montam mensagens para o WhatsApp; sem gravação central ou protocolo de atendimento |
 | Agenda | Solicitação de horário sujeita à confirmação humana; sem reserva de horário |
 | IA de atendimento e curadoria | Ainda não implementada; não há avaliação, captação ou análise automatizada real |
-| Documentação | Portal registra referências e conferências humanas; nenhum arquivo é recebido ou validado automaticamente. Site público mantém conteúdo demonstrativo |
+| Documentação | Portal registra referências e conferências humanas; recebe fotos, mas não documentos jurídicos. Anúncios reais orientam consultar a equipe |
 | Visita do imóvel | Imagem original com enquadramentos, ampliação e arraste. Sem captura espacial, planta verificada ou medição comercial; 3D adiado |
 | Venda e locação | Experiência de descoberta e contato; sem propostas vinculantes, pagamentos, contratos ou assinatura eletrônica |
-| Publicação | Projeto preparado para build estático; domínio, hospedagem e catálogo real ainda precisam de configuração |
+| Publicação | Administrador publica no servidor local após curadoria; API, banco e fotos ainda precisam de hospedagem para publicação online |
 
 As seções de curadoria e documentação não atestam que um imóvel está regular, sem débitos, sem processos ou apto para venda. A marca não apresenta nesta etapa uma comprovação de ser a primeira ou única operação de seu segmento.
 

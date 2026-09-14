@@ -1,7 +1,7 @@
 {
   "name": "eme-select",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.8.0",
   "type": "module",
   "scripts": {
     "start": "node scripts/serve.mjs",
@@ -10,13 +10,14 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "playwright test",
     "backup:portal": "node scripts/backup-portal.mjs",
-    "test:api": "node --test tests/portal-api.test.mjs tests/curation-api.test.mjs"
+    "test:api": "node --test tests/portal-api.test.mjs tests/curation-api.test.mjs tests/listings-api.test.mjs"
   },
   "dependencies": {
     "gsap": "3.15.0",
     "lucide-react": "1.45.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "sharp": "0.35.4",
     "three": "0.186.0"
   },
   "devDependencies": {

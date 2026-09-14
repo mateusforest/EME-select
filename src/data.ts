@@ -54,6 +54,10 @@ export interface Property {
   description: string;
   image: string;
   hasInterior?: boolean;
+  images?: {url:string;caption:string}[];
+  costNotes?:string;
+  condominiumFee?:number|null;
+  propertyTax?:number|null;
 }
 
 export interface SceneMarker {
@@ -429,7 +433,8 @@ export function filterProperties(env: EnvironmentId, operation: Operation, type:
   const { required, excluded, incomplete } = queryTerms(query);
   if (incomplete) return [];
   const selectedType = normalize(type);
-  return properties.filter(p => {
+  const source=properties.some(p=>p.isIllustrative===false)?properties.filter(p=>p.isIllustrative===false):properties;
+  return source.filter(p => {
     if (!propertyInEnvironment(p, env)) return false;
     if (p.operation !== operation) return false;
     if (selectedType === 'condominio') {
@@ -452,3 +457,7 @@ export function whatsappUrl(message: string): string {
 }
 
 export const environmentById = (id: string) => environments.find(e => e.id === id) ?? environments[0];
+
+const demonstrationProperties=properties.slice();
+export function registerPublishedProperties(real:Property[]){properties.splice(0,properties.length,...real,...demonstrationProperties);}
+export const hasPublishedProperties=()=>properties.some(p=>p.isIllustrative===false);

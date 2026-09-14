@@ -59,8 +59,8 @@ const comparisonRows: ComparisonRow[] = [
     render: property => <ul className="cmp-reasons">{property.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>,
   },
   {
-    id: 'documents', label: 'Documentação', value: () => 'Não verificada',
-    render: () => <><span className="cmp-document-state">Não verificada</span><span className="cmp-value-note">Acervo de exemplo, sem análise documental realizada.</span></>,
+    id: 'documents', label: 'Documentação', value: p => p.isIllustrative===false?'Consultar a equipe':'Não verificada',
+    render: p => <><span className="cmp-document-state">{p.isIllustrative===false?'Consultar a equipe':'Não verificada'}</span><span className="cmp-value-note">{p.isIllustrative===false?'Solicite escopo e datas das verificações.':'Acervo de exemplo, sem análise documental realizada.'}</span></>,
   },
 ];
 
@@ -77,7 +77,7 @@ export default function Comparison({ items, onRemove, onBook, onShare, onClear, 
   return <main id="conteudo" className="cmp-page" tabIndex={-1}>
     <div className="cmp-topline">
       <a className="cmp-back" href={collectionHref}><ArrowLeft size={15} aria-hidden="true" /> Voltar à coleção</a>
-      <span className="cmp-demo">Acervo demonstrativo</span>
+      <span className="cmp-demo">{selected.some(p=>p.isIllustrative===false)?'Seleção EME Select':'Acervo demonstrativo'}</span>
     </div>
 
     <header className="cmp-heading">
@@ -119,7 +119,7 @@ export default function Comparison({ items, onRemove, onBook, onShare, onClear, 
             <th scope="col" className="cmp-row-label cmp-intro-cell"><span className="cmp-eyebrow">Cada detalhe<br />conta.</span></th>
             {selected.map((property, index) => <th scope="col" key={property.id} className="cmp-property-heading">
               <div className="cmp-property-topline"><span className="cmp-property-number">{String(index + 1).padStart(2, '0')}</span><button type="button" className="cmp-remove" onClick={() => onRemove(property.id)} aria-label={`Remover ${property.title} da comparação`}><X size={15} aria-hidden="true" /></button></div>
-              <a className="cmp-property-image" href={`#/imovel/${property.id}`}><img src={property.image} alt={`Imagem ilustrativa de ${property.title.toLocaleLowerCase('pt-BR')}`} loading="lazy" /><span>{property.hasInterior ? 'Ambiente ilustrativo' : 'Cenário ilustrativo'}</span></a>
+              <a className="cmp-property-image" href={`#/imovel/${property.id}`}><img src={property.image} alt={`${property.isIllustrative===false?'Fotografia':'Imagem ilustrativa'} de ${property.title}`} loading="lazy" /><span>{property.isIllustrative===false?'Fotografia do imóvel':property.hasInterior ? 'Ambiente ilustrativo' : 'Cenário ilustrativo'}</span></a>
               <span className="cmp-property-region">{environmentById(property.environment).name}</span>
               <a className="cmp-property-title" href={`#/imovel/${property.id}`}>{property.title}</a>
               <a className="cmp-details-link" href={`#/imovel/${property.id}`}>Conhecer o imóvel <ArrowRight size={13} aria-hidden="true" /></a>

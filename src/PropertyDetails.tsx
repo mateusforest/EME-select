@@ -5,6 +5,7 @@ import {
 import type { Property } from './data';
 import { environmentById, money, propertyFacts, supportsBedrooms } from './data';
 import './details.css';
+import PropertyGallery from './PropertyGallery';
 
 export interface PropertyDetailsProps {
   property: Property;
@@ -21,9 +22,9 @@ export default function PropertyDetails({
   const environment = environmentById(property.environment);
   const collectionName = property.environment === 'urbano' ? 'Urbana' : environment.name;
   const visitHref = `#/visita/${property.id}`;
-  const backHref = property.hasInterior ? visitHref : `#/ambientes/${property.environment}`;
+  const backHref = property.hasInterior ? visitHref : `/#/ambientes/${property.environment}`;
   const imageHref = property.hasInterior ? visitHref : property.image;
-  const facts = propertyFacts(property);
+  const facts = propertyFacts(property).map(fact=>property.isIllustrative===false&&!property.area&&fact.label==='Área'?{...fact,value:'A informar'}:fact);
   const residential = supportsBedrooms(property.environment, property.type);
   const land = property.environment === 'terrenos';
 
@@ -34,12 +35,12 @@ export default function PropertyDetails({
           <ArrowLeft size={18} aria-hidden="true" />
           {property.hasInterior ? 'Voltar à visita' : `Voltar para ${environment.name}`}
         </a>
-        <p className="details-demo">Acervo demonstrativo · dados ilustrativos</p>
+        <p className="details-demo">{property.isIllustrative===false?'Imóvel da coleção EME Select':'Acervo demonstrativo · dados ilustrativos'}</p>
       </div>
 
       <div className="details-layout">
         <section className="details-visual" aria-label="Imagem e informações do ambiente">
-          <a
+          {property.isIllustrative===false?<PropertyGallery key={property.id} images={property.images||[]} title={property.title}/>:<a
             className={`details-image-link${property.hasInterior ? ' details-image-link--interior' : ''}`}
             href={imageHref}
             target={property.hasInterior ? undefined : '_blank'}
@@ -58,7 +59,7 @@ export default function PropertyDetails({
               {property.hasInterior ? 'Explorar em tela cheia' : 'Ampliar imagem'}
               {!property.hasInterior && <ArrowUpRight size={16} aria-hidden="true" />}
             </span>
-          </a>
+          </a>}
 
           <div className="details-visual-links">
             <button type="button" className="details-feature-link" onClick={() => onDialog('plan')}>
@@ -104,7 +105,7 @@ export default function PropertyDetails({
           <p className="details-location"><MapPin size={15} aria-hidden="true" />{property.location}</p>
           <div className="details-price-block">
             <span className="details-operation">{property.operation === 'alugar' ? 'Locação' : 'À venda'}</span>
-            <p className="details-price">{money(property.price)}{property.operation === 'alugar' && <span> / mês</span>}</p>
+            <p className="details-price">{property.isIllustrative===false&&!property.price?'Valor a informar':money(property.price)}{property.operation === 'alugar' && <span> / mês</span>}</p>
           </div>
 
           <div className="details-facts-block">
@@ -114,7 +115,7 @@ export default function PropertyDetails({
                 return <div key={fact.label}><Icon size={24} strokeWidth={1.4} aria-hidden="true" /><dt>{fact.label === 'Área' ? land ? 'Área do terreno' : 'Área informada' : fact.label}</dt><dd>{fact.value}</dd></div>;
               })}
             </dl>
-            <p className="details-cost-note">{residential ? 'Condomínio e IPTU: consultar' : 'Tributos e encargos: consultar'}</p>
+            <p className="details-cost-note">{property.isIllustrative===false?`Condomínio mensal: ${property.condominiumFee==null?'consultar':money(property.condominiumFee)} · IPTU anual: ${property.propertyTax==null?'consultar':money(property.propertyTax)}${property.costNotes?' · '+property.costNotes:''}`:residential ? 'Condomínio e IPTU: consultar' : 'Tributos e encargos: consultar'}</p>
           </div>
 
           <section className="details-curation" aria-labelledby="details-curation-title">
@@ -130,9 +131,9 @@ export default function PropertyDetails({
           <section className="details-documents" aria-labelledby="details-documents-title">
             <div className="details-section-heading">
               <h2 id="details-documents-title">Documentação</h2>
-              <span className="details-status">Não verificada</span>
+              <span className="details-status">{property.isIllustrative===false?'Consultar a equipe':'Não verificada'}</span>
             </div>
-            <p>Conheça as verificações previstas. Este imóvel de exemplo não passou por análise documental.</p>
+            <p>{property.isIllustrative===false?'A equipe pode esclarecer o escopo e a data das verificações e orientar sobre a documentação atualizada para a negociação.':'Conheça as verificações previstas. Este imóvel de exemplo não passou por análise documental.'}</p>
             <button className="details-document-link" type="button" onClick={() => onDialog('documents')}>
               <FileText size={17} aria-hidden="true" />
               <span>Ver documentação e verificações</span>

@@ -4,6 +4,7 @@ import { promisify } from 'node:util';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { attachCuration } from './curation.mjs';
+import { attachListings } from './listings.mjs';
 const scrypt = promisify(scryptCallback);
 const COOKIE = 'eme_portal_session';
 const MAX_AGE = 8 * 60 * 60 * 1000;
@@ -33,17 +34,17 @@ function send(res, status, body) {
   res.writeHead(status, { 'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store', 'X-Content-Type-Options':'nosniff', 'Referrer-Policy':'no-referrer', 'X-Frame-Options':'DENY' });
   res.end(JSON.stringify(body));
 }
-async function json(req) {
+async function json(req, limit = 32768) {
   if (!String(req.headers['content-type'] || '').toLowerCase().startsWith('application/json')) fail(415, 'Formato de solicitação não permitido.');
   let size = 0; const chunks = [];
-  for await (const chunk of req) { size += chunk.length; if (size > 32768) fail(413, 'Solicitação muito grande.'); chunks.push(chunk); }
+  for await (const chunk of req) { size += chunk.length; if (size > limit) fail(413, 'Solicitação muito grande.'); chunks.push(chunk); }
   try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { fail(400, 'Solicitação inválida.'); }
 }
 export function createPortalApi({ dbPath, now = () => Date.now() }) {
   if (dbPath !== ':memory:') mkdirSync(dirname(dbPath), { recursive: true, mode: 0o700 });
   const db = new DatabaseSync(dbPath, { timeout: 5000 });
   db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;');
-  if (db.prepare('PRAGMA user_version').get().user_version > 2) throw new Error('Database schema is newer than this server.');
+  if (db.prepare('PRAGMA user_version').get().user_version > 3) throw new Error('Database schema is newer than this server.');
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL,
@@ -111,6 +112,7 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
     curation: curation.read(caseFor(id,user)),
     history: db.prepare('SELECT audit.id, audit.action, audit.detail, audit.created_at, users.name AS author FROM audit JOIN users ON users.id=audit.actor_id WHERE evaluation_id=? ORDER BY audit.id DESC').all(id)
   });
+  const listings = attachListings({db,fail,text,fields,caseFor,transaction,audit,stamp,requireAdmin,send,session});
   let hashing = 0;
   async function passwordJob(fn) {
     if (hashing >= 2) fail(503, 'O acesso está ocupado. Tente novamente em alguns instantes.');
@@ -127,7 +129,10 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
       if (req.method !== 'GET') {
         if (req.headers.origin !== host.origin || req.headers['sec-fetch-site'] === 'cross-site') fail(403, 'Origem não permitida.');
       }
-      const requestBody = req.method === 'GET' ? null : await json(req);
+      if (await listings.publicHandle(path,req,res)) return true;
+      const isPhotoUpload = /^\/api\/listings\/[a-f0-9-]{36}\/photos$/.test(path);
+      if (isPhotoUpload) { const access=session(req); if(!access||access.must_change)fail(401,'Entre para enviar fotografias.'); }
+      const requestBody = req.method === 'GET' ? null : await json(req,isPhotoUpload?11300000:32768);
       const user = session(req);
       if (path === '/api/auth/session' && req.method === 'GET') {
         send(res, 200, { user: user ? safeUser(user) : null, needsSetup: db.prepare('SELECT COUNT(*) AS count FROM users').get().count === 0 }); return true;
@@ -189,6 +194,7 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
         send(res,200,{ user:safeUser(db.prepare('SELECT * FROM users WHERE id=?').get(user.id)) }); return true;
       }
       if (user.must_change) fail(403,'Altere a senha inicial antes de continuar.');
+      if (await listings.handle(path,req,res,user,requestBody)) return true;
       if (curation.handle(path,req,res,user,requestBody,caseDetails)) return true;
       if (path === '/api/assignees' && req.method === 'GET') {
         const members = user.role === 'admin' ? db.prepare('SELECT id,name,role FROM users WHERE active=1 ORDER BY name').all() : [{id:user.id,name:user.name,role:user.role}];

@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, Heart, MapPin, Ruler, Search, Share2, SlidersHorizontal, X } from 'lucide-react';
-import { environments, environmentById, money, propertyFacts, propertyTypesForEnvironment, supportsBedrooms, type EnvironmentId, type Property } from './data';
+import { environments, hasPublishedProperties, environmentById, money, propertyFacts, propertyTypesForEnvironment, supportsBedrooms, type EnvironmentId, type Property } from './data';
 import { catalogHash, DEFAULT_CATALOG_STATE, selectCatalog, validateCatalog, type CatalogState } from './catalog';
 import './catalog.css';
 
@@ -69,7 +69,7 @@ export default function CatalogPage({ state, favorites, comparison, onFavorite, 
   return <main className="catalog-page" id="conteudo">
     <div className="catalog-breadcrumb">
       <a href={state.region === 'todos' ? '#/' : `#/ambientes/${state.region}`}><ArrowLeft size={15} /> Voltar aos ambientes</a>
-      <span>Acervo demonstrativo · valores ilustrativos</span>
+      <span>{hasPublishedProperties()?'Imóveis disponíveis · coleção EME Select':'Acervo demonstrativo · valores ilustrativos'}</span>
     </div>
 
     <section className="catalog-intro" aria-labelledby="catalog-title">
@@ -140,7 +140,7 @@ export default function CatalogPage({ state, favorites, comparison, onFavorite, 
 function CatalogProperty({ property, favorite, compared, onFavorite, onCompare }: { property: Property; favorite: boolean; compared: boolean; onFavorite: () => void; onCompare: () => void }) {
   const region = environmentById(property.environment);
   return <article className="catalog-property">
-    <a className="catalog-property-image" href={`#/${property.hasInterior ? 'visita' : 'imovel'}/${property.id}`} aria-label={`Explorar ${property.title}`}><img src={property.image} alt={`Imagem ilustrativa de ${property.title}`} loading="lazy" decoding="async" /><span>Imagem ilustrativa</span><span className="catalog-image-arrow"><ArrowUpRight size={22} strokeWidth={1.4} /></span></a>
+    <a className="catalog-property-image" href={`#/${property.hasInterior ? 'visita' : 'imovel'}/${property.id}`} aria-label={`Explorar ${property.title}`}><img src={property.image} alt={`${property.isIllustrative===false?'Fotografia':'Imagem ilustrativa'} de ${property.title}`} loading="lazy" decoding="async" /><span>{property.isIllustrative===false?'Fotografia do imóvel':'Imagem ilustrativa'}</span><span className="catalog-image-arrow"><ArrowUpRight size={22} strokeWidth={1.4} /></span></a>
     <div className="catalog-property-copy">
       <div className="catalog-property-top"><span className="eyebrow">{region.name} <span>/ {property.type}</span></span><button className="icon-button" aria-label={`${favorite ? 'Remover' : 'Salvar'} ${property.title} ${favorite ? 'dos' : 'nos'} favoritos`} aria-pressed={favorite} onClick={onFavorite}><Heart size={18} fill={favorite ? 'currentColor' : 'none'} /></button></div>
       <h2><a href={`#/imovel/${property.id}`}>{property.title}</a></h2>

@@ -1,0 +1,14 @@
+{
+  "checks": [
+    "Real draft from portal",
+    "Photo upload and reordering",
+    "Same editorial preview",
+    "Progressive gallery",
+    "Fullscreen and keyboard",
+    "Mobile and reduced motion",
+    "Human approval and publish",
+    "Public catalog and protected internal address",
+    "Unpublish and media revocation"
+  ],
+  "errors": []
+}
