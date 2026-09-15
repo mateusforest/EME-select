@@ -1,7 +1,7 @@
 {
   "name": "eme-select",
   "private": true,
-  "version": "0.9.0",
+  "version": "0.10.0",
   "type": "module",
   "scripts": {
     "start": "node scripts/serve.mjs",
@@ -10,7 +10,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "playwright test",
     "backup:portal": "node scripts/backup-portal.mjs",
-    "test:api": "node --test tests/portal-api.test.mjs tests/curation-api.test.mjs tests/listings-api.test.mjs",
+    "test:api": "node --test tests/portal-api.test.mjs tests/curation-api.test.mjs tests/listings-api.test.mjs tests/submission-api.test.mjs",
     "test:cloud": "node --test tests/cloud-domain.test.mjs tests/cloud-schema.test.mjs"
   },
   "dependencies": {

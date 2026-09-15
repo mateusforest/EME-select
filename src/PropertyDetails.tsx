@@ -9,6 +9,7 @@ import PropertyGallery from './PropertyGallery';
 
 export interface PropertyDetailsProps {
   property: Property;
+  preview?: boolean;
   favorite: boolean;
   onToggleFavorite: () => void;
   onBook: () => void;
@@ -17,7 +18,7 @@ export interface PropertyDetailsProps {
 }
 
 export default function PropertyDetails({
-  property, favorite, onToggleFavorite, onBook, onDialog, onShare,
+  property, preview=false, favorite, onToggleFavorite, onBook, onDialog, onShare,
 }: PropertyDetailsProps) {
   const environment = environmentById(property.environment);
   const collectionName = property.environment === 'urbano' ? 'Urbana' : environment.name;
@@ -35,7 +36,7 @@ export default function PropertyDetails({
           <ArrowLeft size={18} aria-hidden="true" />
           {property.hasInterior ? 'Voltar à visita' : `Voltar para ${environment.name}`}
         </a>
-        <p className="details-demo">{property.isIllustrative===false?'Imóvel da coleção EME Select':'Acervo demonstrativo · dados ilustrativos'}</p>
+        <p className="details-demo">{preview?'Prévia em avaliação · dados a conferir':property.isIllustrative===false?'Imóvel da coleção EME Select':'Acervo demonstrativo · dados ilustrativos'}</p>
       </div>
 
       <div className="details-layout">
@@ -118,9 +119,10 @@ export default function PropertyDetails({
             <p className="details-cost-note">{property.isIllustrative===false?`Condomínio mensal: ${property.condominiumFee==null?'consultar':money(property.condominiumFee)} · IPTU anual: ${property.propertyTax==null?'consultar':money(property.propertyTax)}${property.costNotes?' · '+property.costNotes:''}`:residential ? 'Condomínio e IPTU: consultar' : 'Tributos e encargos: consultar'}</p>
           </div>
 
+          <dl className="details-extra-facts">{[["Banheiros",property.bathrooms],["Área total (m²)",property.totalArea],["Ano de construção",property.yearBuilt]].filter(([,v])=>v!=null).map(([label,value])=><div key={String(label)}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
           <section className="details-curation" aria-labelledby="details-curation-title">
             <div className="details-section-heading">
-              <h2 id="details-curation-title">Curadoria EME</h2>
+              <h2 id="details-curation-title">{preview?'Diferenciais em avaliação':'Curadoria EME'}</h2>
               <span className="details-small-label">O que chama atenção</span>
             </div>
             <ul className="details-reasons">

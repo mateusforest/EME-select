@@ -1,3 +1,4 @@
+import {submission} from './submission.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { randomBytes, randomUUID, scrypt as scryptCallback, timingSafeEqual, createHash } from 'node:crypto';
 import { promisify } from 'node:util';
@@ -44,7 +45,7 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
   if (dbPath !== ':memory:') mkdirSync(dirname(dbPath), { recursive: true, mode: 0o700 });
   const db = new DatabaseSync(dbPath, { timeout: 5000 });
   db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;');
-  if (db.prepare('PRAGMA user_version').get().user_version > 3) throw new Error('Database schema is newer than this server.');
+  if (db.prepare('PRAGMA user_version').get().user_version > 4) throw new Error('Database schema is newer than this server.');
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL,
@@ -58,6 +59,9 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
       id TEXT PRIMARY KEY, title TEXT NOT NULL, city TEXT NOT NULL, type TEXT NOT NULL, operation TEXT NOT NULL,
       owner TEXT NOT NULL, assignee_id TEXT NOT NULL REFERENCES users(id), stage TEXT NOT NULL,
       version INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    ) STRICT;
+    CREATE TABLE IF NOT EXISTS submission_receipts (
+      request_id TEXT PRIMARY KEY REFERENCES evaluations(id), payload_hash TEXT NOT NULL
     ) STRICT;
     CREATE TABLE IF NOT EXISTS audit (
       id INTEGER PRIMARY KEY, evaluation_id TEXT REFERENCES evaluations(id), actor_id TEXT NOT NULL REFERENCES users(id),
@@ -133,6 +137,20 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
       const isPhotoUpload = /^\/api\/listings\/[a-f0-9-]{36}\/photos$/.test(path);
       if (isPhotoUpload) { const access=session(req); if(!access||access.must_change)fail(401,'Entre para enviar fotografias.'); }
       const requestBody = req.method === 'GET' ? null : await json(req,isPhotoUpload?11300000:32768);
+      if(path==='/api/public/submissions'&&req.method==='POST'){
+        consume('submission:'+digest(req.socket.remoteAddress||'unknown'),6);
+        const entry=submission(requestBody),d=entry.data.draft,payloadHash=digest(JSON.stringify(entry.data));
+        const responsible=db.prepare("SELECT id FROM users WHERE active=1 AND role='admin' ORDER BY created_at LIMIT 1").get();if(!responsible)fail(503,'Nossa equipe está preparando o recebimento. Tente mais tarde.');
+        transaction(()=>{
+          const receipt=db.prepare('SELECT payload_hash FROM submission_receipts WHERE request_id=?').get(entry.id);
+          if(receipt){if(receipt.payload_hash===payloadHash)return;fail(409,'Este envio já foi recebido. Inicie uma nova solicitação.');}
+          if(db.prepare('SELECT id FROM evaluations WHERE id=?').get(entry.id))fail(409,'Esta referência já existe. Inicie uma nova solicitação.');
+          db.prepare('INSERT INTO evaluations(id,title,city,type,operation,owner,assignee_id,stage,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)').run(entry.id,d.title,d.city,d.type,entry.data.operation,d.ownerName,responsible.id,'Recebido',stamp(),stamp());
+          db.prepare('INSERT INTO listings(id,data) VALUES(?,?)').run(entry.id,JSON.stringify(d));
+          db.prepare('INSERT INTO submission_receipts(request_id,payload_hash) VALUES(?,?)').run(entry.id,payloadHash);
+          audit(responsible.id,'Envio pelo site','Recebimento automático de dados declarados. Sem aprovação; administrador atribuído como responsável.',entry.id);
+        });send(res,201,{reference:entry.id});return true;
+      }
       const user = session(req);
       if (path === '/api/auth/session' && req.method === 'GET') {
         send(res, 200, { user: user ? safeUser(user) : null, needsSetup: db.prepare('SELECT COUNT(*) AS count FROM users').get().count === 0 }); return true;

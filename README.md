@@ -1,8 +1,8 @@
 # EME Select
 
-Versão 0.4.2 do site da EME Select, com React, TypeScript, Vite, cenários fotográficos navegáveis, transições GSAP e uma apresentação opcional em HyperFrames.
+Versão 0.10.0 da EME Select, com React, TypeScript, Vite, cenários fotográficos navegáveis, transições GSAP e portal conectado ao Supabase em produção na Vercel. O envio de imóveis recebe protocolo e entra na fila de avaliações. O cadastro tem cinco etapas, prévia privada e percurso de fotografias em tela inteira. [Fluxo de cadastro e fotografias](docs/PORTAL-100.md).
 
-O site explora oito cenários — início, Litoral, Serra, Urbano, Condomínios, Comercial, Terrenos e Industrial — e um acervo demonstrativo de 18 imóveis. A home apresenta Casas, Casas em condomínio, Apartamentos e Compactos, além de uma seção visual para explorar os sete ambientes. Condomínios reúne três imóveis já existentes em outras coleções, sem duplicação de anúncios. Os cenários, fotos e dados são ilustrativos. A etapa 3D foi adiada pelo usuário; os modelos de estudo permanecem no código, sem fazer parte da experiência ativa. O projeto ainda não opera um catálogo de imóveis reais, análise jurídica ou avaliação por IA.
+O site preserva oito cenários — início, Litoral, Serra, Urbano, Condomínios, Comercial, Terrenos e Industrial — e um acervo demonstrativo de 18 imóveis identificado como ilustrativo. A home apresenta Casas, Casas em condomínio, Apartamentos e Compactos. O catálogo recebe anúncios reais somente após cadastro, curadoria humana e publicação explícita no portal. A etapa 3D foi adiada pelo usuário; os modelos de estudo permanecem fora da experiência ativa. Análise jurídica automática e avaliação por IA ainda não estão implementadas.
 
 A atualização 0.4 integra tipos comerciais, terrenos urbanos, lotes em condomínio, terras agrícolas, galpões, pavilhões e centros de distribuição. Filtros, fichas, favoritos, comparação e formulário do proprietário acompanham essas categorias. [Registro da integração](docs/AMBIENTES-04.md) · [Imagens e prompts](docs/ASSETS-04.md).
 
@@ -84,9 +84,9 @@ Condomínios horizontais e verticais têm filtros próprios. O menu Explorar re�
 
 ## Contato e dados
 
-O contato configurado em `src/data.ts` é **(54) 99990-2688**, no formato internacional **5554999902688**. Os formulários montam uma mensagem que o visitante revisa antes de abrir o WhatsApp. O envio é concluído pelo visitante no WhatsApp; o formulário não grava solicitações em um banco de dados nem confirma uma visita automaticamente.
+O contato configurado em `src/data.ts` é **(54) 99990-2688**, no formato internacional **5554999902688**. A solicitação de visita monta uma mensagem para o visitante enviar no WhatsApp, sujeita à confirmação humana. O formulário de envio de imóvel grava uma solicitação privada no portal e apresenta um protocolo; não publica o imóvel.
 
-Nenhuma chave de API deve ser colocada em `src/`, `public/` ou em variáveis públicas do Vite. Credenciais e serviços de IA pertencem a um backend futuro.
+Credenciais secretas ficam somente no ambiente do servidor (`.env.local` ignorado pelo Git e variáveis privadas da Vercel). Nunca colocar service-role, senhas ou segredos em `src/`, `public/` ou variáveis `VITE_*`. O banco local de desenvolvimento é separado do Supabase de produção.
 
 A busca usa palavras-chave do catálogo e desconsidera acentos. Exemplos: `casa jardim`, `condomínio horizontal` e `casa sem piscina`. `sem`, `não` e `exceto` excluem o termo seguinte; `e`/`nem` continuam a exclusão e `com` retoma os termos desejados. Isso filtra o texto cadastrado, sem certificar características não informadas. Pedidos de número de quartos ou área ainda não são interpretados, e seus números não são descartados silenciosamente.
 

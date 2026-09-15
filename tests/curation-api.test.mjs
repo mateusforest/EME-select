@@ -30,7 +30,7 @@ test('curation: evidence, review gates, decisions, revisions and migration',asyn
     await req(outsider,'/auth/login',{email:'other@example.test',password});await req(outsider,'/auth/password',{currentPassword:password,newPassword:password+'2'});
     data=(await req(admin,'/evaluations',{title:'Terreno de teste',city:'Caxias do Sul',type:'Terreno urbano',operation:'Venda',assigneeId:brokerId})).body;
     api.close();const old=new DatabaseSync(dbPath);old.exec('DROP TABLE curation; PRAGMA user_version=1;');const before=old.prepare('SELECT count(*) n FROM users').get().n;old.close();api=createPortalApi({dbPath});
-    const check=new DatabaseSync(dbPath,{readOnly:true});assert.equal(check.prepare('PRAGMA user_version').get().user_version,3);assert.equal(check.prepare('SELECT count(*) n FROM users').get().n,before);check.close();
+    const check=new DatabaseSync(dbPath,{readOnly:true});assert.equal(check.prepare('PRAGMA user_version').get().user_version,4);assert.equal(check.prepare('SELECT count(*) n FROM users').get().n,before);check.close();
     const read=await req(broker,route(''));assert.equal(read.status,200);data=read.body;assert.equal(data.curation.score,null);assert.equal(data.curation.criteria[0].label,'Condição do terreno');assert.equal(data.evaluation.version,1);
   });
   await t.test('server rejects forged scores, invalid notes and foreign portfolios',async()=>{

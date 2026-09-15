@@ -54,7 +54,8 @@ export interface Property {
   description: string;
   image: string;
   hasInterior?: boolean;
-  images?: {url:string;caption:string}[];
+  images?: {url:string;caption:string;room?:string}[];
+  bathrooms?:number|null;totalArea?:number|null;yearBuilt?:number|null;
   costNotes?:string;
   condominiumFee?:number|null;
   propertyTax?:number|null;

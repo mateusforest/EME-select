@@ -153,3 +153,5 @@
   .details-page *, .details-page *::before, .details-page *::after { transition: none !important; }
   .details-image-link:hover .details-image { transform: none; }
 }
+
+.details-extra-facts{display:flex;flex-wrap:wrap;gap:20px;margin:20px 0;font-size:12px}.details-extra-facts dt{color:#64726a}.details-extra-facts dd{margin:6px 0;font-size:17px;color:#173c32}

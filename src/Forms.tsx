@@ -1,11 +1,10 @@
 import { useId, useState, type FormEvent, type ReactNode } from 'react';
 import { ArrowLeft, ArrowUpRight, MessageCircle } from 'lucide-react';
-import { CONTACT, PROPERTY_TYPE_OPTIONS, whatsappUrl, type Property } from './data';
+import { CONTACT, whatsappUrl, type Property } from './data';
 import './forms.css';
 
 type ContactFields = { name: string; phone: string; message: string; consent: boolean };
 type BookingFields = ContactFields & { date: string; period: string; time: string };
-type OwnerFields = ContactFields & { city: string; type: string; intention: string };
 type Errors = Record<string, string>;
 
 const contactDefaults: ContactFields = { name: '', phone: '', message: '', consent: false };
@@ -149,58 +148,4 @@ export function BookingForm({ property, onClose }: { property?: Property; onClos
   </section>;
 }
 
-export function OwnerForm({ onClose }: { onClose: () => void }) {
-  const prefix = useId();
-  const [values, setValues] = useState<OwnerFields>({ ...contactDefaults, city: '', type: '', intention: 'Vender' });
-  const [errors, setErrors] = useState<Errors>({});
-  const [review, setReview] = useState(false);
-  const update = <Key extends keyof OwnerFields>(key: Key, value: OwnerFields[Key]) => {
-    setValues(current => ({ ...current, [key]: value }));
-    setErrors(current => { const next = { ...current }; delete next[key]; return next; });
-  };
-  const id = (name: string) => `${prefix}-owner-${name}`;
-  const inputProps = (name: string) => ({ id: id(name), name, 'aria-invalid': Boolean(errors[name]), 'aria-describedby': errors[name] ? `${id(name)}-error` : undefined });
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const next = contactErrors(values);
-    if (values.city.trim().length < 2) next.city = 'Informe a cidade do imóvel.';
-    if (!values.type) next.type = 'Selecione o tipo de imóvel.';
-    if (!['Vender', 'Alugar'].includes(values.intention)) next.intention = 'Escolha vender ou alugar.';
-    setErrors(next);
-    if (Object.keys(next).length) focusError(event.currentTarget, next);
-    else setReview(true);
-  }
-
-  const message = ['Olá, EME Select! Gostaria de apresentar um imóvel para curadoria.', `Nome: ${values.name.trim()}`, `Telefone: ${values.phone.trim()}`, `Cidade: ${values.city.trim()}`, `Tipo de imóvel: ${values.type}`, `Interesse: ${values.intention}`, ...(values.message.trim() ? [`Sobre o imóvel: ${values.message.trim()}`] : []), 'Autorizo o contato da EME Select sobre esta solicitação.'].join('\n');
-
-  if (review) return <Review message={message} onEdit={() => setReview(false)} onClose={onClose}>
-    <ReviewItem label="Nome">{values.name.trim()}</ReviewItem>
-    <ReviewItem label="Telefone">{values.phone.trim()}</ReviewItem>
-    <ReviewItem label="Cidade">{values.city.trim()}</ReviewItem>
-    <ReviewItem label="Imóvel">{values.type} · {values.intention}</ReviewItem>
-    {values.message.trim() && <ReviewItem label="Sobre o imóvel">{values.message.trim()}</ReviewItem>}
-  </Review>;
-
-  return <section className="form-shell">
-    <span className="form-eyebrow">Para proprietários</span>
-    <h2>Todo lugar tem uma história.</h2>
-    <p className="form-intro">Apresente seu imóvel. Nossa equipe conversa com você para entender suas características e iniciar a curadoria.</p>
-    <form className="form-content" noValidate onSubmit={submit}>
-      <p className="form-required-note">Preencha os campos abaixo. A mensagem é opcional.</p>
-      <div className="form-grid">
-        <Field label="Seu nome" id={id('name')} error={errors.name}><input {...inputProps('name')} required autoComplete="name" maxLength={100} value={values.name} onChange={event => update('name', event.target.value)} /></Field>
-        <Field label="Telefone com DDD" id={id('phone')} error={errors.phone}><input {...inputProps('phone')} required type="tel" inputMode="tel" autoComplete="tel" maxLength={22} value={values.phone} onChange={event => update('phone', event.target.value)} /></Field>
-        <Field label="Cidade do imóvel" id={id('city')} error={errors.city}><input {...inputProps('city')} required maxLength={100} value={values.city} onChange={event => update('city', event.target.value)} /></Field>
-        <Field label="Tipo de imóvel" id={id('type')} error={errors.type}><select {...inputProps('type')} required value={values.type} onChange={event => update('type', event.target.value)}><option value="">Selecione</option>{[...PROPERTY_TYPE_OPTIONS.filter(Boolean), 'Outro'].map(type => <option key={type}>{type}</option>)}</select></Field>
-      </div>
-      <Field label="O que você pretende?" id={id('intention')} error={errors.intention}><select {...inputProps('intention')} required value={values.intention} onChange={event => update('intention', event.target.value)}><option>Vender</option><option>Alugar</option></select></Field>
-      <Field label="Conte um pouco sobre o imóvel" id={id('message')} optional><textarea {...inputProps('message')} rows={3} maxLength={1500} value={values.message} onChange={event => update('message', event.target.value)} /></Field>
-      <p className="form-notice">A entrada na coleção depende da avaliação da equipe EME Select.</p>
-      <Consent id={id('consent')} value={values.consent} error={errors.consent} onChange={value => update('consent', value)} />
-      {Object.keys(errors).length > 0 && <p className="form-error-summary" role="alert">Revise os campos indicados para continuar.</p>}
-      <button className="form-primary" type="submit">Revisar apresentação <ArrowUpRight size={18} aria-hidden="true" /></button>
-      <button className="form-text-button form-cancel" type="button" onClick={onClose}>Agora não</button>
-    </form>
-  </section>;
-}
+export {default as OwnerForm} from './OwnerSubmission';
