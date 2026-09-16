@@ -9,7 +9,7 @@ const property = {
     {url:'/__gallery/2.svg',caption:'Jantar junto ao mar',room:'Área social'},
     {url:'/__gallery/3.svg',caption:'Suíte de teste',room:'Área íntima'}],
 };
-const photograph = (n: string) => `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="750"><rect width="1000" height="750" fill="${n==='1'?'#b9ac91':n==='2'?'#597f89':'#776c5c'}"/><rect x="100" y="100" width="800" height="550" fill="#e9e4d8"/><text x="500" y="380" text-anchor="middle" font-size="60">Fotografia ${n}</text></svg>`;
+const photograph = (n: string) => `<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1800" viewBox="0 0 1000 750"><rect width="1000" height="750" fill="${n==='1'?'#b9ac91':n==='2'?'#597f89':'#776c5c'}"/><rect x="100" y="100" width="800" height="550" fill="#e9e4d8"/><text x="500" y="380" text-anchor="middle" font-size="60">Fotografia ${n}</text></svg>`;
 async function fixture(page: Page, beforeNavigation?:()=>Promise<void>) {
   await page.route('**/api/public/properties', route => route.fulfill({json:{properties:[property]}}));
   await page.route('**/__gallery/*.svg', route => route.fulfill({contentType:'image/svg+xml',body:photograph(route.request().url().match(/(\d)\.svg/)![1])}));
@@ -72,4 +72,37 @@ test('celular aceita arraste, mantém controles na tela e respeita movimento red
   }
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.keyboard.press('Escape'); await expect(modal).not.toBeVisible();
+});
+
+test('arquivo pequeno mantém o enquadramento original sem ampliar pixels no desktop', async ({page}) => {
+  await fixture(page, async () => {
+    await page.route('**/__gallery/*.svg', route => route.fulfill({contentType:'image/svg+xml',body:photograph('1').replace('width="2400" height="1800"','width="870" height="652"')}));
+    // Actual decoded dimensions must overrule stale metadata from an older import.
+    await page.route('**/api/public/properties', route => route.fulfill({json:{properties:[{...property,images:property.images.map(photo=>({...photo,width:4000,height:3000}))}]}}));
+  });
+  await page.getByRole('button',{name:'Ampliar',exact:true}).click();
+  const modal=page.getByRole('dialog'), image=modal.locator('.pg-photo-current');
+  await expect(modal.getByText('Enquadramento original',{exact:true})).toBeVisible();
+  await expect(image).toHaveCSS('object-fit','scale-down');
+  expect(await image.boundingBox()).toMatchObject({width:870,height:652});
+  expect(await modal.boundingBox()).toMatchObject({width:1440,height:1000});
+  await expect(modal.getByRole('button',{name:'Preencher tela',exact:true})).toHaveCount(0);
+  await modal.getByRole('button',{name:'Próxima foto',exact:true}).click();
+  await expect(modal.locator('.pg-caption')).toContainText('Jantar junto ao mar');
+  expect(await image.boundingBox()).toMatchObject({width:870,height:652});
+  await expect(image).toHaveCSS('transform','none');
+});
+
+test('arquivo horizontal pequeno aparece inteiro no celular sem corte lateral', async ({page}) => {
+  await page.setViewportSize({width:390,height:844});
+  await fixture(page, () => page.route('**/__gallery/*.svg', route => route.fulfill({contentType:'image/svg+xml',body:photograph('1').replace('width="2400" height="1800"','width="870" height="652"')})));
+  await page.getByRole('button',{name:'Ampliar',exact:true}).click();
+  const modal=page.getByRole('dialog'), image=modal.locator('.pg-photo-current');
+  await expect(modal.getByText('Enquadramento original',{exact:true})).toBeVisible();
+  await expect(image).toHaveCSS('object-fit','scale-down');
+  const box=await image.boundingBox(); expect(box).not.toBeNull();
+  expect(box!.width).toBeLessThanOrEqual(358); expect(box!.width/box!.height).toBeCloseTo(870/652,2);
+  expect(box!.x).toBeGreaterThanOrEqual(16); expect(box!.y).toBeGreaterThanOrEqual(105);
+  expect(box!.y+box!.height).toBeLessThanOrEqual(624);
+  expect(await modal.boundingBox()).toMatchObject({width:390,height:844});
 });

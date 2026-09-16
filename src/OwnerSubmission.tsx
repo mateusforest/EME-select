@@ -156,7 +156,7 @@ export default function OwnerSubmission({ onClose }: { onClose: () => void }) {
         <p className="form-required-note">Nome, telefone e relação com o imóvel são obrigatórios.</p>
         <div className="form-grid">
           <Field label="Seu nome" id={id('name')} error={errors.name}><input {...control('name')} required maxLength={100} autoComplete="name" value={values.name} onChange={event => update('name', event.target.value)} /></Field>
-          <Field label="Telefone com DDD" id={id('phone')} error={errors.phone}><input {...control('phone')} required type="tel" inputMode="tel" maxLength={22} autoComplete="tel" placeholder="(54) 99990-2688" value={values.phone} onChange={event => update('phone', event.target.value)} /></Field>
+          <Field label="Telefone com DDD" id={id('phone')} error={errors.phone}><input {...control('phone')} required type="tel" inputMode="tel" maxLength={22} autoComplete="tel" placeholder="(54) 99157-8029" value={values.phone} onChange={event => update('phone', event.target.value)} /></Field>
           <Field label="Sua relação com o imóvel" id={id('relationship')} error={errors.relationship}><select {...control('relationship')} required value={values.relationship} onChange={event => update('relationship', event.target.value)}><option value="">Selecione</option>{relationships.map(value => <option key={value}>{value}</option>)}</select></Field>
           <Field label="Ocupação atual" id={id('occupancy')} optional><select {...control('occupancy')} value={values.occupancy} onChange={event => update('occupancy', event.target.value)}>{occupancyOptions.map(value => <option key={value}>{value}</option>)}</select></Field>
         </div>

@@ -9,6 +9,14 @@
       "destination": "/api/portal?route=:path*"
     },
     {
+      "source": "/enviar-imovel",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/enviar-imovel/",
+      "destination": "/index.html"
+    },
+    {
       "source": "/portalselect",
       "destination": "/index.html"
     },

@@ -1,11 +1,13 @@
-﻿import {chromium,expect} from '@playwright/test';
+import {chromium,expect} from '@playwright/test';
 import {spawn} from 'node:child_process';
 import {mkdirSync,mkdtempSync,writeFileSync} from 'node:fs';
 import {resolve,join} from 'node:path';
+import sharp from 'sharp';
 
 mkdirSync('tmp',{recursive:true});
 mkdirSync('design/listings',{recursive:true});
 const folder=mkdtempSync(resolve('tmp/listing-browser-'));
+const fixturePaths=await Promise.all(['#b6c6a9','#b8cddd'].map(async(background,index)=>{const path=join(folder,'photo-'+index+'.jpg');await sharp({create:{width:2400,height:1600,channels:3,background}}).jpeg().toFile(path);return path;}));
 const origin='http://127.0.0.1:4201';
 const server=spawn(process.execPath,['scripts/serve.mjs'],{env:{...process.env,EME_PREVIEW_PORT:'4201',EME_DB_PATH:join(folder,'portal.sqlite')},windowsHide:true,stdio:['ignore','pipe','pipe']});
 let browser;
@@ -20,6 +22,7 @@ try{
  const saved=()=>expect(page.getByRole('button',{name:'Salvar cadastro',exact:true})).toBeDisabled();
  await post('/auth/setup',{name:'Equipe de teste',email:'listing@example.test',password:'Listing-browser-test-2026!'});
  await page.goto(origin+'/portalselect/imoveis');
+ await expect(page.getByRole('link',{name:'Abrir ficha de envio'})).toHaveAttribute('href',origin+'/enviar-imovel');
  await page.getByRole('button',{name:'Cadastrar imóvel',exact:true}).click();
  await page.getByLabel('Título do anúncio').fill('Casa entre jardins · teste');
  await page.getByLabel('Cidade e estado').fill('Caxias do Sul · RS');
@@ -49,7 +52,8 @@ try{
  await page.getByRole('button',{name:'Salvar cadastro',exact:true}).click();
  await saved();
  await step('Percurso de fotos');
- await page.getByLabel('Adicionar fotografias do imóvel').setInputFiles(['public/assets/scene-home.png','public/assets/interior-living.png']);
+ await expect(page.getByRole('heading',{name:'O padrão começa no arquivo original.'})).toBeVisible();
+ await page.getByLabel('Adicionar fotografias do imóvel').setInputFiles(fixturePaths);
  await expect(page.locator('.pl-photo')).toHaveCount(2,{timeout:30000});
  await expect(page.getByText('Fotografias salvas. Descreva cada ambiente e escolha a ordem da galeria.')).toBeVisible({timeout:30000});
  await page.getByLabel('Legenda da foto 1').fill('Exterior · imagem de teste');
@@ -89,7 +93,7 @@ try{
  await preview.screenshot({path:'design/listings/preview-mobile.png',fullPage:true});expect(await preview.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await preview.emulateMedia({reducedMotion:'reduce'});await expect(preview.getByRole('button',{name:'Pausar apresentação',exact:true})).toHaveCount(0);
  let evaluation=await (await context.request.get(origin+'/api/evaluations/'+item.id)).json();
- evaluation=await post('/evaluations/'+item.id+'/curation',{version:evaluation.evaluation.version,criteria:evaluation.curation.criteria.map(c=>({key:c.key,score:4,note:'Registro controlado de teste com fonte e data.'})),checks:evaluation.curation.checks.map(c=>({key:c.key,state:'Conferido',note:'Responsável de teste conferiu fontes no ambiente isolado.'})),pending:''});
+ evaluation=await post('/evaluations/'+item.id+'/curation',{version:evaluation.evaluation.version,criteria:evaluation.curation.criteria.map(c=>({key:c.key,score:5,note:'Registro controlado de teste com fonte e data.'})),checks:evaluation.curation.checks.map(c=>({key:c.key,state:'Conferido',note:'Responsável de teste conferiu fontes no ambiente isolado.'})),pending:''});
  evaluation=await post('/evaluations/'+item.id+'/decision',{version:evaluation.evaluation.version,action:'submit',reason:'Encaminhamento de teste para decisão.'});
  await post('/evaluations/'+item.id+'/decision',{version:evaluation.evaluation.version,action:'approve',reason:'Aprovação de teste com evidências revistas.',acknowledged:true});
  await page.goto(origin+'/portalselect/imoveis?imovel='+item.id);

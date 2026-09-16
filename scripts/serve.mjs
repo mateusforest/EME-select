@@ -16,7 +16,8 @@ const server = http.createServer(async (req, res) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405, { Allow: 'GET, HEAD' }); res.end(); return; }
     const requested = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname);
     const portalRoute = /^\/portalselect(?:\/[a-z0-9-]+){0,2}\/?$/.test(requested);
-    const path = resolve(root, `.${requested === '/' || portalRoute ? '/index.html' : requested}`);
+    const submissionRoute = /^\/enviar-imovel\/?$/.test(requested);
+    const path = resolve(root, `.${requested === '/' || portalRoute || submissionRoute ? '/index.html' : requested}`);
     if (!path.startsWith(root + sep)) { res.writeHead(403); res.end(); return; }
     const info = await stat(path);
     if (!info.isFile()) { res.writeHead(404); res.end(); return; }

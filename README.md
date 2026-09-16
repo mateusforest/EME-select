@@ -1,6 +1,6 @@
 # EME Select
 
-Versão 0.10.0 da EME Select, com React, TypeScript, Vite, cenários fotográficos navegáveis, transições GSAP e portal conectado ao Supabase em produção na Vercel. O envio de imóveis recebe protocolo e entra na fila de avaliações. O cadastro tem cinco etapas, prévia privada e percurso de fotografias em tela inteira. [Fluxo de cadastro e fotografias](docs/PORTAL-100.md).
+Versão 0.11.0 da EME Select, com React, TypeScript, Vite, cenários fotográficos navegáveis, transições GSAP e portal conectado ao Supabase em produção na Vercel. A ficha pública está em `/enviar-imovel`, com link para compartilhar pelo portal e protocolo de recebimento. Novas avaliações usam cinco dimensões de qualidade e conferências humanas separadas. Fotos abaixo da resolução mínima ficam no rascunho; a galeria em tela cheia preserva seu enquadramento sem ampliar arquivos pequenos. [Entrega e limites desta versão](docs/PORTAL-110.md).
 
 O site preserva oito cenários — início, Litoral, Serra, Urbano, Condomínios, Comercial, Terrenos e Industrial — e um acervo demonstrativo de 18 imóveis identificado como ilustrativo. A home apresenta Casas, Casas em condomínio, Apartamentos e Compactos. O catálogo recebe anúncios reais somente após cadastro, curadoria humana e publicação explícita no portal. A etapa 3D foi adiada pelo usuário; os modelos de estudo permanecem fora da experiência ativa. Análise jurídica automática e avaliação por IA ainda não estão implementadas.
 
@@ -84,7 +84,7 @@ Condomínios horizontais e verticais têm filtros próprios. O menu Explorar re�
 
 ## Contato e dados
 
-O contato configurado em `src/data.ts` é **(54) 99990-2688**, no formato internacional **5554999902688**. A solicitação de visita monta uma mensagem para o visitante enviar no WhatsApp, sujeita à confirmação humana. O formulário de envio de imóvel grava uma solicitação privada no portal e apresenta um protocolo; não publica o imóvel.
+O contato configurado em `src/data.ts` é **(54) 99157-8029**, no formato internacional **5554991578029**. A solicitação de visita monta uma mensagem para o visitante enviar no WhatsApp, sujeita à confirmação humana. O formulário de envio de imóvel grava uma solicitação privada no portal e apresenta um protocolo; não publica o imóvel.
 
 Credenciais secretas ficam somente no ambiente do servidor (`.env.local` ignorado pelo Git e variáveis privadas da Vercel). Nunca colocar service-role, senhas ou segredos em `src/`, `public/` ou variáveis `VITE_*`. O banco local de desenvolvimento é separado do Supabase de produção.
 

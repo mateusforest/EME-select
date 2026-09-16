@@ -54,7 +54,7 @@ export interface Property {
   description: string;
   image: string;
   hasInterior?: boolean;
-  images?: {url:string;caption:string;room?:string}[];
+  images?: {url:string;caption:string;room?:string;width?:number;height?:number}[];
   bathrooms?:number|null;totalArea?:number|null;yearBuilt?:number|null;
   costNotes?:string;
   condominiumFee?:number|null;
@@ -89,8 +89,8 @@ export interface Environment {
 }
 
 export const CONTACT = {
-  phone: '5554999902688',
-  display: '(54) 99990-2688',
+  phone: '5554991578029',
+  display: '(54) 99157-8029',
   brand: 'EME Select',
 };
 

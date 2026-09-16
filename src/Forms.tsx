@@ -33,7 +33,7 @@ function contactErrors(values: ContactFields): Errors {
   if (values.name.trim().length < 2) errors.name = 'Informe seu nome, com pelo menos 2 caracteres.';
   let digits = values.phone.replace(/\D/g, '');
   if ((digits.length === 12 || digits.length === 13) && digits.startsWith('55')) digits = digits.slice(2);
-  if (!/^[1-9]{2}\d{8,9}$/.test(digits)) errors.phone = 'Informe um telefone brasileiro com DDD, por exemplo (54) 99990-2688.';
+  if (!/^[1-9]{2}\d{8,9}$/.test(digits)) errors.phone = 'Informe um telefone brasileiro com DDD, por exemplo (54) 99157-8029.';
   if (!values.consent) errors.consent = 'Autorize o contato para continuar com o pedido.';
   return errors;
 }

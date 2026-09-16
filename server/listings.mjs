@@ -1,4 +1,5 @@
 import {draft as validateDraft} from './cloud/domain.mjs';
+import {photoPublicationIssues} from '../shared/photo-policy.mjs';
 import sharp from 'sharp';
 import { randomUUID } from 'node:crypto';
 const types=['Casa','Casa em condomínio','Apartamento','Compacto','Cabana','Sala comercial','Loja','Edifício corporativo','Galpão','Pavilhão','Centro de distribuição','Terreno urbano','Lote em condomínio','Terra agrícola'];
@@ -23,13 +24,12 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
     if(!d.neighborhood.trim())reasons.push('Informe bairro ou região pública.');
     if(d.description.trim().length<80)reasons.push('Descreva o imóvel com pelo menos 80 caracteres.');
     if(!d.reasons.trim())reasons.push('Registre os diferenciais selecionados pela EME.');
-    if(!p.length)reasons.push('Adicione pelo menos uma fotografia real.');
-    if(p.some(photo=>photo.caption.trim().length<3))reasons.push('Descreva o ambiente de cada fotografia.');
+    reasons.push(...photoPublicationIssues(p));
     const e=db.prepare('SELECT stage FROM evaluations WHERE id=?').get(r.id);
     if(e.stage!=='Entrada aprovada')reasons.push('Conclua a curadoria e a aprovação de entrada.');
     return reasons;
   }
-  function publicData(r){const d=JSON.parse(r.data),images=photos(r.id).map(({url,caption,room})=>({url,caption,room}));return {
+  function publicData(r){const d=JSON.parse(r.data),images=photos(r.id).map(({url,caption,room,width,height})=>({url,caption,room,width,height}));return {
     id:r.id,title:d.title,environment:d.environment,condominium:d.condominium||undefined,location:d.neighborhood+' · '+d.city,type:d.type==='Casa em condomínio'?'Casa':d.type,operation:d.operation,price:d.price,area:d.area,bedrooms:d.bedrooms,suites:d.suites,parking:d.parking,bathrooms:d.bathrooms,totalArea:d.totalArea,yearBuilt:d.yearBuilt,
     description:d.description,tags:d.features.split('\n').map(v=>v.trim()).filter(Boolean),reasons:d.reasons.split('\n').map(v=>v.trim()).filter(Boolean),costNotes:d.costNotes,condominiumFee:d.condominiumFee,propertyTax:d.propertyTax,image:images[0]?.url,images,isIllustrative:false,hasInterior:false};}
   const detail=(r,user)=>({id:r.id,version:r.version,draft:JSON.parse(r.data),photos:photos(r.id),stage:caseFor(r.id,user).stage,published:!!r.published&&caseFor(r.id,user).stage==='Entrada aprovada',publishedVersion:r.published_version,blockers:blockers(r)});
@@ -82,13 +82,13 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
       });send(res,200,detail(row(id,user),user));return true;
     }
     if(match[2]==='photos'&&req.method==='POST'){
-      fields(body,['version','content','caption']);if(photos(id).length>=20)fail(400,'Limite de 20 fotografias por imóvel.');
+      fields(body,['version','content','caption','room']);if(photos(id).length>=20)fail(400,'Limite de 20 fotografias por imóvel.');
       if(typeof body.content!=='string'||body.content.length>11200000||!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(body.content))fail(400,'Envie JPEG, PNG ou WebP de até 8 MB.');
-      const caption=text(body.caption??'','Legenda',0,180),buffer=Buffer.from(body.content.split(',')[1],'base64');if(buffer.length>8*1024*1024)fail(413,'Cada fotografia pode ter até 8 MB.');
+      const caption=text(body.caption??'','Legenda',0,180),room=text(body.room??'','Ambiente',0,60),buffer=Buffer.from(body.content.split(',')[1],'base64');if(buffer.length>8*1024*1024)fail(413,'Cada fotografia pode ter até 8 MB.');
       if(processing>=2)fail(503,'Há fotos em processamento. Aguarde e tente novamente.');processing++;
-      let output;try{const pipeline=sharp(buffer,{limitInputPixels:20000000,failOn:'warning'});const meta=await pipeline.metadata();if(!['jpeg','png','webp'].includes(meta.format)||meta.pages>1||Math.max(meta.width,meta.height)<600||Math.min(meta.width,meta.height)<200)fail(400,'Use uma fotografia estática com pelo menos 600 pixels no lado maior e 200 no menor.');output=await pipeline.rotate().resize({width:2400,height:2400,fit:'inside',withoutEnlargement:true}).webp({quality:88}).toBuffer({resolveWithObject:true});}catch(e){if(e.status)throw e;fail(400,'Não foi possível ler esta fotografia. Use JPEG, PNG ou WebP válido, até 20 megapixels.');}finally{processing--;}
+      let output;try{const pipeline=sharp(buffer,{limitInputPixels:20000000,failOn:'warning'});const meta=await pipeline.metadata();if(!['jpeg','png','webp'].includes(meta.format)||meta.pages>1||Math.max(meta.width,meta.height)<600||Math.min(meta.width,meta.height)<200)fail(400,'Use uma fotografia estática com pelo menos 600 pixels no lado maior e 200 no menor.');output=await pipeline.rotate().resize({width:3200,height:3200,fit:'inside',withoutEnlargement:true}).webp({quality:90}).toBuffer({resolveWithObject:true});}catch(e){if(e.status)throw e;fail(400,'Não foi possível ler esta fotografia. Use JPEG, PNG ou WebP válido, até 20 megapixels.');}finally{processing--;}
       const freshUser=session(req);if(!freshUser||freshUser.must_change)fail(401,'Entre novamente.');
-      transaction(()=>{checkVersion(row(id,freshUser),body);if(['Entrada aprovada','Não selecionado'].includes(caseFor(id,freshUser).stage))requireAdmin(freshUser);if(photos(id).length>=20)fail(400,'Limite de 20 fotografias por imóvel.');db.prepare('INSERT INTO listing_photos (id,listing_id,data,width,height,caption,position) VALUES (?,?,?,?,?,?,?)').run(randomUUID(),id,output.data,output.info.width,output.info.height,caption,photos(id).length);changed(id,freshUser,'Fotografia adicionada');});send(res,201,detail(row(id,freshUser),freshUser));return true;
+      transaction(()=>{checkVersion(row(id,freshUser),body);if(['Entrada aprovada','Não selecionado'].includes(caseFor(id,freshUser).stage))requireAdmin(freshUser);if(photos(id).length>=20)fail(400,'Limite de 20 fotografias por imóvel.');db.prepare('INSERT INTO listing_photos (id,listing_id,data,width,height,caption,position,room) VALUES (?,?,?,?,?,?,?,?)').run(randomUUID(),id,output.data,output.info.width,output.info.height,caption,photos(id).length,room);changed(id,freshUser,'Fotografia adicionada');});send(res,201,detail(row(id,freshUser),freshUser));return true;
     }
     if(['publish','unpublish'].includes(match[2])&&req.method==='POST'){
       fields(body,['version','confirmed']);requireAdmin(user);

@@ -215,7 +215,7 @@ test('proprietário pode apresentar os novos tipos e revisar a mensagem sem tran
   const options = await field(page, 'Tipo de imóvel').locator('option').allTextContents();
   for (const type of types) expect(options).toContain(type);
   await page.getByLabel('Seu nome', { exact: true }).fill('Teste dos novos ambientes');
-  await page.getByLabel('Telefone com DDD', { exact: true }).fill('(54) 99990-2688');
+  await page.getByLabel('Telefone com DDD', { exact: true }).fill('(54) 99157-8029');
   await page.getByLabel('Cidade do imóvel', { exact: true }).fill('Caxias do Sul');
   await page.getByRole('checkbox', { name: 'Autorizo a EME Select a entrar em contato comigo sobre esta solicitação.', exact: true }).check();
   for (const type of ['Sala comercial', 'Terra agrícola', 'Galpão']) {
@@ -225,7 +225,7 @@ test('proprietário pode apresentar os novos tipos e revisar a mensagem sem tran
     const href = await review.getByRole('link', { name: 'Enviar pelo WhatsApp', exact: true }).getAttribute('href');
     const url = new URL(href!);
     expect(url.origin).toBe('https://wa.me');
-    expect(url.pathname).toBe('/5554999902688');
+    expect(url.pathname).toBe('/5554991578029');
     expect(url.searchParams.get('text')).toContain(`Tipo de imóvel: ${type}`);
     await review.getByRole('button', { name: 'Editar informações', exact: true }).click();
   }

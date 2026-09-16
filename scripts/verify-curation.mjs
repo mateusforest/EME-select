@@ -12,27 +12,44 @@ try {
   browser=await chromium.launch({channel:'msedge',headless:true});const context=await browser.newContext({viewport:{width:1440,height:1040}});const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
   const setup=await context.request.post(origin+'/api/auth/setup',{headers:{Origin:origin},data:{name:'Equipe de teste',email:'test@example.test',password:'Curation-test-only-2026!'}});expect(setup.status()).toBe(201);
   const created=await context.request.post(origin+'/api/evaluations',{headers:{Origin:origin},data:{title:'Casa do jardim · teste',city:'Caxias do Sul',type:'Casa',operation:'Venda'}});expect(created.status()).toBe(201);
+  const evaluationId=(await created.json()).evaluation.id;
+  const listing=await context.request.post(origin+'/api/listings',{headers:{Origin:origin},data:{evaluationId,draft:{title:'Casa do jardim · teste',city:'Caxias do Sul',type:'Casa',environment:'urbano',operation:'comprar',condominium:''}}});expect(listing.status()).toBe(201);
+  const readCase=async()=>{const result=await context.request.get(origin+'/api/evaluations/'+evaluationId);expect(result.status()).toBe(200);return result.json();};
   await page.goto(origin+'/portalselect/avaliacoes');await page.getByRole('button',{name:'Abrir avaliação Casa do jardim · teste'}).click();
   await page.getByRole('button',{name:'Curadoria e decisão',exact:true}).click();
   const panel=page.locator('.pc-panel');await expect(panel.getByRole('heading',{name:'Evidências antes da decisão.'})).toBeVisible();
+  const save=async()=>{const [response]=await Promise.all([page.waitForResponse(r=>r.url().endsWith('/curation')&&r.request().method()==='POST'),panel.getByRole('button',{name:'Salvar curadoria',exact:true}).click()]);expect(response.status()).toBe(200);await expect(panel.getByRole('button',{name:'Salvar curadoria',exact:true})).toBeDisabled();return response.json();};
+  await expect(panel.locator('.pc-criterion')).toHaveCount(5);await expect(panel.locator('.pc-check')).toHaveCount(6);await expect(panel.locator('.pc-score')).toContainText('0/5 dimensões preenchidas');
+  for(const criterion of await panel.locator('.pc-criterion').all())await expect(criterion.getByRole('combobox')).toHaveValue('');
+  const initial=await readCase();expect(initial.curation.policy).toBe('EME-select-v2-pilot');expect(initial.curation.score).toBeNull();expect(initial.curation.criteria.every(c=>c.score===null)).toBe(true);
   await expect(panel.getByRole('button',{name:'Encaminhar para decisão',exact:true})).toBeDisabled();
   await page.screenshot({path:'design/curation/criteria-desktop.png'});
+  const first=panel.locator('.pc-criterion').first();await first.locator('summary').click();await expect(first.locator('details li')).toHaveCount(6);await first.scrollIntoViewIfNeeded();await page.screenshot({path:'design/curation/scale-desktop.png'});await first.locator('summary').click();
   for(const criterion of await panel.locator('.pc-criterion').all()) {await criterion.getByRole('combobox').selectOption('4');await criterion.getByRole('textbox').fill('Verificação de teste em 14/09/2026; fonte e escopo registrados.');}
-  await panel.getByRole('button',{name:'Salvar curadoria',exact:true}).click();
+  await save();
   await expect(panel.locator('.pc-score')).toContainText('80');await expect(panel.getByRole('button',{name:'Encaminhar para decisão',exact:true})).toBeDisabled();
+  await first.getByRole('combobox').selectOption('');const unknown=await save();expect(unknown.curation.score).toBeNull();expect(unknown.curation.criteria[0].score).toBeNull();expect(unknown.curation.coverage).toBe(4);await expect(panel.locator('.pc-score')).toContainText('4/5 dimensões preenchidas');await expect(first.getByRole('combobox')).toHaveValue('');
+  await first.getByRole('combobox').selectOption('4');await save();
   for(const check of await panel.locator('.pc-check').all()){await check.getByRole('combobox').selectOption('Conferido');await check.getByRole('textbox').fill('Responsável de teste · conferência em 14/09/2026 · fonte privada de teste.');}
-  await panel.getByRole('button',{name:'Salvar curadoria',exact:true}).click();await expect(panel.getByRole('button',{name:'Encaminhar para decisão',exact:true})).toBeEnabled();
+  const allChecks=await save();expect(allChecks.curation.checks.every(c=>c.state==='Conferido')).toBe(true);expect(allChecks.curation.score).toBe(80);await expect(panel.getByRole('button',{name:'Encaminhar para decisão',exact:true})).toBeDisabled();
+  const bypass=await context.request.post(origin+'/api/evaluations/'+evaluationId+'/decision',{headers:{Origin:origin},data:{version:allChecks.evaluation.version,action:'submit',reason:'Teste do corte mesmo com todas as conferências.'}});expect(bypass.status()).toBe(409);
+  await first.getByRole('combobox').selectOption('5');const qualified=await save();expect(qualified.curation.score).toBe(85);await expect(panel.getByRole('button',{name:'Encaminhar para decisão',exact:true})).toBeEnabled();
   await page.setViewportSize({width:390,height:844});await page.getByRole('dialog').evaluate(el=>el.scrollTop=0);await page.screenshot({path:'design/curation/criteria-mobile.png'});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   expect(await page.getByRole('dialog').evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
+  await first.locator('summary').click();await first.scrollIntoViewIfNeeded();await page.screenshot({path:'design/curation/scale-mobile.png'});expect(await page.getByRole('dialog').evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);await first.locator('summary').click();
+  await panel.locator('.pc-check').first().scrollIntoViewIfNeeded();await page.screenshot({path:'design/curation/checks-mobile.png'});
   await page.setViewportSize({width:1440,height:1040});
   await panel.getByRole('button',{name:'Encaminhar para decisão',exact:true}).click();await panel.getByLabel('Motivo da decisão').fill('Informações reunidas para a revisão final da equipe.');await panel.getByRole('button',{name:'Confirmar decisão',exact:true}).click();
   await expect(page.locator('.pt-case-meta')).toContainText('Aguardando decisão');
   await panel.getByRole('button',{name:'Aprovar entrada',exact:true}).click();await panel.getByLabel('Motivo da decisão').fill('Fontes revisadas pela equipe no ambiente isolado de teste.');await expect(panel.getByRole('button',{name:'Confirmar decisão',exact:true})).toBeDisabled();
   await panel.getByRole('checkbox').check();await panel.getByRole('button',{name:'Confirmar decisão',exact:true}).click();
   await expect(page.locator('.pt-case-meta')).toContainText('Entrada aprovada');await expect(panel.getByRole('heading',{name:'Decisão preservada'})).toBeVisible();await panel.getByRole('button',{name:'Reabrir avaliação'}).scrollIntoViewIfNeeded();await page.screenshot({path:'design/curation/decision-desktop.png'});
+  const privateListing=await context.request.get(origin+'/api/listings/'+evaluationId);expect((await privateListing.json()).published).toBe(false);const publicData=await context.request.get(origin+'/api/public/properties');expect((await publicData.json()).properties).toEqual([]);
   await page.keyboard.press('Escape');await page.reload();await page.getByRole('button',{name:'Abrir avaliação Casa do jardim · teste'}).click();await page.getByRole('button',{name:'Curadoria e decisão',exact:true}).click();await expect(panel.getByRole('heading',{name:'Decisão preservada'})).toBeVisible();
   await panel.getByRole('button',{name:'Reabrir avaliação'}).click();await panel.getByLabel('Motivo da decisão').fill('Informação nova requer revisão das conferências.');await panel.getByRole('button',{name:'Confirmar decisão',exact:true}).click();
   await expect(page.locator('.pt-case-meta')).toContainText('Em avaliação');await expect(panel.getByRole('button',{name:'Encaminhar para decisão',exact:true})).toBeDisabled();await expect(page.locator('.pt-history')).toContainText('Decisão reaberta');
-  expect(errors).toEqual([]);writeFileSync('design/curation/verification.json',JSON.stringify({checks:['Criteria and notes','High score blocked by pending checks','Human sign-offs','Mobile layout','Review queue','Acknowledged approval','Persisted decision','Reopening invalidates sign-offs'],errors},null,2));console.log('Curation browser: 8 checks passed; no page errors.');
+  const reopened=await readCase();expect(reopened.curation.policy).toBe('EME-select-v2-pilot');expect(reopened.curation.score).toBe(85);expect(reopened.curation.checks).toHaveLength(6);expect(reopened.curation.checks.every(c=>c.state==='Em revisão')).toBe(true);
+  const checks=['V2 five dimensions and six human checks','Unknown remains null, never zero','Score anchors 0–5 visible','80 remains blocked with six completed checks','Server rejects threshold bypass','85 permits review queue','Mobile summary, scale and checks without horizontal overflow','Human acknowledgement required','Approval does not publish linked listing','Decision persists after reload','Reopening invalidates six sign-offs and preserves policy'];
+  expect(errors).toEqual([]);writeFileSync('design/curation/verification.json',JSON.stringify({policy:'EME-select-v2-pilot',checks,errors},null,2));console.log(`Curation browser: ${checks.length} checks passed; no page errors.`);
 }finally{await browser?.close();server.kill();}

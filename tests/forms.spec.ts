@@ -23,7 +23,7 @@ async function storageSnapshot(page: Page): Promise<{ local: string; session: st
   return page.evaluate(() => ({ local: JSON.stringify(localStorage), session: JSON.stringify(sessionStorage) }));
 }
 
-async function fillContact(container: Locator, name = 'Pessoa de Teste', phone = '(54) 99990-2688'): Promise<void> {
+async function fillContact(container: Locator, name = 'Pessoa de Teste', phone = '(54) 99157-8029'): Promise<void> {
   await container.getByLabel('Seu nome', { exact: true }).fill(name);
   await container.getByLabel('Telefone com DDD', { exact: true }).fill(phone);
   await container.getByRole('checkbox', { name: consentName, exact: true }).check();
@@ -38,7 +38,7 @@ async function whatsappMessage(container: Locator): Promise<string> {
   expect(href).toBeTruthy();
   const url = new URL(href!);
   expect(url.origin).toBe('https://wa.me');
-  expect(url.pathname).toBe('/5554999902688');
+  expect(url.pathname).toBe('/5554991578029');
   const text = url.searchParams.get('text');
   expect(text).toBeTruthy();
   return text!;

@@ -4,8 +4,9 @@ import {ArrowLeft, ArrowRight, Expand, Maximize2, Pause, Play, RotateCcw, X} fro
 import {gsap} from 'gsap';
 import './property-gallery.css';
 
-type Photograph = {url: string; caption: string; room?: string};
+type Photograph = {url: string; caption: string; room?: string; width?: number; height?: number};
 type Chapter = {name: string; start: number; end: number};
+type Dimensions = {width: number; height: number};
 
 /** The old image remains visible until the next photograph has decoded pixels. */
 function decodePhoto(image: HTMLImageElement) {
@@ -23,6 +24,8 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
   const [initialFailed, setInitialFailed] = useState(false), [initialReady, setInitialReady] = useState(false);
   const [playing, setPlaying] = useState(false), [reduced, setReduced] = useState(false);
   const [open, setOpen] = useState(false), [wholePhoto, setWholePhoto] = useState(false);
+  const [dimensions, setDimensions] = useState<Record<string, Dimensions>>({});
+  const [viewport, setViewport] = useState<Dimensions>(() => ({width: window.innerWidth, height: window.innerHeight}));
   const root = useRef<HTMLElement>(null), dialog = useRef<HTMLDialogElement>(null);
   const expand = useRef<HTMLButtonElement>(null), close = useRef<HTMLButtonElement>(null);
   const request = useRef(0), busy = useRef(false), direction = useRef(1), retry = useRef<number | null>(null);
@@ -38,6 +41,20 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
   }, []), [photos]);
   const activeChapter = chapters.find(chapter => safeIndex >= chapter.start && safeIndex <= chapter.end);
 
+  function rememberDimensions(image: HTMLImageElement, url: string) {
+    const width = image.naturalWidth, height = image.naturalHeight;
+    if (!width || !height) return;
+    setDimensions(previous => previous[url]?.width === width && previous[url]?.height === height ? previous : {...previous, [url]: {width, height}});
+  }
+  function framing(photo: Photograph, inDialog: boolean) {
+    if (!inDialog) return 'cover';
+    // Decoded dimensions take precedence over metadata, including for older listings.
+    const size = dimensions[photo.url] || (photo.width && photo.height ? {width: photo.width, height: photo.height} : null);
+    // Unknown or undersized files stay in their original framing, never enlarged to cover.
+    if (!size || Math.max(viewport.width / size.width, viewport.height / size.height) > 1) return 'original';
+    return wholePhoto ? 'contained' : 'cover';
+  }
+
   useEffect(() => {
     const preference = matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => {setReduced(preference.matches); if (preference.matches) setPlaying(false);};
@@ -45,6 +62,12 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
     const onHide = () => {if (document.hidden) setPlaying(false);};
     document.addEventListener('visibilitychange', onHide);
     return () => {preference.removeEventListener('change', update); document.removeEventListener('visibilitychange', onHide); request.current++;};
+  }, []);
+
+  useEffect(() => {
+    const measure = () => setViewport({width: window.innerWidth, height: window.innerHeight});
+    window.addEventListener('resize', measure); measure();
+    return () => window.removeEventListener('resize', measure);
   }, []);
 
   useEffect(() => {
@@ -85,13 +108,13 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
         busy.current = false; retry.current = null;
       };
       if (reduced) {finish(); return;}
-      // Tiny movement links neighbouring photos without fabricating depth or warping rooms.
-      // Keeping the old layer opaque prevents a dark flash halfway through the dissolve.
+      // Native-sized photos only dissolve; even a small scale tween would enlarge their pixels.
+      // Larger photographs retain a subtle directional move without additional zoom.
       timeline = gsap.timeline({onComplete: finish, defaults: {ease: 'sine.inOut'}});
-      timeline.fromTo(incomingElements, {opacity: 0, scale: 1.018, xPercent: direction.current * .65},
-        {opacity: 1, scale: 1, xPercent: 0, duration: 1.15}, 0);
-      timeline.fromTo(outgoingElements, {scale: 1, xPercent: 0},
-        {scale: 1.006, xPercent: direction.current * -.35, duration: 1.15}, 0);
+      timeline.fromTo(incomingElements, {opacity: 0, x: (_position, element: HTMLImageElement) => element.closest('.pg-frame-original') ? 0 : direction.current * 5},
+        {opacity: 1, x: 0, duration: 1.1}, 0);
+      timeline.fromTo(outgoingElements, {x: 0},
+        {x: (_position, element: HTMLImageElement) => element.closest('.pg-frame-original') ? 0 : direction.current * -3, duration: 1.1}, 0);
     }).catch(() => {
       if (cancelled || version !== request.current) return;
       setLoading(false); setIncoming(null); setPlaying(false); busy.current = false;
@@ -162,13 +185,16 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
     <span aria-live={playing ? 'off' : 'polite'}>{String(safeIndex + 1).padStart(2, '0')} <i>/</i> {String(photos.length).padStart(2, '0')}</span>
     <button type="button" aria-label="Próxima foto" onClick={() => go(safeIndex + 1)} disabled={photos.length < 2 || loading || incoming !== null}><ArrowRight size={19}/></button>
   </div>;
-  const stage = (inDialog = false) => <div className={`pg-stage${inDialog && wholePhoto ? ' pg-stage-whole' : ''}`}
+  const originalFraming = framing(current, true) === 'original';
+  const stage = (inDialog = false) => <div className="pg-stage"
     onPointerDown={startGesture} onPointerUp={endGesture} onPointerCancel={() => {gesture.current = null;}}>
-    <img className={`pg-photo pg-photo-current${initialFailed ? ' pg-photo-failed' : ''}`} src={current.url}
+    <div className={`pg-image-frame pg-frame-${framing(current, inDialog)}`}><img className={`pg-photo pg-photo-current${initialFailed ? ' pg-photo-failed' : ''}`} src={current.url}
       alt={current.caption || title} fetchPriority="high" draggable={false}
-      onLoad={() => {setInitialReady(true); setInitialFailed(false);}}
-      onError={() => {setInitialReady(false); setInitialFailed(true); setPlaying(false); setError('Não foi possível carregar esta fotografia. Tente novamente ou escolha outra imagem.');}}/>
-    {incoming !== null && photos[incoming] && <img key={photos[incoming].url} className="pg-photo pg-photo-incoming" src={photos[incoming].url} alt="" aria-hidden="true" draggable={false}/>}
+      onLoad={event => {rememberDimensions(event.currentTarget, current.url); setInitialReady(true); setInitialFailed(false);}}
+      onError={() => {setInitialReady(false); setInitialFailed(true); setPlaying(false); setError('Não foi possível carregar esta fotografia. Tente novamente ou escolha outra imagem.');}}/></div>
+    {incoming !== null && photos[incoming] && <div key={photos[incoming].url} className={`pg-image-frame pg-frame-incoming pg-frame-${framing(photos[incoming], inDialog)}`}>
+      <img className="pg-photo pg-photo-incoming" src={photos[incoming].url} alt="" aria-hidden="true" draggable={false} onLoad={event => rememberDimensions(event.currentTarget, photos[incoming].url)}/>
+    </div>}
     {!initialReady && incoming === null && !initialFailed && <span className="pg-loading" role="status">Carregando fotografia…</span>}
     {initialFailed && incoming === null && <div className="pg-unavailable"><span>Fotografia indisponível</span><button type="button" onClick={retryPhoto}><RotateCcw size={16}/>Tentar novamente</button></div>}
     <div className="pg-caption"><div className="pg-caption-copy" aria-live={playing ? 'off' : 'polite'} aria-atomic="true">{current.room && <span className="pg-room">{current.room}</span>}<span>{current.caption || title}</span></div>{controls}</div>
@@ -207,7 +233,7 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
         {error && <div className="pg-tour-error">{errorNotice()}</div>}
         <footer className="pg-tour-footer">{chapterNavigation(true)}
           <div className="pg-tour-actions"><span className="pg-tour-hint">Arraste para avançar<span className="pg-keyboard-hint"> <i>·</i> Use as setas do teclado</span></span><div>
-            {playback()}<button type="button" onClick={() => setWholePhoto(value => !value)} aria-pressed={wholePhoto}><Expand size={15}/>{wholePhoto ? 'Preencher tela' : 'Foto inteira'}</button>
+            {playback()}{originalFraming ? <span className="pg-original-framing"><Expand size={15}/>Enquadramento original</span> : <button type="button" onClick={() => setWholePhoto(value => !value)} aria-pressed={wholePhoto}><Expand size={15}/>{wholePhoto ? 'Preencher tela' : 'Foto inteira'}</button>}
           </div></div>
           <div className="pg-progress" aria-hidden="true"><span style={{transform: `scaleX(${(safeIndex + 1) / photos.length})`}}/></div>
         </footer>

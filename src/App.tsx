@@ -54,7 +54,7 @@ function Header({ tour, favorites, onFavorites, onContact }: { tour: boolean; fa
         </div>}
       </div>
       <a href="#/curadoria" aria-current={hash === '#/curadoria' ? 'page' : undefined}>Nossa curadoria</a>
-      <a href="#/proprietarios" aria-current={hash === '#/proprietarios' ? 'page' : undefined}>Para proprietários</a>
+      <a href="/enviar-imovel">Para proprietários</a>
     </nav>
     <div className="header-actions">
       <button className="icon-button header-heart" aria-label={`Meus favoritos, ${favorites} imóveis`} onClick={onFavorites}><Heart size={20} />{favorites > 0 && <span className="favorite-count">{favorites}</span>}</button>
@@ -64,7 +64,7 @@ function Header({ tour, favorites, onFavorites, onContact }: { tour: boolean; fa
     {menuOpen && <nav className="mobile-menu" id="mobile-menu" aria-label="Menu móvel">
       <a href="#/colecao">A coleção completa<ArrowUpRight size={17} /></a>
       {environments.map(e => <a key={e.id} href={e.id === 'todos' ? '#/' : `#/ambientes/${e.id}`}>{e.name}<ArrowUpRight size={17} /></a>)}
-      <a href="#/curadoria">Nossa curadoria<ArrowUpRight size={17} /></a><a href="#/proprietarios">Para proprietários<ArrowUpRight size={17} /></a>
+      <a href="#/curadoria">Nossa curadoria<ArrowUpRight size={17} /></a><a href="/enviar-imovel">Para proprietários<ArrowUpRight size={17} /></a>
       <button onClick={() => { setMenuOpen(false); onContact(); }}>Fale com a EME<MessageCircle size={18} /></button>
     </nav>}
   </header>;

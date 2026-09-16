@@ -1,42 +1,12 @@
-const policy = 'EME-piloto-01';
+import { readCuration, curationSnapshot } from './curation-policy.mjs';
 const closed = ['Entrada aprovada','Não selecionado'];
-const common = [
-  ['physical','Condição física',30,'Estado observado, manutenção e limitações verificadas.'],
-  ['use','Adequação ao uso',25,'Distribuição, acessos e infraestrutura para o uso proposto.'],
-  ['context','Contexto do local',20,'Entorno, acessibilidade e condicionantes observadas.'],
-  ['market','Coerência de mercado',25,'Preço pedido, despesas e comparáveis identificados e datados.'],
-];
-function definitions(type) {
-  const rows=common.map(row=>[...row]);
-  if(type.includes('Terreno')||type==='Terra agrícola') {
-    rows[0][1]='Condição do terreno'; rows[0][3]='Topografia, limites e condições observadas. Não equivale a laudo técnico.';
-    rows[1][3]='Acesso, infraestrutura e viabilidade do uso pretendido a conferir com os responsáveis.';
-  } else if(['Galpão','Pavilhão'].includes(type)) rows[1][3]='Circulação, acessos, instalações e adequação operacional ao uso proposto.';
-  else if(['Sala comercial','Loja'].includes(type)) rows[1][3]='Acesso, visibilidade quando pertinente e adequação ao uso comercial proposto.';
-  return rows.map(([key,label,weight,help])=>({key,label,weight,help,score:null,note:''}));
-}
-const checkDefinitions=[
-  ['authorization','Autorização e vínculo do solicitante'],
-  ['description','Características, áreas e uso informado'],
-  ['market','Fontes e comparáveis de mercado'],
-  ['documents','Revisão documental pelo responsável'],
-];
 export function attachCuration({db,fail,text,fields,caseFor,transaction,audit,stamp,requireAdmin,send}) {
   db.exec('BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS curation (evaluation_id TEXT PRIMARY KEY REFERENCES evaluations(id), data TEXT NOT NULL) STRICT; COMMIT;');
   if(db.prepare('PRAGMA user_version').get().user_version<2)db.exec('PRAGMA user_version=2;');
   function read(item) {
     const stored=db.prepare('SELECT data FROM curation WHERE evaluation_id=?').get(item.id);
     const saved=stored?JSON.parse(stored.data):null;
-    const criteria=definitions(item.type).map(c=>({...c,...saved?.criteria.find(x=>x.key===c.key)}));
-    const checks=checkDefinitions.map(([key,label])=>({key,label,state:'Pendente',note:'',author:null,date:null,...saved?.checks.find(x=>x.key===key)}));
-    const complete=criteria.every(c=>c.score!==null&&c.note.trim().length>=10);
-    const score=complete?Math.round(criteria.reduce((sum,c)=>sum+c.score*c.weight/5,0)):null;
-    const blockers=[];
-    if(!complete) blockers.push('Complete as quatro notas e suas evidências.');
-    if(score!==null&&(score<80||criteria.some(c=>c.score<3))) blockers.push('A avaliação está abaixo da régua piloto: 80/100 e mínimo 3 por dimensão.');
-    for(const c of checks) if(c.state!=='Conferido'||c.note.trim().length<10) blockers.push(c.label+': conferência pendente.');
-    if(saved?.pending?.trim()) blockers.push('Resolva as pendências abertas antes da decisão.');
-    return {policy,criteria,checks,pending:saved?.pending||'',score,blockers,coverage:criteria.filter(c=>c.score!==null&&c.note.trim().length>=10).length,locked:closed.includes(item.stage)};
+    return readCuration({saved,type:item.type,stage:item.stage});
   }
   function persist(id,data) {db.prepare('INSERT INTO curation VALUES (?,?) ON CONFLICT(evaluation_id) DO UPDATE SET data=excluded.data').run(id,JSON.stringify(data));}
   function version(item,body) {if(!Number.isInteger(body.version)) fail(400,'A versão do dossiê é obrigatória.');if(item.version!==body.version) fail(409,'O dossiê mudou. Recarregue antes de continuar.');}
@@ -50,7 +20,7 @@ export function attachCuration({db,fail,text,fields,caseFor,transaction,audit,st
       fields(body,['version','criteria','checks','pending']); version(item,body);
       if(closed.includes(item.stage))fail(409,'Reabra a decisão antes de editar a curadoria.');
       const previous=read(item);
-      if(!Array.isArray(body.criteria)||body.criteria.length!==4||!Array.isArray(body.checks)||body.checks.length!==4)fail(400,'Preencha os critérios e verificações esperados.');
+      if(!Array.isArray(body.criteria)||body.criteria.length!==previous.criteria.length||!Array.isArray(body.checks)||body.checks.length!==previous.checks.length)fail(400,'Preencha os critérios e verificações esperados para esta versão da política.');
       const criteria=previous.criteria.map(c=>{
         const entries=body.criteria.filter(x=>x?.key===c.key);if(entries.length!==1)fail(400,'Critério inválido ou repetido.');
         const value=entries[0];fields(value,['key','score','note']);
@@ -71,8 +41,8 @@ export function attachCuration({db,fail,text,fields,caseFor,transaction,audit,st
       });
       const pending=text(body.pending,'Pendências',0,3000);
       transaction(()=>{
-        version(caseFor(item.id,user),body);persist(item.id,{criteria,checks,pending});bump(item.id,'Em avaliação');
-        audit(user.id,'Curadoria revisada · '+policy,criteria.map((c,i)=>previous.criteria[i].label+': '+(c.score??'Não verificado')+'/5. '+c.note).join('\n')+'\n'+checks.map((c,i)=>previous.checks[i].label+': '+c.state+'. '+c.note).join('\n')+'\nPendências: '+(pending||'Nenhuma registrada.'),item.id);
+        version(caseFor(item.id,user),body);persist(item.id,curationSnapshot({...previous,criteria,checks,pending}));bump(item.id,'Em avaliação');
+        audit(user.id,'Curadoria revisada · '+previous.policy,criteria.map((c,i)=>previous.criteria[i].label+': '+(c.score??'Não verificado')+'/5. '+c.note).join('\n')+'\n'+checks.map((c,i)=>previous.checks[i].label+': '+c.state+'. '+c.note).join('\n')+'\nPendências: '+(pending||'Nenhuma registrada.'),item.id);
       });
     } else {
       fields(body,['version','action','reason','acknowledged']);version(item,body);
@@ -88,12 +58,11 @@ export function attachCuration({db,fail,text,fields,caseFor,transaction,audit,st
       const stage={submit:'Aguardando decisão',approve:'Entrada aprovada',reject:'Não selecionado',adjust:'Ajustes solicitados',reopen:'Em avaliação'}[body.action];
       transaction(()=>{
         version(caseFor(item.id,user),body);
-        if(body.action==='reopen') {
-          // Prior sign-offs cannot silently authorize a revised submission.
-          persist(item.id,{...current,checks:current.checks.map(c=>({...c,state:'Em revisão',author:user.name,date:stamp()}))});
-        }
+        // Freeze the policy even when the first action is rejection. Reopening
+        // preserves the policy and requires fresh human sign-offs.
+        persist(item.id,curationSnapshot(body.action==='reopen'?{...current,checks:current.checks.map(c=>({...c,state:'Em revisão',author:user.name,date:stamp()}))}:current));
         bump(item.id,stage);
-        audit(user.id,body.action==='reopen'?'Decisão reaberta':stage,reason+'\nRégua: '+policy+'. Nota: '+(current.score??'incompleta')+'.'+(body.action==='approve'?' Revisão humana confirmada. Entrada interna; sem publicação automática.':''),item.id);
+        audit(user.id,body.action==='reopen'?'Decisão reaberta':stage,reason+'\nRégua: '+current.policy+'. Nota: '+(current.score??'incompleta')+'.'+(body.action==='approve'?' Revisão humana confirmada. Entrada interna; sem publicação automática.':''),item.id);
       });
     }
     send(res,200,details(item.id,user));return true;
