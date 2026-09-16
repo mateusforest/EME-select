@@ -1,0 +1,13 @@
+﻿{
+  "display_name": "EME Select — piloto ilustrativo da home",
+  "model": "marble-1.1",
+  "permission": { "public": false },
+  "world_prompt": {
+    "type": "image",
+    "image_prompt": {
+      "source": "uri",
+      "uri": "https://www.emeselect.com/assets/scene-home.png"
+    },
+    "text_prompt": "Preserve the supplied architectural composition and photographic material quality. A low broad contemporary pale-stone villa and swimming pool in the foreground, smaller residences on the hillside, a refined apartment building on the right, lush landscaping, stone paths, calm water and distant mountains. Warm natural daylight, accurate stable building edges, convincing glass and stone. Keep the original viewpoint as the initial presentation, with only short navigable camera displacements. No text, no signage, no interface, no people. This is an illustrative brand environment, not a reconstruction of an actual property."
+  }
+}

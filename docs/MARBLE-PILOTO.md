@@ -1,3 +1,5 @@
+> Atualização 16/09/2026: primeiro mundo privado concluído via World API; 1.580 créditos, arquivos locais e prévia de avaliação. Ver [resultado do piloto 02](../marble-pilot/home/PILOTO-02.md) e [evolução audiovisual](EVOLUCAO-AUDIOVISUAL.md). O restante desta página registra apenas a etapa histórica de 13/09; a home ainda usa a imagem original.
+
 # EME Select — piloto navegável da tela inicial
 
 Verificação das fontes: 13/09/2026.

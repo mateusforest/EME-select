@@ -1,3 +1,5 @@
+> Piloto retomado e gerado de forma privada em 16/09/2026. Pedido da World API em request.json; ver [PILOTO-02.md](PILOTO-02.md). O restante registra a direção e o adiamento históricos de 13/09. O resultado atual permanece em avaliação local, sem substituir a home.
+
 # EME Select — direção do primeiro cenário Marble
 
 Estado: referência preparada e piloto adiado pelo usuário em 13/09/2026. Mundo não gerado nem integrado. A experiência ativa volta às imagens originais; o 3D será tratado em outra etapa.

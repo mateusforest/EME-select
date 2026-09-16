@@ -1,0 +1,7 @@
+{
+  "position": [0, 0, -2],
+  "target": [0, -0.35, -6],
+  "fov": 48,
+  "flipY": true,
+  "maxAngle": 0.12
+}

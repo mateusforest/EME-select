@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='8' fill='%23153e35'/%3E%3Ctext x='24' y='34' text-anchor='middle' fill='%23f3f2e9' font-family='Georgia' font-size='32'%3EM%3C/text%3E%3C/svg%3E" />
+    <title>EME Select · Estudo de cenário</title>
+    <link rel="stylesheet" href="./preview.css" />
+  </head>
+  <body>
+    <main>
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="EME Select · Página inicial">EME <span>SELECT</span></a>
+        <span class="study">Estudo de atmosfera <span class="dot">·</span> 01</span>
+        <span class="private-badge">Prévia local</span>
+      </header>
+
+      <section class="viewer" aria-label="Prévia do cenário ilustrativo EME Select">
+        <img class="reference" id="reference" src="/assets/scene-home.png" alt="Paisagem ilustrativa EME, com residências contemporâneas, piscina e montanhas." />
+        <div class="webgl" id="webgl" role="img" aria-label="Cenário 3D ilustrativo. Arraste para explorar. Use as setas para mudar suavemente o ângulo." tabindex="0"></div>
+        <div class="vignette" aria-hidden="true"></div>
+
+        <div class="scene-heading">
+          <p class="eyebrow">Um novo ponto de vista</p>
+          <h1>Um lugar.<br /><em>Outras perspectivas.</em></h1>
+          <p class="intro">Explore a atmosfera da EME em três dimensões.</p>
+        </div>
+
+        <div class="start-card" id="start-card">
+          <button class="primary" id="start" type="button">Explorar em 3D <span aria-hidden="true">↗</span></button>
+          <p>O cenário carrega somente ao abrir.</p>
+        </div>
+
+        <div class="scene-footer">
+          <p class="illustration"><span class="status-dot" aria-hidden="true"></span>Cenário ilustrativo · estudo de marca</p>
+          <p class="status" id="status" role="status" aria-live="polite">Imagem de referência</p>
+        </div>
+
+        <div class="toolbar" id="toolbar" hidden>
+          <button id="compare" type="button" aria-pressed="false">Ver referência</button>
+          <span class="separator" aria-hidden="true"></span>
+          <button id="reset" type="button" aria-label="Restaurar ponto de vista inicial">↺ <span>Recomeçar</span></button>
+          <button id="fullscreen" type="button" aria-label="Abrir cenário em tela cheia">⛶</button>
+        </div>
+      </section>
+
+      <footer class="bottom-bar">
+        <p>Arquitetura, paisagem e tempo para olhar.</p>
+        <p id="instructions">Prévia para avaliação visual. Não representa um imóvel cadastrado.</p>
+      </footer>
+    </main>
+    <script type="module" src="./preview.js"></script>
+  </body>
+</html>

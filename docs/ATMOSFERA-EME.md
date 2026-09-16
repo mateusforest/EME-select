@@ -14,9 +14,15 @@ Substitui o iframe do Spotify. O player público usa HTMLAudioElement, sem login
 - Nenhum arquivo de música é baixado antes de iniciar a reprodução. Apenas o manifesto é consultado.
 - Não há controles inativos no site: com a lista vazia, o player não aparece.
 
-## Ativação pendente dos arquivos
+## Primeira paisagem sonora — 16/09/2026
 
-O usuário aprovou um player próprio, mas ainda não forneceu os arquivos de áudio autorizados. Por isso `public/audio/playlist.json` está vazio. Não foram baixadas ou extraídas músicas da playlist do Spotify, nem publicados áudios de teste.
+O manifesto contém **Mar calmo**, gravação de natureza `Seawash (calm)` por craiggroshek. A própria [página da gravação](https://freesound.org/people/craiggroshek/sounds/176617/) declara CC0 1.0. Foi usado o MP3 HQ público indicado nessa página, sem acessar o original que exige login.
+
+Arquivo: `public/audio/mar-calmo.mp3`, 4min04s, estéreo 44,1 kHz, MP3 VBR (~178 kbps), 5,44 MB. Origem, licença, hash e validação constam em `docs/audio-mar-calmo-origem.json`. O arquivo é servido pelo próprio site e só é solicitado quando o visitante decide reproduzir. Fechar os controles mantém o áudio. Com uma única faixa, anterior/próxima ficam desabilitados e o fim reinicia a faixa; não é prometido loop sem emenda.
+
+Estudos locais de instrumental e efeitos sintetizados estão em `tmp/audio-pilot`, fora da playlist pública e aguardando avaliação auditiva. Não foram extraídas músicas do Spotify.
+
+## Adicionar outras faixas
 
 1. Receber os arquivos e a confirmação de autorização de uso no site.
 2. Salvar em `public/audio/` com nomes simples, por exemplo `horizonte.mp3`.
