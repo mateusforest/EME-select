@@ -3,7 +3,7 @@ import {readFileSync,existsSync} from 'node:fs';
 import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
 const config=JSON.parse(readFileSync('vercel.json','utf8'));
-assert.deepEqual(config.rewrites,[{source:'/portalselect',destination:'/index.html'},{source:'/portalselect/:path*',destination:'/index.html'}]);
+for(const source of ['/portalselect','/portalselect/:path*'])assert.ok(config.rewrites.some(rule=>rule.source===source&&rule.destination==='/index.html'));
 const root=resolve('dist'),browser=await chromium.launch({channel:'msedge',headless:true});
 try{
  const page=await browser.newPage(),errors=[];let apiConnected=false;
@@ -21,13 +21,15 @@ try{
   await expect(page.getByRole('heading',{name:'O portal online está em preparação.'})).toBeVisible();
   await expect(page.getByRole('textbox',{name:'E-mail',exact:true})).toHaveCount(0);
  }
- await page.getByRole('link',{name:'Explorar a demonstração'}).click();
- await expect(page).toHaveURL('https://portal.eme.test/portalselect/demo');
- await expect(page.locator('.select-portal')).toBeVisible();
+ await expect(page.getByRole('link',{name:/demonstração/i})).toHaveCount(0);
+ await page.goto('https://portal.eme.test/portalselect/demo/avaliacoes?origem=legado');
+ await expect(page).toHaveURL('https://portal.eme.test/portalselect/avaliacoes?origem=legado');
+ await expect(page.getByRole('heading',{name:'O portal online está em preparação.'})).toBeVisible();
+ await expect(page.locator('.pt-live')).toHaveCount(0);
  apiConnected=true;
  await page.goto('https://portal.eme.test/portalselect');
  await expect(page.getByRole('heading',{name:'Bem-vindo de volta.'})).toBeVisible();
  await expect(page.getByRole('textbox',{name:'E-mail',exact:true})).toBeVisible();
  assert.deepEqual(errors,[]);
- console.log('Portal routing and hosted connection states verified: nested routes, missing API, demo and connected login.');
+ console.log('Unified portal verified: nested routes, unavailable API, authenticated legacy links and connected login.');
 }finally{await browser.close();}

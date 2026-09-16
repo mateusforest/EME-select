@@ -1,0 +1,16 @@
+import { useState } from 'react';
+import { ArrowUpRight, Check, ShieldCheck } from 'lucide-react';
+import { readCuration } from '../../server/curation-policy.mjs';
+
+const families = [{ label: 'Residencial', type: 'Casa' }, { label: 'Comercial', type: 'Sala comercial' }, { label: 'Industrial', type: 'Galpão' }, { label: 'Terrenos', type: 'Terreno urbano' }, { label: 'Agrícola', type: 'Terra agrícola' }];
+
+export default function CurationStandard({ onNavigate }: { onNavigate: (page: string) => void }) {
+  const [type, setType] = useState('Casa');
+  const policy = readCuration({ type });
+  return <div className="pt-curation-standard">
+    <div className="ps-chips" aria-label="Família do imóvel">{families.map(family => <button key={family.type} type="button" className={type === family.type ? 'is-active' : ''} aria-pressed={type === family.type} onClick={() => setType(family.type)}>{family.label}</button>)}</div>
+    <div className="pt-standard-intro"><section className="ps-card"><span className="ps-overline">SELECT V2 · {policy.familyLabel.toLocaleUpperCase('pt-BR')}</span><h2>Qualidade que se pode explicar.</h2><p>A curadoria seleciona os imóveis que poderão entrar na carteira. Para quem busca comprar ou alugar, essa seleção orienta a oferta; a compatibilidade com cada cliente exige entender suas necessidades.</p><p>O padrão considera conservação, uso, projeto, infraestrutura e contexto. Não há preço mínimo: valor de venda, marcas de acabamento ou prestígio do endereço não substituem evidências de qualidade.</p><small>Política atual: {policy.policy}. Régua interna piloto, em calibração.</small></section><section className="ps-card pt-standard-threshold"><span className="ps-overline">NOTA MÍNIMA DE QUALIDADE</span><strong>{policy.threshold}<small>/100</small></strong><p>Condição e função: mínimo 4/5.<br />Demais dimensões: mínimo 3/5.</p><span className="ps-tag">A decisão final é humana</span></section></div>
+    <section className="pt-standard-criteria" aria-label="Critérios de qualidade">{policy.criteria.map(criterion => <article className="ps-card" key={criterion.key}><div className="pt-criterion-heading"><h3>{criterion.label}</h3><span>Peso {criterion.weight}%<small>Mínimo {criterion.minimum}/5</small></span></div><p>{criterion.help}</p><details><summary>Como atribuir as notas</summary><ol start={0}>{criterion.anchors.map((anchor, index) => <li key={index}><strong>{index}/5</strong><span>{anchor}</span></li>)}</ol></details></article>)}</section>
+    <section className="ps-card pt-standard-checks"><span className="ps-overline">ALÉM DA PONTUAÇÃO</span><h2>Conferências para decidir com contexto</h2><p>Nota alta não elimina pendências. Cada nota precisa de uma referência de evidência; informação desconhecida permanece sem nota.</p><div>{policy.checks.map(check => <article key={check.key}><Check size={17} /><div><h3>{check.label}</h3><p>{check.help}</p></div></article>)}</div><div className="ps-note"><ShieldCheck size={19} /><p>A entrada aprovada não publica o imóvel automaticamente. Dossiês antigos preservam a régua registrada no momento da avaliação; a política de cada caso aparece no próprio dossiê.</p></div><button className="ps-button ps-button--primary" onClick={() => onNavigate('avaliacoes')}>Aplicar nos dossiês de avaliação<ArrowUpRight size={16} /></button></section>
+  </div>;
+}

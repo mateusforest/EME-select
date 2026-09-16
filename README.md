@@ -1,6 +1,8 @@
 # EME Select
 
-Versão 0.12.0 da EME Select, com React, TypeScript, Vite, cenários fotográficos navegáveis e portal conectado ao Supabase na Vercel. A Central financeira em `/portalselect/financeiro` é exclusiva dos administradores: contas manuais, lançamentos, recorrências, comissões, sócios, caixa, projeções, payback e DRE gerencial. A migration financeira foi aplicada no Supabase em 16/09/2026, após autorização, com estado inicial vazio e acesso público negado. [Funcionamento, implantação e limites](docs/FINANCEIRO-012.md).
+Versão 0.13.0 da EME Select, com React, TypeScript, Vite, cenários fotográficos navegáveis e um único portal autenticado em `/portalselect`, conectado ao Supabase na Vercel. A demonstração separada foi retirada; seus links antigos abrem a área correspondente do portal real. Atendimento, locações, documentos, qualidade da equipe e IA aparecem como **Em desenvolvimento**, sem dados fictícios ou ações simuladas. O Padrão de curadoria consulta a política atual, por família de imóvel. [Unificação e verificação](docs/PORTAL-130.md).
+
+A Central financeira em `/portalselect/financeiro` é exclusiva dos administradores: contas manuais, lançamentos, recorrências, comissões, sócios, caixa, projeções, payback e DRE gerencial. A migration financeira foi aplicada no Supabase em 16/09/2026, após autorização, com estado inicial vazio e acesso público negado. [Funcionamento, implantação e limites](docs/FINANCEIRO-012.md).
 
 A ficha pública está em `/enviar-imovel`, com link para compartilhar pelo portal e protocolo de recebimento. As avaliações usam cinco dimensões de qualidade e conferências humanas separadas. Fotos abaixo da resolução mínima ficam no rascunho; a galeria em tela cheia preserva seu enquadramento sem ampliar arquivos pequenos. [Entrega da curadoria e fotos](docs/PORTAL-110.md).
 

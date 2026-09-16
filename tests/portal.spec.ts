@@ -1,121 +1,188 @@
-import { expect, test } from '@playwright/test';
-import { approvalBlock, evaluations, initialState, isPortalState, scoreOf } from '../src/portal/model';
+﻿import { expect, test, type Page } from '@playwright/test';
+import type { LiveEvaluation, TeamUser } from '../src/portal/api';
 
-test('curadoria keeps documentation and completeness separate from the score', () => {
-  expect(scoreOf([4,5,4,4])).toBe(85);
-  expect(scoreOf([null,5,4,4])).toBeNull();
-  const ready = { ...evaluations[1], reviewed: true };
-  expect(approvalBlock(ready)).toBeNull();
-  expect(approvalBlock({ ...ready, legal: 'Pendente' })).toContain('pendentes');
-  expect(approvalBlock({ ...ready, scores: [2,5,5,5] })).toContain('régua');
-  expect(approvalBlock({ ...ready, scores: [null,5,4,4] })).toContain('incompleta');
-  expect(approvalBlock({ ...ready, stage: 'Entrada aprovada' })).not.toBeNull();
-  expect(isPortalState(initialState())).toBe(true);
-  expect(isPortalState({ ...initialState(), evaluations: [{ ...evaluations[0], scores: [99,3,3,3] }] })).toBe(false);
-});
-test('direct portal route, module navigation and browser history', async ({ page }) => {
-  const errors: string[] = [];
-  page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/portalselect/demo');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Um olhar sobre toda a operação.');
+const admin:TeamUser={id:'a51dd98c-7f63-46a5-a1b3-bd0686129337',name:'Gestão EME',email:'admin@example.test',role:'admin',active:true,mustChangePassword:false};
+const evaluation:LiveEvaluation={id:'41bba750-e9ab-4922-a010-228c63c1702e',title:'Imóvel cadastrado pela equipe',city:'Porto Alegre · RS',type:'Apartamento',operation:'Venda',owner:'Solicitante cadastrado',assignee_id:admin.id,assignee:admin.name,stage:'Recebido',version:1,created_at:'2026-09-16T12:00:00Z',updated_at:'2026-09-16T12:00:00Z'};
+
+async function mockPortal(page:Page,options:{authenticated?:boolean;role?:TeamUser['role'];mustChangePassword?:boolean;sessionError?:boolean}={}){
+  let authenticated=options.authenticated??true;
+  const user={...admin,role:options.role??'admin',mustChangePassword:options.mustChangePassword??false};
+  const requests:string[]=[];
+  await page.route('**/api/**',async route=>{
+    const path=new URL(route.request().url()).pathname;requests.push(path);
+    if(path==='/api/auth/session')return route.fulfill(options.sessionError?{status:503,json:{error:'O serviço de acesso está temporariamente indisponível.'}}:{json:{user:authenticated?user:null,needsSetup:false}});
+    if(path==='/api/auth/login'){authenticated=true;return route.fulfill({json:{user}});}
+    if(!authenticated)return route.fulfill({status:401,json:{error:'Entre com sua conta.'}});
+    if(path==='/api/evaluations')return route.fulfill({json:{evaluations:[evaluation]}});
+    if(path==='/api/assignees')return route.fulfill({json:{members:[user]}});
+    if(path==='/api/listings')return route.fulfill({json:{listings:[]}});
+    return route.fulfill({status:404,json:{error:'Unexpected test API '+path}});
+  });
+  return requests;
+}
+const navigation=(page:Page)=>page.getByRole('navigation',{name:'Navegação da equipe'});
+const plannedStatus=(page:Page)=>page.getByRole('main').getByText('Em desenvolvimento',{exact:true});
+async function expectOnePortal(page:Page){
+  await expect(navigation(page)).toBeVisible();
+  await expect(page.locator('a[href*="/portalselect/demo"]')).toHaveCount(0);
+  await expect(page.getByRole('link',{name:/Demonstração|Explorar o desenho completo/i})).toHaveCount(0);
   await expect(page.locator('.site-header')).toHaveCount(0);
-  await page.getByRole('navigation', { name: 'Navegação do portal' }).getByRole('link', { name: 'Locações' }).click();
-  await expect(page).toHaveURL(/\/portalselect\/demo\/locacoes$/);
-  await page.reload();
-  await expect(page.getByRole('heading', { name: 'Contratos em acompanhamento' })).toBeVisible();
+}
+
+test('the login offers only the team account and no public demonstration bypass',async({page})=>{
+  const requests=await mockPortal(page,{authenticated:false});
+  await page.goto('/portalselect');
+  await expect(page.getByRole('heading',{name:'Bem-vindo de volta.'})).toBeVisible();
+  await expect(page.getByLabel('E-mail',{exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Entrar no portal',exact:true})).toBeVisible();
+  await expect(page.locator('a[href*="/portalselect/demo"]')).toHaveCount(0);
+  await expect(navigation(page)).toHaveCount(0);
+  expect(requests).toContain('/api/auth/session');
+  expect(requests).not.toContain('/api/evaluations');
+});
+
+test('a legacy demo URL requires login and opens the real overview, ignoring former example storage',async({page})=>{
+  await page.addInitScript(()=>localStorage.setItem('eme-select-portal-demo-v1','{"version":1,"evaluations":[{}]}'));
+  const requests=await mockPortal(page,{authenticated:false});
+  await page.goto('/portalselect/demo');
+  await expect(page).toHaveURL(/\/portalselect$/);
+  await expect(page.getByRole('heading',{name:'Bem-vindo de volta.'})).toBeVisible();
+  expect(requests).not.toContain('/api/evaluations');
+  await page.getByLabel('E-mail',{exact:true}).fill(admin.email);
+  await page.getByLabel('Senha',{exact:true}).fill('portal-test-password');
+  await page.getByRole('button',{name:'Entrar no portal',exact:true}).click();
+  await expectOnePortal(page);
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Seu olhar. Agora, com continuidade.');
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await expect(page.locator('tbody')).toContainText(evaluation.title);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  expect(requests).toContain('/api/evaluations');
+});
+
+test('legacy evaluation links preserve their destination and browser history uses the same workspace',async({page})=>{
+  await mockPortal(page);
+  await page.goto('/portalselect/demo/avaliacoes?origem=legado');
+  await expect(page).toHaveURL(/\/portalselect\/avaliacoes\?origem=legado$/);
+  await expectOnePortal(page);
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await expect(page.locator('tbody')).toContainText(evaluation.title);
+  await navigation(page).getByRole('link',{name:'Locações',exact:true}).click();
+  await expect(page).toHaveURL(/\/portalselect\/locacoes$/);
+  await expect(plannedStatus(page)).toBeVisible();
   await page.goBack();
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Um olhar sobre toda a operação.');
-  await page.getByLabel('Buscar no portal', { exact: true }).fill('Mont');
-  await page.locator('.ps-search-results').getByRole('button', { name: /Apartamento/ }).click();
-  await expect(page.getByRole('dialog')).toContainText('AV-002');
-  await page.keyboard.press('Escape');
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page).toHaveURL(/\/portalselect\/avaliacoes\?origem=legado$/);
+  await expect(page.getByLabel('Buscar avaliações da equipe')).toBeVisible();
+  await expect(page.locator('tbody')).toContainText(evaluation.title);
+});
+
+test('the former example property collection redirects to the saved listings module',async({page})=>{
+  const requests=await mockPortal(page);
+  await page.goto('/portalselect/demo/carteira');
+  await expect(page).toHaveURL(/\/portalselect\/imoveis$/);
+  await expectOnePortal(page);
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Cada lugar merece uma boa apresentação.');
+  await expect(page.getByRole('button',{name:/Cadastrar imóvel|Novo imóvel/}).first()).toBeVisible();
+  await expect.poll(()=>requests.includes('/api/listings')).toBe(true);
+  await expect(page.getByText('Os 18 imóveis ilustrativos que compõem o site da EME.',{exact:true})).toHaveCount(0);
+});
+
+test('rental planning is explicit and never presents fictitious contracts or cash totals',async({page})=>{
+  await mockPortal(page);
+  await page.goto('/portalselect/demo/locacoes');
+  await expect(page).toHaveURL(/\/portalselect\/locacoes$/);
+  await expectOnePortal(page);
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Cuidar também é acompanhar.');
+  await expect(plannedStatus(page)).toBeVisible();
+  await expect(page.locator('.ps-rental-list')).toHaveCount(0);
+  await expect(page.getByText('Apartamento do parque',{exact:true})).toHaveCount(0);
+  await expect(page.getByText('Casa do bosque',{exact:true})).toHaveCount(0);
+  await expect(page.getByText('R$ 4.200,00',{exact:true})).toHaveCount(0);
+  await expect(navigation(page).getByRole('link',{name:'Central financeira',exact:true})).toHaveAttribute('href','/portalselect/financeiro');
+});
+
+test('a broker cannot use legacy links to access company finances or team quality',async({page})=>{
+  const requests=await mockPortal(page,{role:'corretor'});
+  for(const route of ['financeiro','qualidade']){
+    await page.goto('/portalselect/demo/'+route);
+    await expect(page).toHaveURL(new RegExp('/portalselect/'+route+'$'));
+    await expectOnePortal(page);
+    await expect(page.getByRole('heading',{name:'Esta área não está disponível para sua conta.'})).toBeVisible();
+    await expect(navigation(page).getByRole('link',{name:'Central financeira',exact:true})).toHaveCount(0);
+    await expect(navigation(page).getByRole('link',{name:'Qualidade da equipe',exact:true})).toHaveCount(0);
+  }
+  expect(requests).not.toContain('/api/finance');
+});
+
+test('mobile planned modules use the team menu, fit the viewport and return to the same overview',async({page})=>{
+  const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.setViewportSize({width:390,height:844});
+  await mockPortal(page);
+  await page.goto('/portalselect');
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Seu olhar. Agora, com continuidade.');
+  await page.getByRole('button',{name:'Abrir navegação',exact:true}).click();
+  await navigation(page).getByRole('link',{name:'Central de IA',exact:true}).click();
+  await expect(page).toHaveURL(/\/portalselect\/inteligencia$/);
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Inteligência com supervisão da EME.');
+  await expect(plannedStatus(page)).toBeVisible();
+  await expect(page.getByRole('button',{name:'Abrir navegação',exact:true})).toHaveAttribute('aria-expanded','false');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+  await page.getByRole('button',{name:'Abrir navegação',exact:true}).click();
+  await navigation(page).getByRole('link',{name:'Visão geral',exact:true}).click();
+  await expect(page).toHaveURL(/\/portalselect$/);
+  await expect(page.locator('tbody')).toContainText(evaluation.title);
   expect(errors).toEqual([]);
 });
-test('new incomplete evaluation persists and cannot bypass approval gates', async ({ page }) => {
+
+test('the password-change gate also protects legacy demonstration routes',async({page})=>{
+  const requests=await mockPortal(page,{mustChangePassword:true});
   await page.goto('/portalselect/demo/avaliacoes');
-  await page.getByRole('button', { name: 'Nova avaliação', exact: true }).click();
-  await page.getByLabel('Nome do imóvel').fill('Casa teste do portal');
-  await page.getByLabel('Cidade e região').fill('Caxias do Sul · RS');
-  await page.getByRole('button', { name: 'Criar avaliação de exemplo' }).click();
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toContainText('Evidências incompletas');
-  await dialog.getByRole('checkbox').check();
-  await expect(dialog.getByRole('button', { name: 'Aprovar entrada de exemplo' })).toBeDisabled();
-  await page.keyboard.press('Escape');
-  await page.reload();
-  await page.getByLabel('Buscar avaliações').fill('Casa teste do portal');
-  await expect(page.locator('tbody tr')).toHaveCount(1);
-  await expect(page.locator('tbody')).toContainText('Recebido');
+  await expect(page).toHaveURL(/\/portalselect\/avaliacoes$/);
+  await expect(page.getByRole('heading',{name:'Uma senha só sua.'})).toBeVisible();
+  await expect(page.getByLabel('Senha atual',{exact:true})).toBeVisible();
+  await expect(navigation(page)).toHaveCount(0);
+  expect(requests).not.toContain('/api/evaluations');
 });
-test('human review is required and approved entry is saved without altering public catalog', async ({ page }) => {
-  await page.goto('/portalselect/demo/avaliacoes');
-  await page.getByRole('button', { name: 'Abrir dossiê de Apartamento Mont’Serrat' }).click();
-  const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('button', { name: 'Aprovar entrada de exemplo' })).toBeDisabled();
-  await dialog.getByRole('checkbox').check();
-  await dialog.getByRole('button', { name: 'Aprovar entrada de exemplo' }).click();
-  await expect(dialog).toContainText('Entrada aprovada neste exemplo');
-  await expect(dialog.locator('.ps-history')).toContainText('sem publicação');
-  await page.keyboard.press('Escape');
-  await page.reload();
-  await page.getByLabel('Buscar avaliações').fill('Mont');
-  await expect(page.locator('tbody')).toContainText('Entrada aprovada');
-});
-test('requested changes record a reason and block approval', async ({ page }) => {
-  await page.goto('/portalselect/demo/avaliacoes');
-  await page.getByRole('button', { name: 'Abrir dossiê de Sala junto à praça' }).click();
-  const dialog = page.getByRole('dialog');
-  await dialog.getByLabel('Solicitar ajuste no exemplo').fill('Confirmar a acessibilidade do acesso principal');
-  await dialog.getByRole('button', { name: 'Registrar ajuste' }).click();
-  await expect(dialog).toContainText('Ajustes solicitados');
-  await expect(dialog.locator('.ps-pending-list')).toContainText('Confirmar a acessibilidade');
-  await dialog.getByRole('checkbox').check();
-  await expect(dialog.getByRole('button', { name: 'Aprovar entrada de exemplo' })).toBeDisabled();
-});
-test('conversation drafts are isolated and persist without sending messages', async ({ page }) => {
-  await page.goto('/portalselect/demo/relacionamento');
-  await page.getByLabel('Rascunho de resposta').fill('Rascunho para Ana — teste local');
-  await page.getByLabel('Nota interna').fill('Conferir os horários disponíveis');
-  await page.getByRole('button', { name: 'Guardar rascunho' }).click();
-  await page.getByRole('button', { name: /Pedro Almeida/ }).click();
-  await expect(page.getByLabel('Rascunho de resposta')).toHaveValue('');
-  await page.getByRole('button', { name: /Ana Oliveira/ }).click();
-  await expect(page.getByLabel('Rascunho de resposta')).toHaveValue('Rascunho para Ana — teste local');
-  await page.reload();
-  await expect(page.getByLabel('Nota interna')).toHaveValue('Conferir os horários disponíveis');
-  await expect(page.getByRole('button', { name: /^Enviar/ })).toHaveCount(0);
-});
-test('rental statement separates owner money and administration revenue', async ({ page }) => {
-  await page.goto('/portalselect/demo/locacoes');
-  await page.locator('.ps-rental-list').getByRole('button', { name: /Apartamento do parque/ }).click();
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toContainText('R$ 4.200,00');
-  await expect(dialog).toContainText('R$ 336,00');
-  await expect(dialog).toContainText('R$ 3.864,00');
-  await page.keyboard.press('Escape');
-  await page.locator('.ps-rental-list').getByRole('button', { name: /Casa do bosque/ }).click();
-  await expect(dialog).toContainText('R$ 3.800,00');
-  await expect(dialog).toContainText('Não calculado');
-});
-test('mobile navigation, contained layout and public return', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+
+test('an unavailable authentication service cannot fall back to an illustrative portal',async({page})=>{
+  await mockPortal(page,{sessionError:true});
   await page.goto('/portalselect/demo');
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('button', { name: 'Abrir navegação' }).click();
-  await page.getByRole('navigation', { name: 'Navegação do portal' }).getByRole('link', { name: 'Central de IA' }).click();
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Inteligência em cada etapa.');
-  await page.getByRole('button', { name: /Entrada e pré-avaliação/ }).click();
-  await expect(page.getByRole('dialog')).toContainText('Integração em preparação');
-  await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Abrir navegação' }).click();
-  await page.getByRole('link', { name: 'Ir para o site' }).click();
-  await expect(page.locator('.site-header')).toBeVisible();
-  await expect(page.locator('.select-portal')).toHaveCount(0);
+  await expect(page.getByRole('alert')).toContainText('temporariamente indisponível');
+  await expect(page.getByRole('button',{name:'Tentar novamente',exact:true})).toBeVisible();
+  await expect(page.locator('a[href*="/portalselect/demo"]')).toHaveCount(0);
+  await expect(navigation(page)).toHaveCount(0);
 });
-test('malformed saved data has an explicit recovery state', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('eme-select-portal-demo-v1', '{"version":1,"evaluations":[{}]}'));
-  await page.goto('/portalselect/demo');
-  await expect(page.getByRole('alert')).toContainText('não puderam ser lidos');
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+test('the curation reference uses the current five-dimension policy and links to real evaluations',async({page})=>{
+  await mockPortal(page);
+  await page.goto('/portalselect/demo/padrao');
+  await expect(page).toHaveURL(/\/portalselect\/padrao$/);
+  await expectOnePortal(page);
+  await expect(page.locator('.pt-standard-threshold')).toContainText('85/100');
+  const criteria=page.getByRole('region',{name:'Critérios de qualidade'});
+  await expect(criteria.getByRole('article')).toHaveCount(5);
+  await expect(criteria.getByText('Mínimo 4/5',{exact:true})).toHaveCount(2);
+  await page.getByRole('button',{name:'Industrial',exact:true}).click();
+  await expect(criteria).toContainText('Peso 30%');
+  await expect(criteria).toContainText('carga/descarga');
+  await page.getByRole('button',{name:'Aplicar nos dossiês de avaliação',exact:true}).click();
+  await expect(page).toHaveURL(/\/portalselect\/avaliacoes$/);
+  await expect(page.locator('tbody')).toContainText(evaluation.title);
+});
+
+test('the extended sidebar keeps account access reachable on mobile without creating sample conversations',async({page})=>{
+  await mockPortal(page);
+  await page.goto('/portalselect/relacionamento');
+  await expect(plannedStatus(page)).toBeVisible();
+  await expect(page.getByLabel('Rascunho de resposta')).toHaveCount(0);
+  await page.screenshot({path:'tmp/portal-unified-relationship-desktop.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:'tmp/portal-unified-relationship-mobile.png',fullPage:true});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+  await page.getByRole('button',{name:'Abrir navegação',exact:true}).click();
+  await expect(navigation(page)).toBeVisible();
+  await page.screenshot({path:'tmp/portal-unified-navigation-mobile.png'});
+  await navigation(page).getByRole('link',{name:'Minha conta',exact:true}).click();
+  await expect(page).toHaveURL(/\/portalselect\/conta$/);
+  await expect(page.getByRole('heading',{name:'Seu acesso, sob seu cuidado.'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Abrir navegação',exact:true})).toHaveAttribute('aria-expanded','false');
 });

@@ -1,6 +1,10 @@
 # EME Select — estado da implementação
 
-## Atualização 0.10.0 — Fichas e percurso fotográfico
+## Atualização 0.13.0 — Portal único
+
+`/portalselect` reúne as áreas funcionais e o escopo das áreas em desenvolvimento, com a mesma autenticação e navegação. A demonstração paralela foi retirada do código publicado; links antigos `/portalselect/demo/...` encaminham à área correspondente e exigem acesso da equipe. O padrão de curadoria usa a política atual Select V2, enquanto dossiês antigos preservam seu histórico. Financeiro, equipe e qualidade da equipe são exclusivos dos administradores. Veja [PORTAL-130.md](PORTAL-130.md) e [FINANCEIRO-012.md](FINANCEIRO-012.md).
+
+## Histórico 0.10.0 — Fichas e percurso fotográfico
 
 Produção usa API na Vercel, Supabase Auth, banco Postgres e armazenamento privado de fotos. O formulário do site cria fichas em Recebido com protocolo. A equipe completa o cadastro em cinco etapas, organiza fotos por ambiente e abre a prévia em tela inteira. O apartamento enviado foi cadastrado privadamente em Em avaliação, sem aprovação ou publicação. Veja [PORTAL-100.md](PORTAL-100.md). `npm start` continua usando SQLite local independente.
 
@@ -40,14 +44,15 @@ A apresentação opcional da marca foi construída em HyperFrames e GSAP, com re
 | --- | --- |
 | Catálogo | Anúncios reais após revisão e publicação no portal; 18 exemplos preservados nos cenários, identificados como demonstrativos |
 | Backend e banco de dados | Vercel + Supabase em produção; SQLite privado independente em desenvolvimento |
-| Autenticação e painel da equipe | Contas individuais e permissões em /portalselect; demonstração em /portalselect/demo |
+| Autenticação e painel da equipe | Portal único em /portalselect; links antigos da demonstração encaminham ao portal autenticado |
+| Financeiro | Lançamentos, contas manuais, comissões, sócios, caixa, projeções e DRE gerencial; sem conexão bancária ou execução de pagamentos |
 | Formulários | Envio de imóvel gravado no portal com protocolo; solicitação de visita via WhatsApp |
 | Agenda | Solicitação de horário sujeita à confirmação humana; sem reserva de horário |
 | IA de atendimento e curadoria | Ainda não implementada; não há avaliação, captação ou análise automatizada real |
 | Documentação | Portal registra referências e conferências humanas; recebe fotos, mas não documentos jurídicos. Anúncios reais orientam consultar a equipe |
 | Visita do imóvel | Percurso de fotos reais em tela inteira, capítulos e transições; sem captura espacial ou medição comercial. 3D adiado |
 | Venda e locação | Experiência de descoberta e contato; sem propostas vinculantes, pagamentos, contratos ou assinatura eletrônica |
-| Publicação | Administrador publica no servidor local após curadoria; API, banco e fotos ainda precisam de hospedagem para publicação online |
+| Publicação | Administrador publica após curadoria; API na Vercel, banco e fotos no Supabase |
 
 As seções de curadoria e documentação não atestam que um imóvel está regular, sem débitos, sem processos ou apto para venda. A marca não apresenta nesta etapa uma comprovação de ser a primeira ou única operação de seu segmento.
 
