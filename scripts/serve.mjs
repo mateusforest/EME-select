@@ -5,6 +5,8 @@ import { dirname, extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createPortalApi } from '../server/portal-api.mjs';
 
+const envPath = resolve(dirname(fileURLToPath(import.meta.url)), '../.env.local');
+if (existsSync(envPath)) process.loadEnvFile(envPath);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../dist');
 const port = Number(process.env.EME_PREVIEW_PORT || 4191);
 const api = createPortalApi({ dbPath: process.env.EME_DB_PATH || resolve(dirname(fileURLToPath(import.meta.url)), '../.eme-private/portal.sqlite') });

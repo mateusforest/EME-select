@@ -8,3 +8,4 @@
 .pi-abandon-confirm h4{margin:0 0 9px}
 .pi-abandon-confirm .pt-error{margin-bottom:16px}
 .pi-abandon .ps-button{white-space:normal;max-width:100%;text-align:center}
+@media(max-width:600px){.pi-status{display:grid;grid-template-columns:28px minmax(0,1fr)}.pi-status>.ps-button{grid-column:1/-1;justify-self:start}}

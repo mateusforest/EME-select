@@ -4,6 +4,7 @@ import { api, ApiError, type Assignee, type TeamUser } from './api';
 import { operationsMetrics, type OperationsState, type Ticket, type Visit, type Lease, type Document as OperationDocument, type Review } from '../../shared/operations.mjs';
 import { OperationEmpty, OperationForm, OperationModal, OperationNotice, OperationStat, localTimestamp, operationAmount, operationDate, operationMoney, operationTimestamp, operationToday, type OperationField, type OperationValues } from './operationsUi';
 import './operations.css';
+import WhatsAppSetup from './WhatsAppSetup';
 
 type Page = 'relacionamento'|'locacoes'|'documentos'|'qualidade';
 type Snapshot = { version: number; state: OperationsState; members: Assignee[]; properties: { id: string; title: string }[]; history: { id: string|number; action: string; author?: string; createdAt?: string; created_at?: string }[] };
@@ -138,6 +139,7 @@ export default function OperationsWorkspace({ page, user }: { page: Page; user: 
     {!state || !snapshot || !metrics ? <OperationEmpty title={loading ? 'Carregando a operação…' : 'Não foi possível carregar os registros.'} description={loading ? 'Buscando os dados que sua conta pode acessar.' : 'Use Atualizar dados para tentar novamente.'}/> : <>
       {snapshot.properties.length === 0 && page !== 'qualidade' && <OperationNotice>Cadastre uma avaliação de imóvel para vincular os registros. <a className="ps-text-button" href="/portalselect/avaliacoes">Abrir avaliações <ArrowUpRight size={14}/></a></OperationNotice>}
       {page === 'relacionamento' && <>
+        {admin && <WhatsAppSetup/>}
         <OperationNotice>Atendimento com registro manual. O WhatsApp da EME ainda funciona no aplicativo; o portal não envia nem recebe mensagens automaticamente.</OperationNotice>
         <div className="po-stats"><OperationStat label="Atendimentos abertos" value={metrics.totals.openTickets}/><OperationStat label="Próximas visitas" value={metrics.totals.upcomingVisits}/><OperationStat label="Chaves em retirada" value={metrics.totals.keysOut}/><OperationStat label="Devoluções atrasadas" value={metrics.totals.overdueKeys}/></div>
         <div className="po-tabs" aria-label="Seções de atendimento"><button aria-pressed={tab === 'tickets'} onClick={() => { setTab('tickets'); setFilter(''); setQuery(''); }}><MessageSquare size={14}/> Atendimento</button><button aria-pressed={tab === 'visits'} onClick={() => { setTab('visits'); setFilter(''); setQuery(''); }}><CalendarDays size={14}/> Visitas e chaves</button></div>

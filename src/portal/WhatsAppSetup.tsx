@@ -1,0 +1,28 @@
+import {useEffect,useState} from 'react';
+import {Check,Copy,MessageSquare,RefreshCw} from 'lucide-react';
+import {api} from './api';
+import './whatsapp.css';
+type Connection={fields:{name:string;label:string;configured:boolean}[];configured:boolean;enabled:boolean;callbackUrl:string;expectedNumber:string;storageReady:boolean;receivingReady:boolean;automaticReplies:false};
+type InboxEvent={event_key:string;kind:string;contact_phone:string;received_at:string;data:{name?:string;text?:string;type?:string;status?:string;mediaId?:string}};
+function ConnectionPanel(){
+  const [data,setData]=useState<Connection|null>(null),[error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[events,setEvents]=useState<InboxEvent[]|null>(null);
+  async function load(){setError('');try{setData(await api<Connection>('/whatsapp/connection'));}catch(e){setError((e as Error).message);}}
+  useEffect(()=>{let active=true;api<Connection>('/whatsapp/connection').then(value=>{if(active)setData(value);}).catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[]);
+  async function test(){setBusy(true);setError('');setNotice('');try{const result=await api<{message:string;number:string}>('/whatsapp/connection/test','POST',{});setNotice(result.message+' Número: '+result.number);}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+  async function inbox(){setBusy(true);setError('');try{setEvents((await api<{events:InboxEvent[]}>('/whatsapp/inbox')).events);}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+  return <div className="pw-content">
+    {error&&<p role="alert" className="pt-error">{error}</p>}{notice&&<p role="status" className="pi-notice">{notice}</p>}
+    {!data?<button className="ps-button" onClick={load}>Conferir configuração</button>:<>
+      <p className="ps-tag">{data.receivingReady?'Recebimento habilitado · confira os eventos':'Aguardando configuração da Meta'}</p>
+      <p>Conexão oficial do número (54) 99157-8029. O atendimento pelo aplicativo continua independente desta preparação. Respostas automáticas não estão ativadas.</p>
+      <ol className="pw-steps"><li>Crie ou selecione um aplicativo da EME no <a href="https://developers.facebook.com/apps/" target="_blank" rel="noreferrer">painel da Meta</a>, com o caso de uso do WhatsApp e o portfólio empresarial correto.</li><li>Antes de vincular o número, confirme o fluxo de coexistência se quiser manter o WhatsApp Business no celular.</li><li>Configure as credenciais na hospedagem, aplique a tabela de recebimento e habilite o canal. Depois, cadastre o endereço abaixo na Meta e assine o campo <code>messages</code>.</li></ol>
+      <label className="pw-callback">Endereço de retorno<input readOnly value={data.callbackUrl}/></label><button className="ps-button" onClick={()=>navigator.clipboard.writeText(data.callbackUrl).then(()=>setNotice('Endereço copiado.')).catch(()=>setError('Selecione o endereço e copie manualmente.'))}><Copy size={15}/>Copiar endereço</button>
+      <p>O token de verificação é o mesmo valor definido em <code>WHATSAPP_VERIFY_TOKEN</code> na hospedagem. Os segredos não são exibidos neste painel.</p>
+      <ul className="pw-checklist">{data.fields.map(field=><li key={field.name}><span>{field.configured?<Check size={16}/>:<span aria-hidden="true">○</span>}<strong>{field.label}</strong></span><small>{field.name} · {field.configured?'Configurado':'Pendente'}</small></li>)}<li><span><strong>Armazenamento privado</strong></span><small>{data.storageReady?'Disponível':'Aplicar migration 20260916_whatsapp.sql no Supabase'}</small></li><li><span><strong>Recebimento do canal</strong></span><small>WHATSAPP_WEBHOOK_ENABLED · {data.enabled?'Habilitado':'Desativado'}</small></li></ul>
+      <div className="pi-actions"><button className="ps-button" disabled={busy} onClick={load}><RefreshCw size={15}/>Atualizar configuração</button><button className="ps-button ps-button--primary" disabled={busy||!data.configured} onClick={test}>Testar conta e número</button><button className="ps-button" disabled={busy||!data.storageReady} onClick={inbox}>Conferir eventos recebidos</button></div>
+      <p className="ps-muted">O teste consulta a Meta sem enviar mensagens. O recebimento guarda texto e referências de mídia para conferência administrativa; não baixa anexos, não cria avaliações e não responde ao cliente automaticamente.</p>
+      {events&&<section className="pw-events"><h3>Últimos eventos recebidos</h3>{!events.length?<p>Nenhum evento recebido. A configuração só estará validada de ponta a ponta depois de uma mensagem de teste.</p>:events.map(event=><article key={event.event_key}><strong>{event.data.name||event.contact_phone||'Evento da Meta'}</strong><small>{new Date(event.received_at).toLocaleString('pt-BR')} · {event.kind==='message'?'Mensagem':event.kind==='status'?'Estado de entrega':'Notificação'}</small><p>{event.data.text||event.data.status||('Conteúdo: '+(event.data.type||event.kind))}</p>{event.data.mediaId&&<small>Anexo referenciado; arquivo ainda não baixado.</small>}</article>)}</section>}
+    </>}
+  </div>;
+}
+export default function WhatsAppSetup(){const[open,setOpen]=useState(false);return <section className="ps-card pw-setup"><div className="ps-section-head"><div><span className="ps-overline">CANAL DE ATENDIMENTO</span><h2>Conectar WhatsApp</h2></div><button className="ps-button" aria-expanded={open} aria-controls="pw-connection" onClick={()=>setOpen(value=>!value)}><MessageSquare size={17}/>{open?'Fechar configuração':'Preparar WhatsApp'}</button></div>{open&&<div id="pw-connection"><ConnectionPanel/></div>}</section>;}

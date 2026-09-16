@@ -5,6 +5,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/api/webhooks/whatsapp",
+      "destination": "/api/whatsappWebhook"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/portal?route=:path*"
     },
@@ -24,5 +28,13 @@
       "source": "/portalselect/:path*",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/portal.js": {
+      "maxDuration": 120
+    },
+    "api/whatsappWebhook.js": {
+      "maxDuration": 30
+    }
+  }
 }

@@ -1,6 +1,8 @@
 # EME Select
 
-Versão 0.14.0 da EME Select, com React, TypeScript, Vite, cenários fotográficos navegáveis e um único portal autenticado em `/portalselect`, conectado ao Supabase na Vercel. Atendimento, agenda e chaves, locações, documentos privados e qualidade têm fluxos reais com histórico e permissões. A Central de IA inclui conferência da régua, conexão protegida à OpenAI e análises sob demanda para revisão humana. WhatsApp automático depende de habilitação do canal; análises por IA dependem da configuração da chave. [Operação, implantação e limites](docs/OPERACOES-014.md). A demonstração separada foi retirada na [versão 0.13](docs/PORTAL-130.md).
+Versão 0.15.0: GPT-6 Astra com reconhecimento da chave do servidor e preparação segura da conexão WhatsApp. [Configuração, validação e limites](docs/ASTRA-WHATSAPP-015.md).
+
+Base 0.14.0 da EME Select, com React, TypeScript, Vite, cenários fotográficos navegáveis e um único portal autenticado em `/portalselect`, conectado ao Supabase na Vercel. Atendimento, agenda e chaves, locações, documentos privados e qualidade têm fluxos reais com histórico e permissões. A Central de IA inclui conferência da régua, conexão protegida à OpenAI e análises sob demanda para revisão humana. WhatsApp automático depende de habilitação do canal; análises por IA dependem da configuração da chave. [Operação, implantação e limites](docs/OPERACOES-014.md). A demonstração separada foi retirada na [versão 0.13](docs/PORTAL-130.md).
 
 A Central financeira em `/portalselect/financeiro` é exclusiva dos administradores: contas manuais, lançamentos, recorrências, comissões, sócios, caixa, projeções, payback e DRE gerencial. A migration financeira foi aplicada no Supabase em 16/09/2026, após autorização, com estado inicial vazio e acesso público negado. [Funcionamento, implantação e limites](docs/FINANCEIRO-012.md).
 

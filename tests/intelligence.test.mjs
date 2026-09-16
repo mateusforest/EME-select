@@ -6,6 +6,18 @@ import { readFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { aiProjection, checklistResult, requestAnalysis, sealKey, openKey, createIntelligence } from '../server/intelligence.mjs';
 import { attachIntelligence } from '../server/intelligence-local.mjs';
+import {resolveAISettings} from '../server/ai-config.mjs';
+
+test('Astra uses server key on untouched setup, preserves explicit disable and keeps structured safety contract',async()=>{
+ const initial={version:0,model:'gpt-5-mini',enabled:false,secret:''};
+ assert.equal(resolveAISettings(initial,{OPENAI_API_KEY:'private'}).model,'gpt-6-astra');
+ assert.equal(resolveAISettings(initial,{OPENAI_API_KEY:'private'}).enabled,true);
+ assert.equal(resolveAISettings(initial,{}).enabled,false);
+ assert.equal(resolveAISettings({...initial,version:1},{OPENAI_API_KEY:'private'}).enabled,false);
+ let payload;const context=aiProjection({data:{title:'Ficha sintética',type:'Casa'}});
+ const result=await requestAnalysis({apiKey:'fake',model:'gpt-6-astra',task:'curadoria',context,instruction:'',fetcher:async(_url,options)=>{payload=JSON.parse(options.body);return{ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify({summary:'Sem evidências suficientes',recommendation:'dados_insuficientes',strengths:[],pending:['Conferir imóvel'],nextActions:[],draftReply:''})}]}]})};}});
+ assert.equal(payload.reasoning.effort,'low');assert.equal(payload.model,'gpt-6-astra');assert.equal(payload.store,false);assert.equal(payload.text.format.strict,true);assert.equal(payload.max_output_tokens,3500);assert.equal(payload.tools,undefined);assert.equal(result.result.recommendation,'dados_insuficientes');
+});
 
 test('AI receives a minimal projection and unknown evidence never becomes approval', () => {
   const context = aiProjection({ id: randomUUID(), version: 1, data: { title: 'Imóvel real', city: 'Vacaria', type: 'Casa', owner: 'SEGREDO', draft: { privateAddress: 'ENDEREÇO PRIVADO', ownerContact: 'TELEFONE', price: 500000, description: 'Casa confortável', area: 200 }, photos: [{ id: randomUUID() }] } });

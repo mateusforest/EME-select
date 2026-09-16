@@ -1,12 +1,13 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
+import { DEFAULT_AI_MODEL } from './ai-config.mjs';
 import { aiFail, createIntelligence } from './intelligence.mjs';
 
 export function attachIntelligence({ db, dbPath, transaction, stamp, caseFor, consume, send, env = process.env, fetcher }) {
   db.exec(`CREATE TABLE IF NOT EXISTS ai_settings(id TEXT PRIMARY KEY CHECK(id='company'),version INTEGER NOT NULL DEFAULT 0,model TEXT NOT NULL,enabled INTEGER NOT NULL DEFAULT 0,secret TEXT NOT NULL DEFAULT '') STRICT;
     CREATE TABLE IF NOT EXISTS ai_runs(id TEXT PRIMARY KEY,case_id TEXT NOT NULL REFERENCES evaluations(id),actor_id TEXT NOT NULL REFERENCES users(id),case_version INTEGER NOT NULL,status TEXT NOT NULL,data TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,review_version INTEGER NOT NULL DEFAULT 0) STRICT;
     CREATE TABLE IF NOT EXISTS ai_events(id INTEGER PRIMARY KEY,actor_id TEXT NOT NULL REFERENCES users(id),action TEXT NOT NULL,run_id TEXT,created_at TEXT NOT NULL) STRICT;`);
-  db.prepare("INSERT OR IGNORE INTO ai_settings(id,model) VALUES('company','gpt-5-mini')").run();
+  db.prepare("INSERT OR IGNORE INTO ai_settings(id,model) VALUES('company',?)").run(DEFAULT_AI_MODEL);
   let rawKey;
   if (env.EME_AI_ENCRYPTION_KEY) rawKey = env.EME_AI_ENCRYPTION_KEY;
   else if (dbPath === ':memory:') rawKey = randomBytes(32);

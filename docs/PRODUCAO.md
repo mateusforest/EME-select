@@ -1,6 +1,10 @@
 # EME Select — estado da implementação
 
-## Atualização 0.14.0 — Áreas operacionais
+## Atualização 0.15.0 — Astra e conexão WhatsApp
+
+O portal usa GPT-6 Astra na configuração inicial e reconhece a chave privada da OpenAI na hospedagem. O recebimento do WhatsApp está preparado e permanece desativado até configurar a Meta e aplicar a tabela privada do canal. Não há envio ou atendimento automático. Consulte [ASTRA-WHATSAPP-015.md](ASTRA-WHATSAPP-015.md).
+
+## Histórico 0.14.0 — Áreas operacionais
 
 Atendimento manual, agenda e chaves, acompanhamento de locações, documentos privados, qualidade da equipe e Central de IA implementados com persistência e permissões reais. As duas novas migrations foram aplicadas pelo administrador e verificadas no Supabase da EME em 16/09/2026: sete tabelas privadas e funções com sessão obrigatória. WhatsApp automático e portal do cliente externo ainda dependem das próximas integrações; IA sob demanda depende da chave da OpenAI. Consulte [OPERACOES-014.md](OPERACOES-014.md) para uso, implantação e limites precisos.
 

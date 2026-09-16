@@ -1,7 +1,7 @@
 {
   "name": "eme-select",
   "private": true,
-  "version": "0.14.0",
+  "version": "0.15.0",
   "type": "module",
   "scripts": {
     "start": "node scripts/serve.mjs",
@@ -13,7 +13,8 @@
     "test:api": "node --test tests/portal-api.test.mjs tests/curation-api.test.mjs tests/listings-api.test.mjs tests/submission-api.test.mjs tests/finance-api.test.mjs",
     "test:cloud": "node --test tests/cloud-domain.test.mjs tests/cloud-schema.test.mjs tests/photo-policy.test.mjs tests/finance-schema.test.mjs tests/finance-routing.test.mjs",
     "test:finance": "node --test tests/finance-domain.test.mjs tests/finance-api.test.mjs tests/finance-schema.test.mjs tests/finance-routing.test.mjs",
-    "test:operations": "node --test tests/operations-domain.test.mjs tests/operations-api.test.mjs tests/operations-schema.test.mjs tests/intelligence.test.mjs"
+    "test:operations": "node --test tests/operations-domain.test.mjs tests/operations-api.test.mjs tests/operations-schema.test.mjs tests/intelligence.test.mjs",
+    "test:whatsapp": "node --test tests/whatsapp.test.mjs"
   },
   "dependencies": {
     "gsap": "3.15.0",

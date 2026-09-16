@@ -8,6 +8,7 @@ import { attachCuration } from './curation.mjs';
 import { attachListings } from './listings.mjs';
 import { attachFinance } from './finance.mjs';
 import { attachIntelligence } from './intelligence-local.mjs';
+import { attachWhatsApp } from './whatsapp-local.mjs';
 import { attachOperations } from './operations.mjs';
 const scrypt = promisify(scryptCallback);
 const COOKIE = 'eme_portal_session';
@@ -123,6 +124,7 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
   const finance = attachFinance({db,transaction,stamp,fail,send});
   const intelligence = attachIntelligence({db,dbPath,transaction,stamp,caseFor,consume,send});
   const operations = attachOperations({db,transaction,stamp,send});
+  const whatsapp = attachWhatsApp({db,transaction,consume,send});
   let hashing = 0;
   async function passwordJob(fn) {
     if (hashing >= 2) fail(503, 'O acesso está ocupado. Tente novamente em alguns instantes.');
@@ -135,6 +137,7 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
     try {
       const host = new URL('http://' + req.headers.host);
       if (!['127.0.0.1','localhost'].includes(host.hostname)) fail(403, 'Host não permitido.');
+      if (await whatsapp.publicHandle(path,req,res)) return true;
       if (!['GET','POST','PATCH'].includes(req.method)) fail(405, 'Método não permitido.');
       if (req.method !== 'GET') {
         if (req.headers.origin !== host.origin || req.headers['sec-fetch-site'] === 'cross-site') fail(403, 'Origem não permitida.');
@@ -223,6 +226,7 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
       if (finance.handle(path,req,res,user,requestBody)) return true;
       if (await intelligence.handle(path,req,res,user,requestBody)) return true;
       if (await operations.handle(path,req,res,user,requestBody)) return true;
+      if (await whatsapp.handle(path,req,res,user,requestBody)) return true;
       if (await listings.handle(path,req,res,user,requestBody)) return true;
       if (curation.handle(path,req,res,user,requestBody,caseDetails)) return true;
       if (path === '/api/assignees' && req.method === 'GET') {
