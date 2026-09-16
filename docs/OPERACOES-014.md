@@ -43,4 +43,6 @@ npx playwright test tests/portal.spec.ts tests/operations-workspace.spec.ts test
 
 Os testes usam bancos isolados. As respostas da OpenAI são simuladas exclusivamente nos testes; não houve consumo real nem envio de dados de clientes à OpenAI durante o desenvolvimento.
 
-Verificação da versão: build aprovado; 12 verificações da API operacional, 11 da migration/RPC, nove do domínio operacional, nove da IA e 14 testes de navegador aprovados. As regressões da API existente (40) e cloud (17) também passaram. O SQL combinado foi validado em PostgreSQL isolado, incluindo permissões, preservação dos dados existentes e rollback integral diante de erro na segunda migration. Sua aplicação em produção deve ser conferida antes do deploy.
+Verificação da versão: build aprovado; 12 verificações da API operacional, 11 da migration/RPC, nove do domínio operacional, nove da IA e 14 testes de navegador aprovados. As regressões da API existente (40) e cloud (17) também passaram. O SQL combinado foi validado em PostgreSQL isolado, incluindo permissões, preservação dos dados existentes e rollback integral diante de erro na segunda migration.
+
+Ativação em produção confirmada em 16/09/2026, após execução do SQL pelo administrador: as sete tabelas responderam ao servidor e negaram acesso público (401). As duas funções rejeitaram comandos sem sessão válida; os registros de configuração inicial existem. A conferência não criou nem alterou registros operacionais.

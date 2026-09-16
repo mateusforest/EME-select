@@ -2,7 +2,7 @@
 
 ## Atualização 0.14.0 — Áreas operacionais
 
-Atendimento manual, agenda e chaves, acompanhamento de locações, documentos privados, qualidade da equipe e Central de IA implementados com persistência e permissões reais. A ativação em produção exige as duas novas migrations. WhatsApp automático e portal do cliente externo ainda dependem das próximas integrações; IA sob demanda depende da chave da OpenAI. Consulte [OPERACOES-014.md](OPERACOES-014.md) para uso, implantação e limites precisos.
+Atendimento manual, agenda e chaves, acompanhamento de locações, documentos privados, qualidade da equipe e Central de IA implementados com persistência e permissões reais. As duas novas migrations foram aplicadas pelo administrador e verificadas no Supabase da EME em 16/09/2026: sete tabelas privadas e funções com sessão obrigatória. WhatsApp automático e portal do cliente externo ainda dependem das próximas integrações; IA sob demanda depende da chave da OpenAI. Consulte [OPERACOES-014.md](OPERACOES-014.md) para uso, implantação e limites precisos.
 
 ## Histórico 0.13.0 — Portal único
 
