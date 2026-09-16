@@ -2,6 +2,7 @@ import {submission} from '../submission.mjs';
 import {randomBytes,randomUUID,createHash,timingSafeEqual} from 'node:crypto';
 import sharp from 'sharp';
 import {createClient} from './client.mjs';
+import {attachCloudFinance} from './finance.mjs';
 import {fail,fields,text,types,closed,admin,checkVersion,draft,curation,reviseCuration,decision,changed,listingBlockers,publicProperty,listing,evaluation,newCase} from './domain.mjs';
 const digest=v=>createHash('sha256').update(v).digest('hex');
 const cookieName='eme_cloud_session';
@@ -14,6 +15,7 @@ export function createCloudApi({env=process.env,client=createClient(env)}={}){
  const members=()=>rest('eme_profiles?select=id,name,email,role,active,must_change&order=created_at');
  const tokenOf=req=>(String(req.headers.cookie||'').split(';').map(v=>v.trim()).find(v=>v.startsWith(cookieName+'='))||'').slice(cookieName.length+1);
  const hashOf=req=>digest(tokenOf(req));
+ const finance=attachCloudFinance({client,hashOf});
  function setCookie(res,token,expired=false){res.setHeader('Set-Cookie',`${cookieName}=${token}; Path=/api; HttpOnly; SameSite=Strict; Secure; Max-Age=${expired?0:28800}`);}
  async function session(req){const token=tokenOf(req);if(!/^[\w-]{43}$/.test(token))return null;const rows=await rest('eme_sessions?token_hash=eq.'+digest(token)+'&select=*,eme_profiles(*)');const row=rows[0];if(!row||!row.eme_profiles.active||Date.parse(row.expires_at)<Date.now()||Date.parse(row.last_seen)<Date.now()-1800000)return null;await rest('eme_sessions?token_hash=eq.'+digest(token),'PATCH',{last_seen:new Date().toISOString()});return row.eme_profiles;}
  async function openSession(req,res,id){await rest('eme_sessions?token_hash=eq.'+hashOf(req),'DELETE');const token=randomBytes(32).toString('base64url');await rest('eme_sessions','POST',{token_hash:digest(token),user_id:id,expires_at:new Date(Date.now()+28800000).toISOString()});setCookie(res,token);}
@@ -62,6 +64,7 @@ export function createCloudApi({env=process.env,client=createClient(env)}={}){
     fields(body,['currentPassword','newPassword']);password(body.newPassword);await rate('password:'+user.id,8);await credentials(user.email,body.currentPassword);await request('/auth/v1/admin/users/'+user.id,{method:'PUT',body:{password:body.newPassword}});await rest('eme_profiles?id=eq.'+user.id,'PATCH',{must_change:false});await rest('eme_sessions?user_id=eq.'+user.id,'DELETE');await openSession(req,res,user.id);return send(200,{user:safe({...user,must_change:false})});
    }
    if(user.must_change)fail(403,'Atualize sua senha inicial.');
+   if(await finance.handle(path,req,res,user,body,send))return;
    if(path==='/api/assignees'&&req.method==='GET'){const people=(await members()).filter(p=>p.active&&(user.role==='admin'||p.id===user.id)).map(({id,name,role})=>({id,name,role}));return send(200,{members:people});}
    if(path==='/api/users'){
     admin(user);if(req.method==='GET')return send(200,{users:(await members()).map(safe)});

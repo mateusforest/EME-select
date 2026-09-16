@@ -6,6 +6,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { attachCuration } from './curation.mjs';
 import { attachListings } from './listings.mjs';
+import { attachFinance } from './finance.mjs';
 const scrypt = promisify(scryptCallback);
 const COOKIE = 'eme_portal_session';
 const MAX_AGE = 8 * 60 * 60 * 1000;
@@ -117,6 +118,7 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
     history: db.prepare('SELECT audit.id, audit.action, audit.detail, audit.created_at, users.name AS author FROM audit JOIN users ON users.id=audit.actor_id WHERE evaluation_id=? ORDER BY audit.id DESC').all(id)
   });
   const listings = attachListings({db,fail,text,fields,caseFor,transaction,audit,stamp,requireAdmin,send,session});
+  const finance = attachFinance({db,transaction,stamp,fail,send});
   let hashing = 0;
   async function passwordJob(fn) {
     if (hashing >= 2) fail(503, 'O acesso está ocupado. Tente novamente em alguns instantes.');
@@ -212,6 +214,7 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
         send(res,200,{ user:safeUser(db.prepare('SELECT * FROM users WHERE id=?').get(user.id)) }); return true;
       }
       if (user.must_change) fail(403,'Altere a senha inicial antes de continuar.');
+      if (finance.handle(path,req,res,user,requestBody)) return true;
       if (await listings.handle(path,req,res,user,requestBody)) return true;
       if (curation.handle(path,req,res,user,requestBody,caseDetails)) return true;
       if (path === '/api/assignees' && req.method === 'GET') {
