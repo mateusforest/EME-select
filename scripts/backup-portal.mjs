@@ -1,5 +1,5 @@
 import { DatabaseSync, backup } from 'node:sqlite';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, copyFileSync } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
@@ -18,6 +18,8 @@ try {
     copy.exec('DELETE FROM sessions;');
     const check = copy.prepare('PRAGMA integrity_check').get();
     if (check.integrity_check !== 'ok') throw new Error('A cópia não passou na verificação de integridade.');
+    // The optional private cipher key must travel with a restored SQLite database.
+    if (existsSync(source + '.ai-key')) copyFileSync(source + '.ai-key', target + '.ai-key');
     console.log('Cópia verificada: ' + target);
   } finally { copy.close(); }
 } finally { db.close(); }

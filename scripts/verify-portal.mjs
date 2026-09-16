@@ -36,7 +36,7 @@ try {
       results.push({ width, route: route || '/', status: response.status(), overflow, title });
       await expect(page.locator('a[href*="/portalselect/demo"]')).toHaveCount(0);
       await expect(page.getByText('Dados fictícios',{exact:true})).toHaveCount(0);
-      if(['/relacionamento','/locacoes','/documentos','/qualidade','/inteligencia'].includes(route))await expect(page.locator('.pt-module-status').getByText('Em desenvolvimento',{exact:true})).toBeVisible();
+      if(['/relacionamento','/locacoes','/documentos','/qualidade','/inteligencia'].includes(route))await expect(page.getByText('Em desenvolvimento',{exact:true})).toHaveCount(0);
       if(['','/padrao','/relacionamento','/financeiro'].includes(route))await page.screenshot({path:join(temp,(route.slice(1)||'hoje')+'-'+width+'.png'),fullPage:true});
     }
   }

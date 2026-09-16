@@ -1,6 +1,10 @@
 # EME Select — estado da implementação
 
-## Atualização 0.13.0 — Portal único
+## Atualização 0.14.0 — Áreas operacionais
+
+Atendimento manual, agenda e chaves, acompanhamento de locações, documentos privados, qualidade da equipe e Central de IA implementados com persistência e permissões reais. A ativação em produção exige as duas novas migrations. WhatsApp automático e portal do cliente externo ainda dependem das próximas integrações; IA sob demanda depende da chave da OpenAI. Consulte [OPERACOES-014.md](OPERACOES-014.md) para uso, implantação e limites precisos.
+
+## Histórico 0.13.0 — Portal único
 
 `/portalselect` reúne as áreas funcionais e o escopo das áreas em desenvolvimento, com a mesma autenticação e navegação. A demonstração paralela foi retirada do código publicado; links antigos `/portalselect/demo/...` encaminham à área correspondente e exigem acesso da equipe. O padrão de curadoria usa a política atual Select V2, enquanto dossiês antigos preservam seu histórico. Financeiro, equipe e qualidade da equipe são exclusivos dos administradores. Veja [PORTAL-130.md](PORTAL-130.md) e [FINANCEIRO-012.md](FINANCEIRO-012.md).
 
@@ -47,9 +51,9 @@ A apresentação opcional da marca foi construída em HyperFrames e GSAP, com re
 | Autenticação e painel da equipe | Portal único em /portalselect; links antigos da demonstração encaminham ao portal autenticado |
 | Financeiro | Lançamentos, contas manuais, comissões, sócios, caixa, projeções e DRE gerencial; sem conexão bancária ou execução de pagamentos |
 | Formulários | Envio de imóvel gravado no portal com protocolo; solicitação de visita via WhatsApp |
-| Agenda | Solicitação de horário sujeita à confirmação humana; sem reserva de horário |
-| IA de atendimento e curadoria | Ainda não implementada; não há avaliação, captação ou análise automatizada real |
-| Documentação | Portal registra referências e conferências humanas; recebe fotos, mas não documentos jurídicos. Anúncios reais orientam consultar a equipe |
+| Agenda | Equipe registra visitas com verificação de conflitos; confirmação e retirada de chave exigem autorização da EME |
+| IA de atendimento e curadoria | Conferência por regras e análises/rascunhos sob demanda via OpenAI configurável; sem envio automático ao cliente, decisão ou publicação autônoma |
+| Documentação | Upload privado por imóvel, versões, validade e revisão humana; sem consulta jurídica automática ou certificação |
 | Visita do imóvel | Percurso de fotos reais em tela inteira, capítulos e transições; sem captura espacial ou medição comercial. 3D adiado |
 | Venda e locação | Experiência de descoberta e contato; sem propostas vinculantes, pagamentos, contratos ou assinatura eletrônica |
 | Publicação | Administrador publica após curadoria; API na Vercel, banco e fotos no Supabase |

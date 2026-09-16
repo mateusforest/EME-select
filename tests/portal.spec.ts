@@ -16,12 +16,13 @@ async function mockPortal(page:Page,options:{authenticated?:boolean;role?:TeamUs
     if(path==='/api/evaluations')return route.fulfill({json:{evaluations:[evaluation]}});
     if(path==='/api/assignees')return route.fulfill({json:{members:[user]}});
     if(path==='/api/listings')return route.fulfill({json:{listings:[]}});
+    if(path==='/api/operations')return route.fulfill({json:{version:0,state:{version:1,tickets:[],visits:[],leases:[],documents:[],reviews:[]},properties:[{id:evaluation.id,title:evaluation.title,assigneeId:user.id}],members:[user],history:[]}});
+    if(path==='/api/intelligence')return route.fulfill({json:{settings:{configured:false,enabled:false,model:'gpt-5-mini',version:0,canConfigure:user.role==='admin'},properties:[{id:evaluation.id,title:evaluation.title,version:1}],runs:[]}});
     return route.fulfill({status:404,json:{error:'Unexpected test API '+path}});
   });
   return requests;
 }
 const navigation=(page:Page)=>page.getByRole('navigation',{name:'Navegação da equipe'});
-const plannedStatus=(page:Page)=>page.getByRole('main').getByText('Em desenvolvimento',{exact:true});
 async function expectOnePortal(page:Page){
   await expect(navigation(page)).toBeVisible();
   await expect(page.locator('a[href*="/portalselect/demo"]')).toHaveCount(0);
@@ -68,7 +69,7 @@ test('legacy evaluation links preserve their destination and browser history use
   await expect(page.locator('tbody')).toContainText(evaluation.title);
   await navigation(page).getByRole('link',{name:'Locações',exact:true}).click();
   await expect(page).toHaveURL(/\/portalselect\/locacoes$/);
-  await expect(plannedStatus(page)).toBeVisible();
+  await expect(page.getByRole('button',{name:'Novo contrato',exact:true})).toBeVisible();
   await page.goBack();
   await expect(page).toHaveURL(/\/portalselect\/avaliacoes\?origem=legado$/);
   await expect(page.getByLabel('Buscar avaliações da equipe')).toBeVisible();
@@ -86,13 +87,14 @@ test('the former example property collection redirects to the saved listings mod
   await expect(page.getByText('Os 18 imóveis ilustrativos que compõem o site da EME.',{exact:true})).toHaveCount(0);
 });
 
-test('rental planning is explicit and never presents fictitious contracts or cash totals',async({page})=>{
+test('rental management starts empty and never presents fictitious contracts or cash totals',async({page})=>{
   await mockPortal(page);
   await page.goto('/portalselect/demo/locacoes');
   await expect(page).toHaveURL(/\/portalselect\/locacoes$/);
   await expectOnePortal(page);
   await expect(page.getByRole('heading',{level:1})).toHaveText('Cuidar também é acompanhar.');
-  await expect(plannedStatus(page)).toBeVisible();
+  await expect(page.getByRole('button',{name:'Novo contrato',exact:true})).toBeVisible();
+  await expect(page.getByText('Em desenvolvimento',{exact:true})).toHaveCount(0);
   await expect(page.locator('.ps-rental-list')).toHaveCount(0);
   await expect(page.getByText('Apartamento do parque',{exact:true})).toHaveCount(0);
   await expect(page.getByText('Casa do bosque',{exact:true})).toHaveCount(0);
@@ -113,7 +115,7 @@ test('a broker cannot use legacy links to access company finances or team qualit
   expect(requests).not.toContain('/api/finance');
 });
 
-test('mobile planned modules use the team menu, fit the viewport and return to the same overview',async({page})=>{
+test('mobile operational modules use the team menu, fit the viewport and return to the same overview',async({page})=>{
   const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
   await page.setViewportSize({width:390,height:844});
   await mockPortal(page);
@@ -123,7 +125,8 @@ test('mobile planned modules use the team menu, fit the viewport and return to t
   await navigation(page).getByRole('link',{name:'Central de IA',exact:true}).click();
   await expect(page).toHaveURL(/\/portalselect\/inteligencia$/);
   await expect(page.getByRole('heading',{level:1})).toHaveText('Inteligência com supervisão da EME.');
-  await expect(plannedStatus(page)).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Comece por um imóvel.',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Solicitar análise IA',exact:true})).toBeDisabled();
   await expect(page.getByRole('button',{name:'Abrir navegação',exact:true})).toHaveAttribute('aria-expanded','false');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
   await page.getByRole('button',{name:'Abrir navegação',exact:true}).click();
@@ -172,7 +175,7 @@ test('the curation reference uses the current five-dimension policy and links to
 test('the extended sidebar keeps account access reachable on mobile without creating sample conversations',async({page})=>{
   await mockPortal(page);
   await page.goto('/portalselect/relacionamento');
-  await expect(plannedStatus(page)).toBeVisible();
+  await expect(page.getByRole('button',{name:'Novo atendimento',exact:true})).toBeVisible();
   await expect(page.getByLabel('Rascunho de resposta')).toHaveCount(0);
   await page.screenshot({path:'tmp/portal-unified-relationship-desktop.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});

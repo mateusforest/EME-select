@@ -7,6 +7,8 @@ import { dirname } from 'node:path';
 import { attachCuration } from './curation.mjs';
 import { attachListings } from './listings.mjs';
 import { attachFinance } from './finance.mjs';
+import { attachIntelligence } from './intelligence-local.mjs';
+import { attachOperations } from './operations.mjs';
 const scrypt = promisify(scryptCallback);
 const COOKIE = 'eme_portal_session';
 const MAX_AGE = 8 * 60 * 60 * 1000;
@@ -119,6 +121,8 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
   });
   const listings = attachListings({db,fail,text,fields,caseFor,transaction,audit,stamp,requireAdmin,send,session});
   const finance = attachFinance({db,transaction,stamp,fail,send});
+  const intelligence = attachIntelligence({db,dbPath,transaction,stamp,caseFor,consume,send});
+  const operations = attachOperations({db,transaction,stamp,send});
   let hashing = 0;
   async function passwordJob(fn) {
     if (hashing >= 2) fail(503, 'O acesso está ocupado. Tente novamente em alguns instantes.');
@@ -138,7 +142,9 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
       if (await listings.publicHandle(path,req,res)) return true;
       const isPhotoUpload = /^\/api\/listings\/[a-f0-9-]{36}\/photos$/.test(path);
       if (isPhotoUpload) { const access=session(req); if(!access||access.must_change)fail(401,'Entre para enviar fotografias.'); }
-      const requestBody = req.method === 'GET' ? null : await json(req,isPhotoUpload?11300000:32768);
+      const isDocumentUpload = path === '/api/operations/commands';
+      if (isDocumentUpload) { const access=session(req); if(!access||access.must_change)fail(401,'Entre para registrar a operação.'); }
+      const requestBody = req.method === 'GET' ? null : await json(req,isPhotoUpload?11300000:isDocumentUpload?3000000:32768);
       if(path==='/api/public/submissions'&&req.method==='POST'){
         consume('submission:'+digest(req.socket.remoteAddress||'unknown'),6);
         const entry=submission(requestBody),d=entry.data.draft,payloadHash=digest(JSON.stringify(entry.data));
@@ -215,6 +221,8 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
       }
       if (user.must_change) fail(403,'Altere a senha inicial antes de continuar.');
       if (finance.handle(path,req,res,user,requestBody)) return true;
+      if (await intelligence.handle(path,req,res,user,requestBody)) return true;
+      if (await operations.handle(path,req,res,user,requestBody)) return true;
       if (await listings.handle(path,req,res,user,requestBody)) return true;
       if (curation.handle(path,req,res,user,requestBody,caseDetails)) return true;
       if (path === '/api/assignees' && req.method === 'GET') {
