@@ -1,4 +1,6 @@
-﻿# Atmosfera EME — playlist no cabeçalho
+> Histórico: esta integração foi substituída pelo [player próprio Atmosfera EME](ATMOSFERA-EME.md). O iframe Spotify não faz mais parte do site.
+
+# Atmosfera EME — playlist no cabeçalho
 
 Playlist oficial: https://open.spotify.com/playlist/79BMpNy8NQiujxA5qVUGJy
 
