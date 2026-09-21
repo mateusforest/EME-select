@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import ScenePage from './spatial/SceneExperience';
 import ExploreEnvironments from './ExploreEnvironments';
 import Tour from './spatial/InteriorExperience';
@@ -12,6 +12,10 @@ import Comparison from './Comparison';
 import { catalogHash, parseCatalogHash } from './catalog';
 import { useSceneNavigation } from './sceneNavigation';
 import AtmospherePlayer from './AtmospherePlayer';
+import { ASSETS, MORADAS_ROUTE } from './developments/moradas';
+import './developments/development.css';
+
+const DevelopmentPage = lazy(() => import('./developments/DevelopmentPage'));
 
 type Modal = { kind: 'favorites' | 'motion' | 'privacy' } | { kind: 'booking' | 'documents' | 'plan' | 'location'; property?: Property };
 const goProperty = (p: Property) => `#/${p.hasInterior ? 'visita' : 'imovel'}/${p.id}`;
@@ -51,6 +55,7 @@ function Header({ tour, favorites, onFavorites, onContact, modalOpen }: { tour: 
         {exploreOpen && <div className="desktop-explore-menu" id="desktop-explore-menu">
           <div><span className="eyebrow">Por ambiente</span>{environments.map(e => <a key={e.id} href={e.id === 'todos' ? '#/' : `#/ambientes/${e.id}`}>{e.id === 'todos' ? 'Todos os ambientes' : e.name}<ArrowUpRight size={13} /></a>)}</div>
           <div><span className="eyebrow">Por tipo de imóvel</span>{[{ label: 'Casas', type: 'Casa' }, { label: 'Casas em condomínio', type: 'Casa', region: 'condominios' as const }, { label: 'Apartamentos', type: 'Apartamento' }, { label: 'Compactos', type: 'Compacto', operation: 'alugar' as const }, { label: 'Condomínios horizontais', type: 'Condomínio horizontal' }, { label: 'Condomínios verticais', type: 'Condomínio vertical' }, { label: 'Lojas', type: 'Loja' }, { label: 'Salas comerciais', type: 'Sala comercial' }, { label: 'Edifícios corporativos', type: 'Edifício corporativo' }, { label: 'Terrenos urbanos', type: 'Terreno urbano' }, { label: 'Lotes em condomínio', type: 'Lote em condomínio' }, { label: 'Terras agrícolas', type: 'Terra agrícola' }, { label: 'Galpões', type: 'Galpão' }, { label: 'Pavilhões', type: 'Pavilhão' }, { label: 'Centros de distribuição', type: 'Centro de distribuição', operation: 'alugar' as const }].map(item => <a key={`${item.region || 'todos'}:${item.type}`} href={catalogHash({ region: item.region, type: item.type, operation: item.operation || properties.find(property => property.type === item.type)?.operation || 'comprar' })}>{item.label}<ArrowUpRight size={13} /></a>)}</div>
+          <a href={MORADAS_ROUTE}>Moradas da Serra · DeVille <ArrowUpRight size={17} /></a>
           <a href="#/colecao">Explorar a coleção completa <ArrowRight size={17} /></a>
         </div>}
       </div>
@@ -65,6 +70,7 @@ function Header({ tour, favorites, onFavorites, onContact, modalOpen }: { tour: 
     </div>
     {menuOpen && <nav className="mobile-menu" id="mobile-menu" aria-label="Menu móvel">
       <a href="#/colecao">A coleção completa<ArrowUpRight size={17} /></a>
+      <a href={MORADAS_ROUTE}>Moradas da Serra · DeVille<ArrowUpRight size={17} /></a>
       {environments.map(e => <a key={e.id} href={e.id === 'todos' ? '#/' : `#/ambientes/${e.id}`}>{e.name}<ArrowUpRight size={17} /></a>)}
       <a href="#/curadoria">Nossa curadoria<ArrowUpRight size={17} /></a><a href="/enviar-imovel">Para proprietários<ArrowUpRight size={17} /></a>
       <button onClick={() => { setMenuOpen(false); onContact(); }}>Fale com a EME<MessageCircle size={18} /></button>
@@ -111,6 +117,7 @@ export default function App() {
   const environment = environmentById(parts[0] === 'ambientes' ? parts[1] : 'todos');
   const isScene = parts[0] === '' || (parts[0] === 'ambientes' && environments.some(e => e.id === parts[1]));
   const isTour = parts[0] === 'visita' && Boolean(property?.hasInterior);
+  const isDevelopment = parts[0] === 'empreendimentos' && parts[1] === 'moradas-da-serra';
   const close = () => setModal(null);
   useEffect(() => { try { localStorage.setItem('eme-select:favorites', JSON.stringify(favorites)); } catch { /* A navegação permanece disponível quando o armazenamento está bloqueado. */ } }, [favorites]);
   useEffect(() => {
@@ -120,7 +127,7 @@ export default function App() {
     previousRoute.current = currentRoute;
     if (parts[0] === 'colecao') lastCatalog.current = catalogHash(parseCatalogHash(hash));
     if (parts[0] === 'comparar') { setComparison(comparisonIds(hash)); lastCatalog.current = comparisonReturn(hash); }
-    document.title = `${property?.title || (isScene ? environment.name === 'Todos os ambientes' ? 'Seu próximo lugar' : environment.name : parts[0] === 'colecao' ? 'A coleção' : parts[0] === 'comparar' ? 'Comparar imóveis' : parts[0] === 'curadoria' ? 'Nossa curadoria' : parts[0] === 'proprietarios' ? 'Para proprietários' : 'Página não encontrada')} — EME Select`;
+    document.title = `${isDevelopment ? 'Moradas da Serra · DeVille' : property?.title || (isScene ? environment.name === 'Todos os ambientes' ? 'Seu próximo lugar' : environment.name : parts[0] === 'colecao' ? 'A coleção' : parts[0] === 'comparar' ? 'Comparar imóveis' : parts[0] === 'curadoria' ? 'Nossa curadoria' : parts[0] === 'proprietarios' ? 'Para proprietários' : 'Página não encontrada')} — EME Select`;
   }, [hash]);
   useEffect(() => { if (!toast) return; const timer = window.setTimeout(() => setToast(''), 4000); return () => window.clearTimeout(timer); }, [toast]);
   useEffect(() => { const handler = (event: MessageEvent) => { if (event.origin === window.location.origin && event.source === frameRef.current?.contentWindow && event.data?.type === 'eme-select:close-intro') setModal(null); }; window.addEventListener('message', handler); return () => window.removeEventListener('message', handler); }, []);
@@ -147,6 +154,7 @@ export default function App() {
   if (modal?.kind === 'plan' && landInquiry) modalTitle = 'Área e implantação';
   return <><a href="#conteudo" className="skip-link" onClick={event => { event.preventDefault(); const main = document.querySelector('main'); main?.setAttribute('tabindex', '-1'); main?.focus(); }}>Pular para o conteúdo</a><Header tour={isTour} favorites={favorites.length} onFavorites={() => setModal({ kind: 'favorites' })} onContact={contact} modalOpen={Boolean(modal)} />
     {isScene ? <ScenePage key={environment.id} environment={environment} onMotion={() => setModal({ kind: 'motion' })} favorites={favorites} onFavorite={toggleFavorite} />
+      : isDevelopment ? <Suspense fallback={<main id="conteudo" className="empty-page" role="status">Preparando o Moradas da Serra…</main>}><DevelopmentPage /></Suspense>
       : parts[0] === 'colecao' ? <CatalogPage state={catalogState} favorites={favorites} comparison={comparison} onFavorite={toggleFavorite} onCompare={toggleComparison} onShare={() => shareRoute(catalogHash(catalogState), 'Link da busca copiado.')} />
       : parts[0] === 'comparar' ? <Comparison items={comparison.map(id => properties.find(p => p.id === id)!)} collectionHref={lastCatalog.current} onRemove={removeComparison} onBook={p => setModal({ kind: 'booking', property: p })} onShare={() => shareRoute(comparisonHash(comparison, lastCatalog.current), 'Link da comparação copiado.')} onClear={() => { setComparison([]); window.location.hash = comparisonHash([], lastCatalog.current); }} />
       : isTour && property ? <Tour property={property} favorite={favorites.includes(property.id)} onFavorite={() => toggleFavorite(property.id)} onBook={contact} onShare={() => share(property)} />
@@ -154,7 +162,7 @@ export default function App() {
       : parts[0] === 'curadoria' ? <CurationPage onContact={contact} onMotion={() => setModal({ kind: 'motion' })} />
       : parts[0] === 'proprietarios' ? <OwnerPage />
       : <main className="empty-page" id="conteudo"><span className="eyebrow">Um novo caminho</span><h1>Vamos encontrar<br />o seu lugar.</h1><p>Esta página não está disponível.</p><a className="primary-button" href="#/">Voltar aos ambientes <ArrowRight size={19} /></a></main>}
-    {isScene && environment.id === 'todos' && <ExploreEnvironments />}
+    {isScene && environment.id === 'todos' && <><section className="development-feature" aria-labelledby="moradas-feature-title"><img src={`${ASSETS}hero.webp`} alt="Estudo visual do Moradas da Serra, da DeVille" loading="lazy" /><div><p className="eyebrow">DeVille · Vacaria, RS</p><h2 id="moradas-feature-title">Um empreendimento.<br />Novas perspectivas.</h2><p>Conheça o Moradas da Serra em uma experiência própria. Explore torres, andares, interiores e espaços de convivência.</p><a className="primary-button" href={MORADAS_ROUTE}>Explorar Moradas da Serra <ArrowUpRight size={18} /></a><small>Apresentação conceitual · disponibilidade a confirmar.</small></div></section><ExploreEnvironments /></>}
     {!isTour && <Footer onPrivacy={() => setModal({ kind: 'privacy' })} />}
     {comparison.length > 0 && parts[0] !== 'comparar' && !modal && <aside className="comparison-tray" aria-label="Seleção para comparar"><div><strong>{comparison.length} de 3 imóveis</strong><small>{comparison.length < 2 ? 'Escolha mais um para comparar' : 'Uma escolha, diferentes perspectivas'}</small></div><button disabled={comparison.length < 2} onClick={() => { window.location.hash = comparisonHash(comparison, lastCatalog.current); }}>Comparar seleção <ArrowRight size={16} /></button><button className="icon-button" aria-label="Limpar comparação" onClick={() => setComparison([])}><X size={16} /></button></aside>}
     {modal && <Dialog title={modalTitle} onClose={close} wide={modal.kind === 'favorites' || modal.kind === 'motion'}>
