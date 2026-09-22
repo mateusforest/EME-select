@@ -56,6 +56,9 @@ const DevelopmentModel = forwardRef<ModelControls, Props>(function DevelopmentMo
       const trunk = material('#74614b'), leaves = material('#526b42'), lawn = material('#708755');
       const white = material('#f5f0e4'), asphalt = material('#747a77');
       const warmGlass = own(new THREE.MeshStandardMaterial({ color: '#ddd4a2', emissive: '#ffbd68', emissiveIntensity: .25, roughness: .32 }));
+      const commonGlass = own(new THREE.MeshStandardMaterial({ color: '#dbc89e', emissive: '#ffd08a', emissiveIntensity: 0, roughness: .3 }));
+      const fixture = own(new THREE.MeshStandardMaterial({ color: '#fff0ca', emissive: '#ffd48b', emissiveIntensity: 0 }));
+      const nightLights: import('three').PointLight[] = [];
       const water = own(new THREE.MeshStandardMaterial({ color: '#609fa5', metalness: .18, roughness: .2 }));
       const boxGeo = own(new THREE.BoxGeometry(1, 1, 1));
       const leafGeo = own(new THREE.IcosahedronGeometry(1, 2));
@@ -84,7 +87,7 @@ const DevelopmentModel = forwardRef<ModelControls, Props>(function DevelopmentMo
       function windowAt(parent: import('three').Object3D, x: number, y: number, z: number, rotate: number, index: number, wide = 1.4) {
         const window = new THREE.Group(); window.position.set(x, y, z); window.rotation.y = rotate; parent.add(window);
         box(window, 0, 0, 0, wide + .14, 1.4, .12, frameMat);
-        box(window, 0, 0, .07, wide, 1.25, .045, index % 5 === 0 ? warmGlass : glass);
+        box(window, 0, 0, .07, wide, 1.25, .045, index % 4 !== 0 ? warmGlass : glass);
         box(window, 0, 0, .11, .045, 1.27, .035, frameMat);
         box(window, 0, -.73, .1, wide + .22, .07, .32, frameMat, true);
       }
@@ -141,11 +144,25 @@ const DevelopmentModel = forwardRef<ModelControls, Props>(function DevelopmentMo
       const pool = box(scene, 23, .41, 20, 9.5, .02, 6.5, water); pool.userData.area = 'leisure'; hitTargets.push(pool);
       box(scene, 24, 1.6, 10, 12, 3.1, 4.5, timber, true);
       box(scene, 24, 3.3, 10.5, 14, .4, 7.5, ivory, true);
-      for (const x of [19, 23, 27]) box(scene, x, 1.65, 12.3, 3.5, 2.65, .06, glass);
+      for (const x of [19, 23, 27]) box(scene, x, 1.65, 12.3, 3.5, 2.65, .06, commonGlass);
       for (const x of [17.2, 30.8]) box(scene, x, 1.5, 13.5, .3, 3, .3, stone, true);
       for (const x of [17.7, 28.8]) for (const z of [18, 22]) box(scene, x, .45, z, 1.3, .35, 2.4, timber, true);
       const entrance = box(scene, 8, 1.6, 27, 10, 3.2, 4, ivory, true); entrance.userData.area = 'entrance'; hitTargets.push(entrance);
-      box(scene, 8, 3.3, 27, 11.5, .35, 5.2, ivory, true); box(scene, 8, 1.7, 29.02, 5.5, 2.4, .06, glass);
+      box(scene, 8, 3.3, 27, 11.5, .35, 5.2, ivory, true); box(scene, 8, 1.7, 29.02, 5.5, 2.4, .06, commonGlass);
+      // Emissive fixtures and a bounded set of local lights illuminate actual
+      // surfaces without expensive per-light shadow maps on mobile devices.
+      for (const [x, y, z] of [[8, 2.8, 30], [24, 2.8, 14], [-23, 3.8, 16], [-8, 3.8, 24], [8, 2.8, 6], [-12, 2.8, -4]]) {
+        box(scene, x, y, z, .4, .12, .4, fixture);
+        const light = new THREE.PointLight('#ffd28a', 0, 17, 2);
+        light.position.set(x, y - .25, z); scene.add(light); nightLights.push(light);
+      }
+      for (let x = -27; x <= 30; x += 9) {
+        box(scene, x, .5, 28, .18, 1, .18, metal);
+        box(scene, x, 1.04, 28, .23, .14, .23, fixture);
+      }
+      for (const center of Object.values(towerCenters)) {
+        box(scene, center.x, 2.8, center.z + 1, 2.5, .08, 3.1, fixture);
+      }
       // Context is a subdued schematic neighborhood, not a geographic survey.
       for (let i = 0; i < 36; i++) {
         const angle = i * 2.399, radius = 62 + (i % 4) * 13;
@@ -165,8 +182,18 @@ const DevelopmentModel = forwardRef<ModelControls, Props>(function DevelopmentMo
       sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = -52; sun.shadow.camera.right = 52; sun.shadow.camera.top = 52; sun.shadow.camera.bottom = -52; sun.shadow.camera.near = .5; sun.shadow.camera.far = 130; sun.shadow.bias = -.0004; sun.shadow.normalBias = .025; scene.add(sun);
       const fill = new THREE.DirectionalLight('#bed1df', .8); fill.position.set(35, 28, -30); scene.add(fill);
       const highlightMat = own(new THREE.MeshBasicMaterial({ color: '#a9c594', transparent: true, opacity: .29, depthWrite: false }));
-      const highlight = box(scene, 0, 0, 0, 14.8, 2.8, 11.2, highlightMat);
-      const edges = own(new THREE.EdgesGeometry(new THREE.BoxGeometry(14.8, 2.8, 11.2)));
+      // Trace the real model footprint, including the recessed front and balcony.
+      const footprint = [[-5.92, -4.92], [5.92, -4.92], [5.92, -.57], [7.4, -.57], [7.4, 3.25], [5.92, 3.25], [5.92, 4.92], [5.82, 5.5], [1.6, 5.5], [1.6, 5.16], [-1.6, 5.16], [-1.6, 5.5], [-5.82, 5.5], [-5.92, 4.92]];
+      const positions: number[] = [], edgePositions: number[] = [];
+      footprint.forEach(([x, z], i) => {
+        const [nx, nz] = footprint[(i + 1) % footprint.length];
+        positions.push(x, -1.42, z, nx, -1.42, nz, nx, 1.42, nz, x, -1.42, z, nx, 1.42, nz, x, 1.42, z);
+        for (const y of [-1.42, 1.42]) edgePositions.push(x, y, z, nx, y, nz);
+      });
+      const bandGeometry = own(new THREE.BufferGeometry()); bandGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      highlightMat.side = THREE.DoubleSide;
+      const highlight = new THREE.Mesh(bandGeometry, highlightMat); scene.add(highlight);
+      const edges = own(new THREE.BufferGeometry()); edges.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
       const outline = new THREE.LineSegments(edges, own(new THREE.LineBasicMaterial({ color: '#e8efd6', transparent: true, opacity: .85 }))); scene.add(outline);
       const pinLayer = document.createElement('div'); pinLayer.className = 'development-model-pins'; mount.appendChild(pinLayer);
       const pinInfo = [{ area: 'court' as const, text: 'Quadra', position: new THREE.Vector3(-16, 1, 16) }, { area: 'leisure' as const, text: 'Lazer', position: new THREE.Vector3(24, 2, 18) }, { area: 'entrance' as const, text: 'Acesso', position: new THREE.Vector3(8, 4, 27) }];
@@ -186,17 +213,25 @@ const DevelopmentModel = forwardRef<ModelControls, Props>(function DevelopmentMo
       }
       function update() {
         const state = latest.current; const center = towerCenters[state.tower];
-        highlight.position.set(center.x + .5, 3.4 + (state.floor - .5) * 2.85, center.z + .3); outline.position.copy(highlight.position);
+        highlight.position.set(center.x, 3.4 + (state.floor - .5) * 2.85, center.z); outline.position.copy(highlight.position);
         const night = state.lighting === 'night', day = state.lighting === 'day';
         scene.background = new THREE.Color(night ? '#263949' : day ? '#d9e6eb' : '#e8dfcf');
         scene.fog = new THREE.Fog(scene.background, 120, 245);
-        ambient.intensity = night ? .75 : day ? 2.8 : 2.2;
-        sun.intensity = night ? .4 : day ? 3 : 2.9;
+        ambient.intensity = night ? .55 : day ? 2.8 : 1.4;
+        sun.intensity = night ? .25 : day ? 3 : 1.8;
+        fill.intensity = night ? .25 : .8;
         sun.color.set(night ? '#a4bfe1' : day ? '#fff4de' : '#ffd5a0');
         sun.position.set(day ? -18 : -36, day ? 65 : 30, 30);
-        warmGlass.emissiveIntensity = night ? 2.6 : .22;
+        warmGlass.color.set(day ? '#789093' : '#ddd4a2');
+        warmGlass.emissiveIntensity = day ? 0 : night ? 2.6 : 1.4;
+        commonGlass.emissiveIntensity = day ? 0 : night ? 2.2 : 1.1;
+        fixture.emissiveIntensity = day ? 0 : night ? 4 : 2;
+        water.emissive.set('#4dced9'); water.emissiveIntensity = day ? 0 : night ? .4 : .12;
+        nightLights.forEach(light => { light.intensity = day ? 0 : night ? 65 : 35; });
         renderer.toneMappingExposure = night ? .88 : 1.16;
-        mount.dataset.lighting = state.lighting; mount.dataset.selectedFloor = `${state.tower}-${state.floor}`; schedule();
+        mount.dataset.lighting = state.lighting; mount.dataset.selectedFloor = `${state.tower}-${state.floor}`;
+        mount.dataset.windowEmission = String(warmGlass.emissiveIntensity);
+        mount.dataset.activeLights = String(nightLights.filter(light => light.intensity > 0).length); schedule();
       }
       function reset() { camera.position.copy(home); controls.target.copy(homeTarget); controls.update(); settling = 20; schedule(); }
       function zoom(direction: number) { const offset = camera.position.clone().sub(controls.target); offset.setLength(THREE.MathUtils.clamp(offset.length() * (direction > 0 ? .84 : 1.18), controls.minDistance, controls.maxDistance)); camera.position.copy(controls.target).add(offset); controls.update(); schedule(); }

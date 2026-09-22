@@ -58,6 +58,11 @@ test('real 3D camera, floor selection, lighting and context-loss fallback', asyn
   const model = page.getByTestId('development-model');
   await expect(model).toHaveAttribute('data-camera', /,/, { timeout: 45000 });
   await expect(model).toHaveAttribute('data-selected-floor', 'a-6');
+  await expect(model).toHaveAttribute('data-active-lights', '6');
+  await expect(model).toHaveAttribute('data-window-emission', '1.4');
+  await page.getByRole('button', { name: 'Dia', exact: true }).click();
+  await expect(model).toHaveAttribute('data-active-lights', '0');
+  await expect(model).toHaveAttribute('data-window-emission', '0');
   const before = await model.getAttribute('data-camera');
   await model.locator('canvas').focus();
   await page.keyboard.press('ArrowRight');
@@ -67,6 +72,8 @@ test('real 3D camera, floor selection, lighting and context-loss fallback', asyn
   await expect(model).toHaveAttribute('data-selected-floor', 'b-8');
   await page.getByRole('button', { name: 'Noite', exact: true }).click();
   await expect(model).toHaveAttribute('data-lighting', 'night');
+  await expect(model).toHaveAttribute('data-active-lights', '6');
+  await expect(model).toHaveAttribute('data-window-emission', '2.6');
   await page.screenshot({ path: 'test-results/deville-3d-night.png', fullPage: true });
   await page.getByRole('button', { name: 'Entardecer', exact: true }).click();
   await page.screenshot({ path: 'test-results/deville-3d.png', fullPage: true });
@@ -75,6 +82,49 @@ test('real 3D camera, floor selection, lighting and context-loss fallback', asyn
   await page.getByRole('button', { name: 'Voltar à apresentação', exact: true }).click();
   await expect(page.locator('.development-image-world')).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test('facade selection and lights share the image projection through resizing and zoom', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.goto(route);
+  const lights = page.getByTestId('scene-lights');
+  await expect(lights).toHaveCSS('opacity', '0.74');
+  await page.locator('.development-image-world>img').evaluate((image: HTMLImageElement) => image.decode());
+  await page.screenshot({ path: 'test-results/deville-sunset-fixed.png' });
+  await page.getByRole('button', { name: 'Noite', exact: true }).click();
+  await expect(lights).toHaveCSS('opacity', '1');
+  await expect(page.getByTestId('apartment-lights').locator('g')).toHaveCount(62);
+  await page.screenshot({ path: 'test-results/deville-night-fixed.png' });
+  await page.getByRole('button', { name: 'Dia', exact: true }).click();
+  await expect(lights).toHaveCSS('opacity', '0');
+  for (const tower of ['Torre 1', 'Torre 2']) {
+    await page.getByRole('button', { name: tower, exact: true }).click();
+    for (const floor of [1, 6, 9]) {
+      await page.getByRole('button', { name: `${floor}º andar, disponibilidade a confirmar`, exact: true }).click();
+      await expect(page.getByTestId('floor-band')).toHaveAttribute('data-selected-floor', `${tower === 'Torre 1' ? 'a' : 'b'}-${floor}`);
+      await page.screenshot({ path: `test-results/floor-${tower === 'Torre 1' ? 'a' : 'b'}-${floor}.png` });
+    }
+  }
+  // Independent cover-projection calculation catches mismatched aspect ratio,
+  // object-position, or zoom between the raster facade and its SVG selection.
+  for (const width of [1920, 1440, 390]) {
+    await page.setViewportSize({ width, height: 1080 });
+    await page.getByRole('button', { name: 'Aproximar cenário', exact: true }).click();
+    const error = await page.evaluate(() => {
+      const image = document.querySelector<HTMLImageElement>('.development-image-world>img')!;
+      const overlay = document.querySelector<SVGSVGElement>('.development-scene-overlay')!;
+      const bounds = image.getBoundingClientRect();
+      const scale = Math.max(bounds.width / image.naturalWidth, bounds.height / image.naturalHeight);
+      const point = overlay.createSVGPoint(); point.x = 1012; point.y = 222;
+      const actual = point.matrixTransform(overlay.getScreenCTM()!);
+      const expected = { x: bounds.x + (bounds.width - image.naturalWidth * scale) / 2 + 1012 * scale, y: bounds.y + (bounds.height - image.naturalHeight * scale) / 2 + 222 * scale };
+      return Math.hypot(actual.x - expected.x, actual.y - expected.y);
+    });
+    expect(error).toBeLessThan(.1);
+    await expect(page.getByTestId('floor-band')).toBeAttached();
+    await page.getByRole('button', { name: 'Restaurar visão geral', exact: true }).click();
+  }
 });
 
 test('mobile scene, panels, galleries and reduced-motion layout stay usable', async ({ page }) => {

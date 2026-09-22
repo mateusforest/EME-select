@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, ArrowUpRight, Box, Check, ChevronLeft, ChevronRi
 import { Dialog } from '../ui';
 import { whatsappUrl } from '../data';
 import { ASSETS, floorState, floors, galleries, MORADAS_ROUTE, units, type GalleryId, type Lighting, type Place, type TowerId } from './moradas';
+import SceneOverlay from './SceneOverlay';
 import type { ModelControls } from './DevelopmentModel';
 import './development.css';
 
@@ -50,17 +51,11 @@ export default function DevelopmentPage() {
     catch { setNotice('Você pode compartilhar o endereço desta página.'); }
   }
   function startModel() { setMode('model'); setReady(false); setModelFailed(false); }
-  // Coordinates are tied to the authored 1920×1080 concept render, never to a technical plan.
-  const bandY = tower === 'a' ? 813 - floor * 59 : 681 - floor * 47;
-  const bandX = tower === 'a' ? 924 : 550;
-  const bandWidth = tower === 'a' ? 357 : 299;
   return <main id="conteudo" className={`development-page development-page--${mode}`} ref={pageRef}>
     <div className={`development-stage development-stage--${lighting}`} data-testid="development-stage">
       {mode === 'image' ? <div className="development-image-world" style={{ transform: `scale(${zoom})` }}>
         <img src={`${ASSETS}hero.webp`} alt="Reconstrução visual conceitual das duas torres do Moradas da Serra, com áreas de convivência" fetchPriority="high" />
-        <svg className="development-floor-overlay" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          {place === 'floors' && <g><path d={`M ${bandX} ${bandY} L ${bandX + bandWidth * .7} ${bandY + 16} L ${bandX + bandWidth} ${bandY - 23} L ${bandX + bandWidth} ${bandY + 28} L ${bandX + bandWidth * .7} ${bandY + 70} L ${bandX} ${bandY + 54} Z`} /><circle cx={bandX + bandWidth * .84} cy={bandY + 15} r="8" /></g>}
-        </svg>
+        <SceneOverlay tower={tower} floor={floor} lighting={lighting} showFloor={place === 'floors'} />
         <div className="development-hotspots">
           <button className="development-hotspot development-hotspot--court" onClick={() => openGallery('court')}><span>Quadra <ArrowUpRight size={12} /></span><i><Plus size={16} /></i></button>
           <button className="development-hotspot development-hotspot--entrance" onClick={() => openGallery('entrance')}><span>Acesso <ArrowUpRight size={12} /></span><i><Plus size={16} /></i></button>
