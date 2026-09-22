@@ -69,7 +69,7 @@ export default function DevelopmentPage() {
     <section className="development-intro" aria-labelledby="development-title">
       <a className="development-back" href="#/"><ArrowLeft size={13} /> Voltar à coleção</a>
       <p className="eyebrow"><span className="tiny-rule" /> DeVille · Vacaria, RS</p>
-      <h1 id="development-title">Moradas da Serra.<em>Seu lugar, por<br />outro ângulo.</em></h1>
+      <h1 id="development-title">Moradas da Serra.<em>Seu lugar, por{' '}<br />outro ângulo.</em></h1>
       <p>Explore as torres, os andares e cada possibilidade.</p>
       <div className="development-view-switch" role="group" aria-label="Visualização do empreendimento">
         <button aria-pressed={mode === 'image'} onClick={() => setMode('image')}><ImageIcon size={14} /> Apresentação</button>
