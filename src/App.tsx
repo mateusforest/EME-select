@@ -11,7 +11,7 @@ import CatalogPage from './CatalogPage';
 import Comparison from './Comparison';
 import { catalogHash, parseCatalogHash } from './catalog';
 import { useSceneNavigation } from './sceneNavigation';
-import AtmospherePlayer from './AtmospherePlayer';
+
 import { ASSETS, MORADAS_ROUTE } from './developments/moradas';
 import './developments/development.css';
 
@@ -33,7 +33,7 @@ function useHash() {
   return hash;
 }
 
-function Header({ tour, favorites, onFavorites, onContact, modalOpen }: { tour: boolean; favorites: number; onFavorites: () => void; onContact: () => void; modalOpen: boolean }) {
+function Header({ tour, favorites, onFavorites, onContact }: { tour: boolean; favorites: number; onFavorites: () => void; onContact: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [exploreOpen, setExploreOpen] = useState(false);
   const exploreRef = useRef<HTMLDivElement>(null);
@@ -63,7 +63,7 @@ function Header({ tour, favorites, onFavorites, onContact, modalOpen }: { tour: 
       <a href="/enviar-imovel">Para proprietários</a>
     </nav>
     <div className="header-actions">
-      <AtmospherePlayer suspended={modalOpen || menuOpen || exploreOpen} />
+
       <button className="icon-button header-heart" aria-label={`Meus favoritos, ${favorites} imóveis`} onClick={onFavorites}><Heart size={20} />{favorites > 0 && <span className="favorite-count">{favorites}</span>}</button>
       <button className="contact-button" onClick={onContact}>Fale com a EME <ArrowUpRight size={17} /></button>
       <button className="icon-button mobile-menu-toggle" aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'} aria-expanded={menuOpen} aria-controls="mobile-menu" onClick={() => setMenuOpen(v => !v)}>{menuOpen ? <X size={23} /> : <Menu size={23} />}</button>
@@ -152,7 +152,7 @@ export default function App() {
   let modalTitle = '';
   if (modal) modalTitle = { favorites: 'Sua seleção', booking: 'Agendar uma visita', documents: 'Documentação e verificações', plan: 'Planta do imóvel', location: 'Localização e entorno', motion: 'A essência da EME', privacy: 'Sua privacidade' }[modal.kind];
   if (modal?.kind === 'plan' && landInquiry) modalTitle = 'Área e implantação';
-  return <><a href="#conteudo" className="skip-link" onClick={event => { event.preventDefault(); const main = document.querySelector('main'); main?.setAttribute('tabindex', '-1'); main?.focus(); }}>Pular para o conteúdo</a><Header tour={isTour} favorites={favorites.length} onFavorites={() => setModal({ kind: 'favorites' })} onContact={contact} modalOpen={Boolean(modal)} />
+  return <><a href="#conteudo" className="skip-link" onClick={event => { event.preventDefault(); const main = document.querySelector('main'); main?.setAttribute('tabindex', '-1'); main?.focus(); }}>Pular para o conteúdo</a><Header tour={isTour} favorites={favorites.length} onFavorites={() => setModal({ kind: 'favorites' })} onContact={contact} />
     {isScene ? <ScenePage key={environment.id} environment={environment} onMotion={() => setModal({ kind: 'motion' })} favorites={favorites} onFavorite={toggleFavorite} />
       : isDevelopment ? <Suspense fallback={<main id="conteudo" className="empty-page" role="status">Preparando o Moradas da Serra…</main>}><DevelopmentPage /></Suspense>
       : parts[0] === 'colecao' ? <CatalogPage state={catalogState} favorites={favorites} comparison={comparison} onFavorite={toggleFavorite} onCompare={toggleComparison} onShare={() => shareRoute(catalogHash(catalogState), 'Link da busca copiado.')} />
