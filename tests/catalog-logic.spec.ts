@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { catalogHash, DEFAULT_CATALOG_STATE, parseCatalogHash, selectCatalog, validateCatalog } from '../src/catalog';
 import type { CatalogState } from '../src/catalog';
-import { properties } from '../src/data';
+import { properties, registerPublishedProperties } from '../src/data';
+
+import {sampleProperties} from './fixtures/catalog';
+test.beforeEach(()=>registerPublishedProperties(sampleProperties));
 
 const state = (values: Partial<CatalogState> = {}): CatalogState => ({ ...DEFAULT_CATALOG_STATE, ...values });
 
@@ -82,4 +85,14 @@ test('ordering is deterministic and never reorders the source catalog', () => {
   expect(selectCatalog(state({ sort: 'maior-area' })).map(property => property.area)).toEqual(purchaseProperties.map(property => property.area).sort((a, b) => b - a));
   expect(selectCatalog(state()).map(property => property.id)).toEqual(originalIds.filter(id => properties.find(property => property.id === id)?.operation === 'comprar'));
   expect(properties.map(property => property.id)).toEqual(originalIds);
+});
+
+test('location profiles round-trip and isolate matching real listings',()=>{
+ registerPublishedProperties(sampleProperties.map(p=>({...p,locationProfile:p.id==='litoral-01'?'beira-mar':'centro'})));
+ const scoped=state({region:'litoral',type:'Casa',locationProfile:'beira-mar'});
+ expect(parseCatalogHash(catalogHash(scoped))).toEqual(scoped);
+ expect(selectCatalog(scoped).map(p=>p.id)).toEqual(['litoral-01']);
+ expect(parseCatalogHash('#/colecao?regiao=industrial&localizacao=beira-mar').locationProfile).toBe('');
+ registerPublishedProperties([{...sampleProperties[0],isIllustrative:true}]);
+ expect(selectCatalog(state())).toEqual([]);
 });

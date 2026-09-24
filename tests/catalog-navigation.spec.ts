@@ -1,4 +1,7 @@
+import {sampleProperties} from './fixtures/catalog';
 import { expect, test, type Page } from '@playwright/test';
+
+test.beforeEach(async({page})=>{await page.route('**/api/public/properties',r=>r.fulfill({json:{properties:sampleProperties}}));});
 
 const compare = (page: Page, title: string) => page.getByRole('button', { name: `Comparar ${title}`, exact: true });
 const row = (page: Page, title: string) => page.getByRole('article').filter({ has: compare(page, title) });

@@ -63,3 +63,6 @@
  .scene-page--spatial.scene-page--photographic .scene-selection h2{font-size:24px}
 }
 @media(prefers-reduced-motion:reduce){.photographic-home__image,.photographic-home__label,.photographic-home__dot,.photographic-home__scrim{transition:none}}
+
+.scene-location-tabs{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 17px;pointer-events:auto}.scene-location-tabs button{padding:8px 11px;font-size:10px;border:1px solid #173c3233;border-radius:3px;background:#f8f6eef2;color:#173c32}.scene-location-tabs button[aria-pressed=true]{background:#173c32;color:#faf8f1}@media(max-width:600px){.scene-location-tabs{gap:4px;margin-bottom:12px}.scene-location-tabs button{font-size:9px;padding:8px}}
+.collection-connection-notice{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:70;background:#f6f4ec;border:1px solid #899b82;padding:12px 18px;box-shadow:0 4px 18px #173c3220;color:#173c32;font-size:12px;max-width:calc(100% - 24px);width:max-content}.collection-connection-notice button{text-decoration:underline;padding:5px;color:inherit}

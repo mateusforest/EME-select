@@ -1,3 +1,5 @@
+import {createDevelopmentApi} from '../developments.mjs';
+import {developmentRecordId} from '../../shared/development.mjs';
 import {submission} from '../submission.mjs';
 import {randomBytes,randomUUID,createHash,timingSafeEqual} from 'node:crypto';
 import sharp from 'sharp';
@@ -18,6 +20,13 @@ export function createCloudApi({env=process.env,client=createClient(env)}={}){
  const members=()=>rest('eme_profiles?select=id,name,email,role,active,must_change&order=created_at');
  const tokenOf=req=>(String(req.headers.cookie||'').split(';').map(v=>v.trim()).find(v=>v.startsWith(cookieName+'='))||'').slice(cookieName.length+1);
  const hashOf=req=>digest(tokenOf(req));
+ const developments=createDevelopmentApi({
+  read:async()=>(await rest('eme_cases?id=eq.'+developmentRecordId))[0]||null,
+  write:async(req,row,data,user,action)=>save(req,row||{id:developmentRecordId,version:0,assignee_id:user.id},data,action,'Configuração, plantas e unidades revisadas pela administração.'),
+  putImage:(id,bytes)=>request('/storage/v1/object/eme-property-photos/development-'+id+'.webp',{method:'POST',raw:true,body:bytes,headers:{'Content-Type':'image/webp','x-upsert':'false'}}),
+  getImage:async id=>Buffer.from(await (await request('/storage/v1/object/authenticated/eme-property-photos/development-'+id+'.webp',{raw:true})).arrayBuffer()),
+  deleteImage:id=>request('/storage/v1/object/eme-property-photos',{method:'DELETE',body:{prefixes:['development-'+id+'.webp']}}),
+ });
  const finance=attachCloudFinance({client,hashOf});
  const intelligence=attachCloudIntelligence({client,hashOf,caseFor,env});
  const operations=attachCloudOperations({client,hashOf});
@@ -25,7 +34,7 @@ export function createCloudApi({env=process.env,client=createClient(env)}={}){
  function setCookie(res,token,expired=false){res.setHeader('Set-Cookie',`${cookieName}=${token}; Path=/api; HttpOnly; SameSite=Strict; Secure; Max-Age=${expired?0:28800}`);}
  async function session(req){const token=tokenOf(req);if(!/^[\w-]{43}$/.test(token))return null;const rows=await rest('eme_sessions?token_hash=eq.'+digest(token)+'&select=*,eme_profiles(*)');const row=rows[0];if(!row||!row.eme_profiles.active||Date.parse(row.expires_at)<Date.now()||Date.parse(row.last_seen)<Date.now()-1800000)return null;await rest('eme_sessions?token_hash=eq.'+digest(token),'PATCH',{last_seen:new Date().toISOString()});return row.eme_profiles;}
  async function openSession(req,res,id){await rest('eme_sessions?token_hash=eq.'+hashOf(req),'DELETE');const token=randomBytes(32).toString('base64url');await rest('eme_sessions','POST',{token_hash:digest(token),user_id:id,expires_at:new Date(Date.now()+28800000).toISOString()});setCookie(res,token);}
- async function caseFor(id,u){const row=(await rest('eme_cases?id=eq.'+id))[0];if(!row||u.role!=='admin'&&row.assignee_id!==u.id)fail(404,'Imóvel não encontrado.');return row;}
+ async function caseFor(id,u){const row=(await rest('eme_cases?id=eq.'+id))[0];if(!row||row.data.kind==='development'||u.role!=='admin'&&row.assignee_id!==u.id)fail(404,'Imóvel não encontrado.');return row;}
  async function save(req,row,data,action,detail,assignee=row.assignee_id){const result=await rpc('eme_save_case',{p_session:hashOf(req),p_id:row.id,p_version:row.version||0,p_data:data,p_assignee:assignee,p_action:action,p_detail:detail});return Array.isArray(result)?result[0]:result;}
  async function details(row){const [people,history]=await Promise.all([members(),rest('eme_audit?case_id=eq.'+row.id+'&select=id,action,detail,created_at,eme_profiles(name)&order=id.desc')]);return {evaluation:evaluation(row,people),curation:curation(row.data),history:history.map(h=>({...h,author:h.action==='Envio pelo site'?'Site EME Select':h.eme_profiles?.name||'Equipe',eme_profiles:undefined}))};}
  async function createAuth(name,address,secret){const result=await request('/auth/v1/admin/users',{method:'POST',body:{email:address,password:secret,email_confirm:true,user_metadata:{name}}});return result.user||result;}
@@ -41,6 +50,7 @@ export function createCloudApi({env=process.env,client=createClient(env)}={}){
    if(!allowed.includes(req.headers.host))fail(403,'Host não permitido.');if(!['GET','POST','PATCH'].includes(req.method))fail(405,'Método não permitido.');
    if(req.method!=='GET'&&(![`https://${req.headers.host}`,...(env.EME_TEST_HOST===req.headers.host?[`http://${req.headers.host}`]:[])].includes(req.headers.origin)||req.headers['sec-fetch-site']==='cross-site'))fail(403,'Origem não permitida.');
    let body=null;if(req.method!=='GET'){if(!String(req.headers['content-type']).startsWith('application/json'))fail(415,'Envie JSON.');if(req.body!==undefined){body=typeof req.body==='string'?JSON.parse(req.body):req.body;if(Buffer.byteLength(JSON.stringify(body))>3000000)fail(413,'Arquivo grande demais.');}else{let size=0;const chunks=[];for await(const part of req){size+=part.length;if(size>3000000)fail(413,'Arquivo grande demais.');chunks.push(part);}try{body=JSON.parse(Buffer.concat(chunks));}catch{fail(400,'Solicitação inválida.');}}}
+   if(await developments.publicHandle(path,req,res,send))return;
    if(path==='/api/public/properties'&&req.method==='GET'){const rows=await rest('eme_cases?select=id,data->published&data->>stage=eq.Entrada%20aprovada&data->published=not.is.null');return send(200,{properties:rows.map(r=>r.published).filter(Boolean)});}
    if(path==='/api/public/submissions'&&req.method==='POST'){
     if(Buffer.byteLength(JSON.stringify(body))>16000)fail(413,'Reduza o tamanho das informações.');
@@ -70,6 +80,7 @@ export function createCloudApi({env=process.env,client=createClient(env)}={}){
     fields(body,['currentPassword','newPassword']);password(body.newPassword);await rate('password:'+user.id,8);await credentials(user.email,body.currentPassword);await request('/auth/v1/admin/users/'+user.id,{method:'PUT',body:{password:body.newPassword}});await rest('eme_profiles?id=eq.'+user.id,'PATCH',{must_change:false});await rest('eme_sessions?user_id=eq.'+user.id,'DELETE');await openSession(req,res,user.id);return send(200,{user:safe({...user,must_change:false})});
    }
    if(user.must_change)fail(403,'Atualize sua senha inicial.');
+   if(await developments.handle(path,req,res,user,body,send))return;
    if(await finance.handle(path,req,res,user,body,send))return;
    if(await intelligence.handle(path,req,res,user,body,send))return;
    if(await operations.handle(path,req,res,user,body,send))return;
@@ -81,7 +92,7 @@ export function createCloudApi({env=process.env,client=createClient(env)}={}){
    }
    const memberMatch=path.match(/^\/api\/users\/([a-f0-9-]{36})$/);if(memberMatch&&req.method==='PATCH'){admin(user);fields(body,['active']);if(typeof body.active!=='boolean')fail(400,'Situação inválida.');await rpc('eme_set_active',{p_session:hashOf(req),p_id:memberMatch[1],p_active:body.active});return send(200,{ok:true});}
    if(['/api/evaluations','/api/listings'].includes(path)){
-    if(req.method==='GET'){const rows=await rest('eme_cases?order=updated_at.desc'+(user.role==='admin'?'':'&assignee_id=eq.'+user.id));if(path.endsWith('listings'))return send(200,{listings:rows.filter(r=>r.data.draft).map(listing)});const people=await members();return send(200,{evaluations:rows.map(r=>evaluation(r,people))});}
+    if(req.method==='GET'){const rows=(await rest('eme_cases?order=updated_at.desc'+(user.role==='admin'?'':'&assignee_id=eq.'+user.id))).filter(r=>r.data.kind!=='development');if(path.endsWith('listings'))return send(200,{listings:rows.filter(r=>r.data.draft).map(listing)});const people=await members();return send(200,{evaluations:rows.map(r=>evaluation(r,people))});}
     if(req.method==='POST'){await rate('create-case:'+user.id,100);let row,assignee=user.id,data;
      if(path.endsWith('listings')){fields(body,['draft','evaluationId']);const d=draft(body.draft);if(body.evaluationId){row=await caseFor(text(body.evaluationId,36,36),user);if(row.data.draft)fail(409,'Já existe anúncio para esta avaliação.');if(closed.includes(row.data.stage))admin(user);assignee=row.assignee_id;data=changed(syncDraft(row.data,d));}else{row=newCase({});data=changed(syncDraft(row.data,d));}}
      else{fields(body,['title','city','type','operation','owner','assigneeId']);if(!types.includes(body.type)||!['Venda','Locação','Venda e locação'].includes(body.operation))fail(400,'Tipo ou finalidade inválidos.');assignee=body.assigneeId||user.id;row=newCase({title:text(body.title,1,120),city:text(body.city,1,120),owner:text(body.owner||'',0,120),type:body.type,operation:body.operation});data=row.data;}

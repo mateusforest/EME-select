@@ -17,7 +17,11 @@ test('Postgres migration: RLS, ownership, atomic versioning, audit and revocatio
  await save('admin',0,data);await assert.rejects(save('broker',1,data));await save('admin',1,data,ids[1]);await assert.rejects(save('broker',1,data,ids[1]));
  await save('broker',2,data,ids[1]);await assert.rejects(save('broker',3,{...data,stage:'Entrada aprovada'},ids[1]));await save('admin',3,{...data,stage:'Entrada aprovada'},ids[1]);
  assert.equal((await db.query('select count(*)::int n from public.eme_audit where case_id=$1',[caseId])).rows[0].n,4);
- await db.exec('set role anon');await assert.rejects(db.query('select * from public.eme_cases'));await assert.rejects(save('admin',4,data));await db.exec('reset role');
+ const developmentId='e6e00000-0000-4000-8000-000000000001',development={kind:'development',config:{name:'Moradas da Serra',units:[],plans:[]},live:null};
+ const saveDevelopment=(version,body)=>db.query('select * from public.eme_save_case($1,$2,$3,$4,$5,$6,$7)',['admin',developmentId,version,JSON.stringify(body),ids[0],'Empreendimento atualizado','Revisão de teste']);
+ await saveDevelopment(0,development);await saveDevelopment(1,{...development,live:development.config});await assert.rejects(saveDevelopment(1,development));
+ assert.equal((await db.query('select data from public.eme_cases where id=$1',[developmentId])).rows[0].data.live.name,'Moradas da Serra');
+ await db.exec('set role anon');await assert.rejects(db.query('select * from public.eme_cases'));await assert.rejects(save('admin',4,data));await assert.rejects(saveDevelopment(2,development));await db.exec('reset role');
  await db.query('select public.eme_set_active($1,$2,$3)',['admin',ids[1],false]);assert.equal((await db.query("select count(*)::int n from public.eme_sessions where token_hash='broker'")).rows[0].n,0);
  const submitted='00000000-0000-4000-8000-000000000099';const received={title:'Recebido',submissionHash:'same',stage:'Entrada aprovada',published:{unsafe:true}};
  await db.query('select public.eme_receive_submission($1,$2)',[submitted,JSON.stringify(received)]);

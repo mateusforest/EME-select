@@ -1,0 +1,10 @@
+export type DevelopmentPlan={id:string;title:string;area:number|null;bedrooms:number|null;suites:number|null;parking:number|null;imageUrl:string};
+export type ManagedUnit={id:string;tower:'a'|'b';floor:number;label:string;planId:string;status:'unknown'|'available'|'reserved'|'sold';price:number|null;orientation:string};
+export type DevelopmentConfig={name:string;developer:string;location:string;description:string;notes:string;towers:{id:'a'|'b';label:string;floors:number}[];plans:DevelopmentPlan[];units:ManagedUnit[]};
+export type DevelopmentRecord={version:number;config:DevelopmentConfig;published:boolean;publishedAt:string|null};
+export const developmentId:string;
+export const developmentRecordId:string;
+export const unitStatuses:Record<ManagedUnit['status'],string>;
+export function emptyDevelopment():DevelopmentConfig;
+export function validateDevelopment(input:unknown):DevelopmentConfig;
+export function developmentPublicationIssues(config:DevelopmentConfig):string[];

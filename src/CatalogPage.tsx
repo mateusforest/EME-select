@@ -1,6 +1,7 @@
+import { profilesFor, locationProfiles } from '../shared/locations.mjs';
 import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, Heart, MapPin, Ruler, Search, Share2, SlidersHorizontal, X } from 'lucide-react';
-import { environments, hasPublishedProperties, environmentById, money, propertyFacts, propertyTypesForEnvironment, supportsBedrooms, type EnvironmentId, type Property } from './data';
+import { environments, environmentById, money, propertyFacts, propertyTypesForEnvironment, supportsBedrooms, type EnvironmentId, type Property } from './data';
 import { catalogHash, DEFAULT_CATALOG_STATE, selectCatalog, validateCatalog, type CatalogState } from './catalog';
 import './catalog.css';
 
@@ -14,7 +15,7 @@ interface CatalogPageProps {
 }
 
 const collectionLabels: Record<string, string> = {
-  Casa: 'Casas', Apartamento: 'Apartamentos', Compacto: 'Compactos', Cabana: 'Cabanas',
+  Cobertura: 'Coberturas', Casa: 'Casas', Apartamento: 'Apartamentos', Compacto: 'Compactos', Cabana: 'Cabanas',
   'Condomínio horizontal': 'Horizontais', 'Condomínio vertical': 'Verticais',
   Loja: 'Lojas', 'Sala comercial': 'Salas comerciais', 'Edifício corporativo': 'Edifícios corporativos',
   'Terreno urbano': 'Terrenos urbanos', 'Lote em condomínio': 'Lotes em condomínio', 'Terra agrícola': 'Terras agrícolas',
@@ -41,6 +42,7 @@ export default function CatalogPage({ state, favorites, comparison, onFavorite, 
   function update<K extends keyof CatalogState>(key: K, value: CatalogState[K]) {
     setDraft(previous => {
       const next = { ...previous, [key]: value };
+      if (key === 'region') next.locationProfile = '';
       if (key === 'region' && next.type && !propertyTypesForEnvironment(next.region).includes(next.type)) next.type = '';
       if (!supportsBedrooms(next.region, next.type)) next.bedrooms = '';
       return next;
@@ -59,6 +61,7 @@ export default function CatalogPage({ state, favorites, comparison, onFavorite, 
 
   const chips: { key: keyof CatalogState; label: string }[] = [];
   if (state.region !== 'todos') chips.push({ key: 'region', label: region.name });
+  if (state.locationProfile) chips.push({ key: 'locationProfile', label: locationProfiles.find(p=>p.value===state.locationProfile)?.label||state.locationProfile });
   if (state.type) chips.push({ key: 'type', label: state.type });
   if (state.query) chips.push({ key: 'query', label: `“${state.query}”` });
   if (state.minPrice) chips.push({ key: 'minPrice', label: `A partir de ${money(Number(state.minPrice))}` });
@@ -69,13 +72,13 @@ export default function CatalogPage({ state, favorites, comparison, onFavorite, 
   return <main className="catalog-page" id="conteudo">
     <div className="catalog-breadcrumb">
       <a href={state.region === 'todos' ? '#/' : `#/ambientes/${state.region}`}><ArrowLeft size={15} /> Voltar aos ambientes</a>
-      <span>{hasPublishedProperties()?'Imóveis disponíveis · coleção EME Select':'Acervo demonstrativo · valores ilustrativos'}</span>
+      <span>Imóveis publicados · coleção EME Select</span>
     </div>
 
     <section className="catalog-intro" aria-labelledby="catalog-title">
       <div>
         <p className="eyebrow">A coleção EME Select</p>
-        <h1 id="catalog-title">Encontre o seu lugar.</h1>
+        <h1 id="catalog-title">{state.type ? (state.type==='Condomínio horizontal'?'Casas em condomínio':state.type==='Condomínio vertical'?'Condomínios verticais':collectionLabels[state.type]||state.type) : 'Encontre o seu lugar.'}</h1>
         <p>Explore possibilidades. Perceba os detalhes. Escolha o que faz sentido para você.</p>
       </div>
       <button className="catalog-share" onClick={onShare}><Share2 size={17} /> Compartilhar busca <ArrowUpRight size={14} /></button>
@@ -98,7 +101,7 @@ export default function CatalogPage({ state, favorites, comparison, onFavorite, 
           <div className="catalog-filter-heading"><span className="eyebrow">Suas possibilidades</span><SlidersHorizontal size={18} strokeWidth={1.3} /></div>
           <label className="catalog-field" htmlFor="catalog-query"><span>O que você procura?</span><div className="catalog-search-input"><Search size={15} /><input id="catalog-query" value={draft.query} onChange={e => update('query', e.target.value)} maxLength={180} placeholder="Varanda, jardim, natureza…" /></div></label>
           <label className="catalog-field" htmlFor="catalog-operation"><span>Finalidade</span><select id="catalog-operation" value={draft.operation} onChange={e => { setDraft(previous => ({ ...previous, operation: e.target.value as CatalogState['operation'], minPrice: '', maxPrice: '' })); setError(null); }}><option value="comprar">Comprar</option><option value="alugar">Alugar</option></select></label>
-          <label className="catalog-field" htmlFor="catalog-region"><span>Ambiente</span><select id="catalog-region" value={draft.region} onChange={e => update('region', e.target.value as EnvironmentId)}>{environments.map(environment => <option key={environment.id} value={environment.id}>{environment.id === 'todos' ? 'Todos os ambientes' : environment.name}</option>)}</select></label>
+          <label className="catalog-field"><span>Localização</span><select value={draft.locationProfile} onChange={e=>update('locationProfile',e.target.value)}>{profilesFor(draft.region).map(p=><option key={p.value} value={p.value}>{p.label}</option>)}</select></label><label className="catalog-field" htmlFor="catalog-region"><span>Ambiente</span><select id="catalog-region" value={draft.region} onChange={e => update('region', e.target.value as EnvironmentId)}>{environments.map(environment => <option key={environment.id} value={environment.id}>{environment.id === 'todos' ? 'Todos os ambientes' : environment.name}</option>)}</select></label>
           <label className="catalog-field" htmlFor="catalog-type"><span>Tipo de imóvel</span><select id="catalog-type" value={draft.type} onChange={e => update('type', e.target.value)}>{types.map(type => <option key={type} value={type}>{type || 'Todos os tipos'}</option>)}</select></label>
 
           <fieldset className="catalog-price-range"><legend>{draft.operation === 'alugar' ? 'Aluguel mensal · R$' : 'Valor de compra · R$'}</legend><div className="catalog-range-grid">
@@ -130,7 +133,7 @@ export default function CatalogPage({ state, favorites, comparison, onFavorite, 
           {items.map(property => <CatalogProperty key={property.id} property={property} favorite={favorites.includes(property.id)} compared={comparison.includes(property.id)} onFavorite={() => onFavorite(property.id)} onCompare={() => onCompare(property.id)} />)}
         </div>
 
-        {items.length === 0 && <div className="catalog-empty"><Search size={36} strokeWidth={1} /><h2>Vamos abrir<br /><em>novas possibilidades.</em></h2><p>{error ? 'Revise os valores para continuar sua busca.' : 'Nenhum imóvel corresponde a esta combinação. Experimente outro ambiente ou retire um filtro.'}</p><a className="primary-button" href={catalogHash({ operation: state.operation })}>Explorar a coleção <ArrowRight size={18} /></a></div>}
+        {items.length === 0 && <div className="catalog-empty"><Search size={36} strokeWidth={1} /><h2>Vamos abrir<br /><em>novas possibilidades.</em></h2><p>{error ? 'Revise os valores para continuar sua busca.' : 'Ainda não há imóveis publicados para esta seleção. Fale com a EME ou explore outra categoria.'}</p><a className="primary-button" href={catalogHash({ operation: state.operation })}>Explorar a coleção <ArrowRight size={18} /></a></div>}
         {items.length > 0 && <div className="catalog-endnote"><span className="tiny-rule" /><p>Uma boa escolha começa com uma boa conversa.</p><a href="#/curadoria">Entenda nosso olhar <ArrowUpRight size={14} /></a></div>}
       </section>
     </div>

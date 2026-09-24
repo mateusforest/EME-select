@@ -1,0 +1,55 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import http from 'node:http';
+import {mkdtempSync,mkdirSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+import sharp from 'sharp';
+import {createPortalApi} from '../server/portal-api.mjs';
+import {emptyDevelopment} from '../shared/development.mjs';
+
+test('development drafts, authorized plans, publication, persistence and withdrawal',async t=>{
+ mkdirSync('tmp',{recursive:true});const dbPath=join(mkdtempSync(resolve('tmp/development-api-')),'portal.sqlite');
+ let api=createPortalApi({dbPath});const server=http.createServer((req,res)=>api.handle(req,res));
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
+ t.after(async()=>{await new Promise(r=>server.close(r));api.close();});
+ const admin={},broker={},anon={},path='/developments/moradas-da-serra';const password='Development-test-only-2026!';
+ async function req(who,path,body,method=body?'POST':'GET'){
+  const res=await fetch(origin+'/api'+path,{method,headers:{Origin:origin,Cookie:who.cookie||'','Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
+  if(res.headers.get('set-cookie'))who.cookie=res.headers.get('set-cookie').split(';')[0];
+  return {status:res.status,body:res.headers.get('content-type')?.includes('application/json')?await res.json():Buffer.from(await res.arrayBuffer())};
+ }
+ await req(admin,'/auth/setup',{name:'Admin Teste',email:'admin@example.test',password});
+ await req(admin,'/users',{name:'Corretor Teste',email:'broker@example.test',password,role:'corretor'});
+ await req(broker,'/auth/login',{email:'broker@example.test',password});await req(broker,'/auth/password',{currentPassword:password,newPassword:password+'2'});
+ assert.equal((await req(anon,path)).status,401);assert.equal((await req(broker,path)).status,403);
+ assert.deepEqual((await req(anon,'/public'+path)).body.config.units,[]);
+ let record=(await req(admin,path)).body;assert.equal(record.version,0);
+ let config=emptyDevelopment();config.units=[{id:'test-unit',tower:'a',floor:6,label:'601',planId:'',status:'available',price:350000,orientation:'Norte'}];
+ let saved=await req(admin,path,{version:0,config},'PATCH');assert.equal(saved.status,200,JSON.stringify(saved.body));record=saved.body;
+ assert.equal((await req(admin,path,{version:0,config},'PATCH')).status,409);
+ assert.equal((await req(admin,path+'/publish',{version:record.version,confirmed:true})).status,409);
+ assert.equal((await req(admin,path,{version:record.version,config:{...config,units:[{...config.units[0],floor:10}]}},'PATCH')).status,400);
+ assert.equal((await req(admin,path+'/images',{version:record.version,content:'data:image/png;base64,ZmFrZQ=='})).status,400);
+ const image=await sharp({create:{width:1600,height:1000,channels:3,background:'#f1eee3'}}).jpeg().withMetadata().toBuffer();
+ const uploaded=await req(admin,path+'/images',{version:record.version,content:'data:image/jpeg;base64,'+image.toString('base64')});assert.equal(uploaded.status,201);record=uploaded.body;
+ const imagePath=record.imageUrl.replace('/api','');
+ assert.notEqual((await req(anon,imagePath)).status,200);assert.equal((await req(broker,imagePath)).status,403);
+ const bytes=await req(admin,imagePath);assert.equal(bytes.status,200);assert.equal((await sharp(bytes.body).metadata()).exif,undefined);
+ config.plans=[{id:'test-plan',title:'Planta 2 dormitórios',area:52,bedrooms:2,suites:0,parking:1,imageUrl:record.imageUrl}];config.units[0].planId='test-plan';
+ record=(await req(admin,path,{version:record.version,config},'PATCH')).body;
+ assert.equal((await req(anon,'/public'+path)).body.published,false);
+ assert.equal((await req(admin,path+'/publish',{version:record.version})).status,400);
+ record=(await req(admin,path+'/publish',{version:record.version,confirmed:true})).body;
+ let publicData=(await req(anon,'/public'+path)).body;assert.equal(publicData.config.units[0].label,'601');assert.equal(publicData.config.plans[0].area,52);assert.equal(publicData.version,undefined);
+ assert.equal((await req(anon,imagePath)).status,200);
+ config.units[0].status='sold';record=(await req(admin,path,{version:record.version,config},'PATCH')).body;
+ assert.equal((await req(anon,'/public'+path)).body.config.units[0].status,'available');
+ record=(await req(admin,path+'/publish',{version:record.version,confirmed:true})).body;
+ api.close();api=createPortalApi({dbPath});assert.equal((await req(anon,'/public'+path)).body.config.units[0].status,'sold');
+ const forged=structuredClone(config);forged.plans[0].imageUrl='/api/development-images/11111111-1111-4111-8111-111111111111';
+ record=(await req(admin,path,{version:record.version,config:forged},'PATCH')).body;
+ assert.equal((await req(admin,path+'/publish',{version:record.version,confirmed:true})).status,400);
+ record=(await req(admin,path+'/unpublish',{version:record.version})).body;
+ assert.deepEqual((await req(anon,'/public'+path)).body.config.units,[]);assert.notEqual((await req(anon,imagePath)).status,200);
+ assert.deepEqual((await req(anon,'/public/properties')).body.properties,[]);
+});

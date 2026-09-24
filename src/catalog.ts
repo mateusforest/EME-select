@@ -1,8 +1,10 @@
+import { profilesFor } from '../shared/locations.mjs';
 import { environments, filterProperties, PROPERTY_TYPE_OPTIONS, propertyTypesForEnvironment, supportsBedrooms } from './data';
 import type { EnvironmentId, Property } from './data';
 
 export interface CatalogState {
   region: EnvironmentId;
+  locationProfile: string;
   operation: 'comprar' | 'alugar';
   type: string;
   query: string;
@@ -14,7 +16,7 @@ export interface CatalogState {
 }
 
 export const DEFAULT_CATALOG_STATE: CatalogState = {
-  region: 'todos', operation: 'comprar', type: '', query: '',
+  region: 'todos', locationProfile: '', operation: 'comprar', type: '', query: '',
   minPrice: '', maxPrice: '', minArea: '', bedrooms: '', sort: 'curadoria',
 };
 
@@ -24,7 +26,7 @@ const sorts = new Set(['curadoria', 'menor-preco', 'maior-preco', 'maior-area'])
 const numericLimits = { minPrice: 1_000_000_000_000, maxPrice: 1_000_000_000_000, minArea: 10_000_000, bedrooms: 100 } as const;
 type NumericKey = keyof typeof numericLimits;
 const keys: Array<[keyof CatalogState, string]> = [
-  ['region', 'regiao'], ['operation', 'operacao'], ['type', 'tipo'], ['query', 'busca'],
+  ['region', 'regiao'], ['locationProfile', 'localizacao'], ['operation', 'operacao'], ['type', 'tipo'], ['query', 'busca'],
   ['minPrice', 'precoMin'], ['maxPrice', 'precoMax'], ['minArea', 'areaMin'],
   ['bedrooms', 'quartos'], ['sort', 'ordem'],
 ];
@@ -46,6 +48,7 @@ function sanitize(input: Partial<CatalogState>): CatalogState {
   if (typeof input.region === 'string' && regions.has(input.region)) state.region = input.region;
   if (input.operation === 'comprar' || input.operation === 'alugar') state.operation = input.operation;
   if (typeof input.type === 'string' && types.has(input.type)) state.type = input.type;
+  if (profilesFor(state.region).some(p=>p.value===input.locationProfile)) state.locationProfile = input.locationProfile!;
   if (typeof input.query === 'string') state.query = input.query.slice(0, 180);
   if (typeof input.sort === 'string' && sorts.has(input.sort)) state.sort = input.sort;
   for (const key of Object.keys(numericLimits) as NumericKey[]) {
@@ -104,6 +107,7 @@ export function validateCatalog(state: CatalogState): string | null {
 export function selectCatalog(state: CatalogState): Property[] {
   if (validateCatalog(state)) return [];
   const result = filterProperties(state.region, state.operation, state.type, state.query).filter(property => {
+    if (state.locationProfile && property.locationProfile !== state.locationProfile) return false;
     if (state.minPrice !== '' && property.price < Number(state.minPrice)) return false;
     if (state.maxPrice !== '' && property.price > Number(state.maxPrice)) return false;
     if (state.minArea !== '' && property.area < Number(state.minArea)) return false;

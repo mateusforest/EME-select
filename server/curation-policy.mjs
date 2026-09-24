@@ -3,7 +3,7 @@ export const SELECT_POLICY = 'EME-select-v2-pilot';
 
 const closed = ['Entrada aprovada', 'Não selecionado'];
 const families = {
-  residential: {label:'Residencial',types:['Casa','Casa em condomínio','Apartamento','Compacto','Cabana'],weights:[25,25,20,20,10]},
+  residential: {label:'Residencial',types:['Casa','Casa em condomínio','Apartamento','Cobertura','Compacto','Cabana'],weights:[25,25,20,20,10]},
   commercial: {label:'Comercial',types:['Sala comercial','Loja','Edifício corporativo'],weights:[25,25,20,20,10]},
   industrial: {label:'Industrial e logístico',types:['Galpão','Pavilhão','Centro de distribuição'],weights:[25,30,15,20,10]},
   land: {label:'Terrenos',types:['Terreno urbano','Lote em condomínio'],weights:[25,25,20,15,15]},

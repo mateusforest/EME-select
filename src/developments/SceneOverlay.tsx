@@ -33,15 +33,15 @@ const grounds = [
   [797, 696], [888, 691], [1019, 713], [1100, 662], [543, 605], [629, 611],
   [1237, 714], [1277, 720], [1337, 700], [1416, 722], [1490, 747], [1540, 760],
 ];
-export default function SceneOverlay({ tower, floor, lighting, showFloor }: { tower: TowerId; floor: number; lighting: Lighting; showFloor: boolean }) {
+export default function SceneOverlay({ tower, floor, lighting, showFloor, onSelectFloor, unavailable = [] }: { tower: TowerId; floor: number; lighting: Lighting; showFloor: boolean; onSelectFloor:(floor:number,tower:TowerId)=>void; unavailable?:string[] }) {
   const uid = useId().replace(/:/g, '');
   const glow = `${uid}-glow`, pane = `${uid}-pane`;
-  return <svg className="development-scene-overlay" viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  return <svg className="development-scene-overlay" viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid slice" role="group" aria-label="Selecionar andar diretamente nas torres">
     <defs>
       <radialGradient id={glow}><stop stopColor="#ffe3a7" stopOpacity=".7" /><stop offset=".35" stopColor="#ffc875" stopOpacity=".24" /><stop offset="1" stopColor="#ffbd64" stopOpacity="0" /></radialGradient>
       <linearGradient id={pane} x2="0" y2="1"><stop stopColor="#fff2c8" /><stop offset="1" stopColor="#e9a957" /></linearGradient>
     </defs>
-    <g className="development-scene-lights" data-lighting={lighting} data-testid="scene-lights">
+    <g className="development-scene-lights" data-lighting={lighting} data-testid="scene-lights" aria-hidden="true">
       <g data-testid="apartment-lights">
         {windows.filter(window => window.lit).map((window, i) => {
           const { x, y, w, h, slope } = window;
@@ -64,6 +64,10 @@ export default function SceneOverlay({ tower, floor, lighting, showFloor }: { to
         <path d="M1282 779 L1335 761 L1469 799" fill="none" stroke="#c1f6f1" strokeWidth="1.5" opacity=".55" />
       </g>
     </g>
-    {showFloor && <polygon className="development-floor-band" data-testid="floor-band" data-selected-floor={`${tower}-${floor}`} points={floorOutline(tower, floor)} />}
+    {showFloor && <polygon className="development-floor-band" data-testid="floor-band" data-selected-floor={`${tower}-${floor}`} points={floorOutline(tower, floor)} aria-hidden="true" />}
+    {(['b','a'] as const).flatMap(id=>Array.from({length:9},(_,index)=>{
+      const level=index+1,disabled=unavailable.includes(`${id}-${level}`);
+      return <polygon key={`${id}-${level}`} className="development-floor-hit" points={floorOutline(id,level)} role="button" tabIndex={disabled?-1:0} aria-label={`Selecionar torre ${id==='a'?'1':'2'}, ${level}º andar no prédio`} aria-disabled={disabled} aria-pressed={showFloor&&tower===id&&floor===level} onClick={()=>{if(!disabled)onSelectFloor(level,id);}} onKeyDown={e=>{if(!disabled&&['Enter',' '].includes(e.key)){e.preventDefault();onSelectFloor(level,id);}}}><title>{`${level}º andar${disabled?' · indisponível':''}`}</title></polygon>;
+    }))}
   </svg>;
 }

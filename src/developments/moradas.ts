@@ -12,8 +12,8 @@ export const units: DevelopmentUnit[] = [];
 export const floors = [9, 8, 7, 6, 5, 4, 3, 2, 1];
 export function floorState(tower: TowerId, floor: number, inventory: DevelopmentUnit[] = units) {
   const matches = inventory.filter(unit => unit.tower === tower && unit.floor === floor);
-  if (!matches.length || matches.some(unit => unit.status === 'unknown')) return 'unknown';
   if (matches.some(unit => unit.status === 'available')) return 'available';
+  if (!matches.length || matches.some(unit => unit.status === 'unknown')) return 'unknown';
   return 'unavailable';
 }
 export const galleries: Record<GalleryId, { title: string; note: string; images: { file: string; caption: string }[] }> = {

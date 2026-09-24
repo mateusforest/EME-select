@@ -1,3 +1,5 @@
+import {createDevelopmentApi} from './developments.mjs';
+import {types} from './cloud/domain.mjs';
 import {submission} from './submission.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { randomBytes, randomUUID, scrypt as scryptCallback, timingSafeEqual, createHash } from 'node:crypto';
@@ -15,7 +17,6 @@ const COOKIE = 'eme_portal_session';
 const MAX_AGE = 8 * 60 * 60 * 1000;
 const IDLE = 30 * 60 * 1000;
 const roles = ['admin', 'corretor'];
-const types = ['Casa','Casa em condomínio','Apartamento','Compacto','Sala comercial','Loja','Galpão','Pavilhão','Terreno urbano','Terra agrícola'];
 const stages = ['Recebido','Em avaliação','Ajustes solicitados'];
 const digest = value => createHash('sha256').update(value).digest('hex');
 const fail = (status, message) => { const error = new Error(message); error.status = status; throw error; };
@@ -120,6 +121,14 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
     curation: curation.read(caseFor(id,user)),
     history: db.prepare('SELECT audit.id, audit.action, audit.detail, audit.created_at, users.name AS author FROM audit JOIN users ON users.id=audit.actor_id WHERE evaluation_id=? ORDER BY audit.id DESC').all(id)
   });
+  db.exec('CREATE TABLE IF NOT EXISTS development_config(id INTEGER PRIMARY KEY CHECK(id=1), version INTEGER NOT NULL, data TEXT NOT NULL); CREATE TABLE IF NOT EXISTS development_images(id TEXT PRIMARY KEY, data BLOB NOT NULL);');
+  const developments=createDevelopmentApi({
+    read:async()=>{const row=db.prepare('SELECT * FROM development_config WHERE id=1').get();return row?{...row,data:JSON.parse(row.data)}:null;},
+    write:async(req,row,data,user,action)=>transaction(()=>{const current=db.prepare('SELECT version FROM development_config WHERE id=1').get();if((current?.version||0)!==(row?.version||0))fail(409,'O empreendimento mudou. Recarregue.');const version=(row?.version||0)+1;db.prepare('INSERT INTO development_config(id,version,data) VALUES(1,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,data=excluded.data').run(version,JSON.stringify(data));audit(user.id,action,'Plantas e unidades atualizadas.');return {version,data};}),
+    putImage:async(id,bytes)=>db.prepare('INSERT INTO development_images(id,data) VALUES(?,?)').run(id,bytes),
+    getImage:async id=>{const row=db.prepare('SELECT data FROM development_images WHERE id=?').get(id);if(!row)fail(404,'Planta não encontrada.');return row.data;},
+    deleteImage:async id=>db.prepare('DELETE FROM development_images WHERE id=?').run(id),
+  });
   const listings = attachListings({db,fail,text,fields,caseFor,transaction,audit,stamp,requireAdmin,send,session});
   const finance = attachFinance({db,transaction,stamp,fail,send});
   const intelligence = attachIntelligence({db,dbPath,transaction,stamp,caseFor,consume,send});
@@ -142,12 +151,13 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
       if (req.method !== 'GET') {
         if (req.headers.origin !== host.origin || req.headers['sec-fetch-site'] === 'cross-site') fail(403, 'Origem não permitida.');
       }
+      if (await developments.publicHandle(path,req,res,(status,value)=>send(res,status,value))) return true;
       if (await listings.publicHandle(path,req,res)) return true;
-      const isPhotoUpload = /^\/api\/listings\/[a-f0-9-]{36}\/photos$/.test(path);
+      const isPhotoUpload = path==='/api/developments/moradas-da-serra/images' || /^\/api\/listings\/[a-f0-9-]{36}\/photos$/.test(path);
       if (isPhotoUpload) { const access=session(req); if(!access||access.must_change)fail(401,'Entre para enviar fotografias.'); }
       const isDocumentUpload = path === '/api/operations/commands';
       if (isDocumentUpload) { const access=session(req); if(!access||access.must_change)fail(401,'Entre para registrar a operação.'); }
-      const requestBody = req.method === 'GET' ? null : await json(req,isPhotoUpload?11300000:isDocumentUpload?3000000:32768);
+      const requestBody = req.method === 'GET' ? null : await json(req,isPhotoUpload?11300000:isDocumentUpload?3000000:path.startsWith('/api/developments/')?120000:32768);
       if(path==='/api/public/submissions'&&req.method==='POST'){
         consume('submission:'+digest(req.socket.remoteAddress||'unknown'),6);
         const entry=submission(requestBody),d=entry.data.draft,payloadHash=digest(JSON.stringify(entry.data));
@@ -227,6 +237,7 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
       if (await intelligence.handle(path,req,res,user,requestBody)) return true;
       if (await operations.handle(path,req,res,user,requestBody)) return true;
       if (await whatsapp.handle(path,req,res,user,requestBody)) return true;
+      if (await developments.handle(path,req,res,user,requestBody,(status,value)=>send(res,status,value))) return true;
       if (await listings.handle(path,req,res,user,requestBody)) return true;
       if (curation.handle(path,req,res,user,requestBody,caseDetails)) return true;
       if (path === '/api/assignees' && req.method === 'GET') {

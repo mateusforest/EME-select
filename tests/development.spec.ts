@@ -1,8 +1,9 @@
+import {emptyDevelopment} from '../shared/development.mjs';
 import { test, expect } from '@playwright/test';
 import { floorState } from '../src/developments/moradas';
 
 const route = '/#/empreendimentos/moradas-da-serra';
-test.beforeEach(async ({ page }) => { await page.route('**/api/public/properties', request => request.fulfill({ json: { properties: [] } })); });
+test.beforeEach(async ({ page }) => { await page.route('**/api/public/developments/moradas-da-serra',r=>r.fulfill({json:{config:emptyDevelopment(),published:false}})); await page.route('**/api/public/properties', request => request.fulfill({ json: { properties: [] } })); });
 
 test('unknown stock is not availability and sold-out floors cannot be offered', () => {
   expect(floorState('a', 6, [])).toBe('unknown');

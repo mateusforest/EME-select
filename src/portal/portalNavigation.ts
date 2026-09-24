@@ -14,6 +14,7 @@ export interface PortalNavigationItem {
 export const portalNavigation: PortalNavigationItem[] = [
   { id: 'hoje', label: 'Visão geral', title: 'Seu olhar. Agora, com continuidade.', description: 'Acompanhe sua carteira e os próximos passos.', icon: LayoutDashboard, group: 'Sua operação', status: 'active' },
   { id: 'imoveis', label: 'Imóveis e anúncios', title: 'Cada lugar merece uma boa apresentação.', description: 'Cadastro, fotografias e apresentação de cada imóvel.', icon: House, group: 'Sua operação', status: 'active' },
+  { id: 'empreendimentos', label: 'Empreendimentos', title: 'Uma experiência completa. Unidade por unidade.', description: 'Cenário DeVille, plantas, andares e disponibilidade.', icon: House, group: 'Sua operação', status: 'active', adminOnly: true },
   { id: 'avaliacoes', label: 'Avaliações', title: 'Cada imóvel começa com uma boa leitura.', description: 'Cadastro, responsável, curadoria e histórico em um só lugar.', icon: ClipboardCheck, group: 'Sua operação', status: 'active' },
   { id: 'relacionamento', label: 'Atendimento e visitas', title: 'Toda conversa merece continuidade.', description: 'Histórico de contatos, agenda de visitas e controle de chaves.', icon: MessageSquare, group: 'Sua operação', status: 'active' },
   { id: 'locacoes', label: 'Locações', title: 'Cuidar também é acompanhar.', description: 'Contratos, manutenção e compromissos da administração mensal.', icon: KeyRound, group: 'Sua operação', status: 'active' },
