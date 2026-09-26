@@ -1,0 +1,42 @@
+.g400-page .development-intro{width:26%;left:4.5%}
+.g400-page .development-intro h1{font-size:clamp(30px,2.7vw,48px)}
+.g400-name{display:block;font:300 clamp(66px,6.5vw,116px)/.95 var(--sans,sans-serif);letter-spacing:-.08em;margin-bottom:26px}
+.g400-name>span{display:block;font:400 10px/1.6 var(--sans,sans-serif);text-transform:uppercase;letter-spacing:.31em;margin-top:13px}
+.g400-name>img{display:block;width:clamp(210px,18vw,300px);max-width:100%;height:auto}
+.g400-name>.g400-logo-accessible{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.g400-page .development-intro h1 em{font-size:inherit}
+.g400-location{margin-top:24px;border-top:1px solid var(--line);padding:15px 0;font-size:11px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;text-align:left;max-width:240px}
+.g400-location small{width:100%;font-size:9px;color:#607568}
+.g400-page .development-panel{right:3%;width:272px}
+.g400-page .development-veil{background:linear-gradient(90deg,#f6f4ecf5 0%,#f6f4ece6 17%,#f6f4ec91 28%,transparent 43%,transparent 75%,#f6f4ec45),linear-gradient(0deg,#f6f4ec 0%,#f6f4ece0 6%,transparent 23%)}
+.g400-page .development-stage--day .development-image-world>img{filter:saturate(.82)}
+.g400-page .development-stage--sunset .development-image-world>img{filter:sepia(.28) saturate(.83) brightness(.83)}
+.g400-window-lights{transition:opacity 1s;pointer-events:none;mix-blend-mode:screen}
+.g400-scene-overlay .development-floor-band{pointer-events:none}
+.g400-hotspot-roof{left:55%;top:22%}.g400-hotspot-interiors{left:41%;top:47%}.g400-hotspot-leisure{left:63%;top:72%}
+.g400-floors{grid-template-columns:repeat(3,1fr)}
+.g400-floors button:last-child{grid-column:1/-1;justify-content:space-between}
+.g400-floors small{display:inline!important;font-size:11px}
+.g400-floor-roof{font-size:10px}
+.g400-unit-list{margin:12px 0 0}
+.g400-unit-list>button{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;padding:12px 0;border-bottom:1px solid var(--line);text-align:left;min-height:54px}
+.g400-unit-list>button:hover{color:#97755c}
+.g400-unit-list strong{font-size:14px;font-weight:500}
+.g400-unit-list strong small{font-size:11px;font-weight:400}
+.g400-unit-list>button>span>span{display:block;font-size:10px;color:#617362;margin-top:6px}
+.g400-unit-list i{font-style:normal;margin:0 5px}
+.g400-project-note{font-size:9px;line-height:1.7;color:#62725f;margin:13px 0 16px}
+.g400-page .development-bottom{left:4.5%;right:3%}
+.g400-enlarge-plan{margin:0 0 16px;font-size:12px;min-height:40px}
+.g400-dialog .development-gallery-image.g400-plan-enlarged{display:block;overflow:auto;height:65svh;overscroll-behavior:contain}
+.g400-dialog .g400-plan-enlarged img{width:1920px;max-width:none;height:auto;object-fit:initial}
+.g400-dialog .development-gallery-image.is-plan{background:#a5a5a5}
+.g400-dialog .development-gallery-image img{flex:none}
+.g400-feature{background:#e9e8df}
+.g400-feature>img{object-position:center}
+@media(min-width:1700px){.g400-page .development-panel{width:300px}.g400-name{margin-bottom:32px}}
+@media(max-width:1200px) and (min-width:901px){.g400-page .development-panel{width:235px;right:2%;padding:17px}.g400-page .development-intro{left:3%;width:26%}.g400-page .development-bottom{left:3%;right:2%;gap:10px}.g400-page .development-bottom button{padding:10px}.g400-page .development-controls span{display:none}.g400-page .development-intro h1{font-size:30px}.g400-location{max-width:215px}}
+@media(max-width:900px){.g400-page{display:flex;flex-direction:column;padding:0 0 235px;min-height:0}.g400-page .development-intro{position:relative;left:auto;top:auto;width:auto;padding:26px 5% 0;min-height:0}.g400-page .development-intro h1{font-size:32px;margin-bottom:15px;max-width:500px}.g400-name{font-size:66px;margin-bottom:14px}.g400-page .development-intro h1 em br{display:none}.g400-page .development-intro>p:not(.eyebrow){max-width:420px;font-size:12px;margin-bottom:14px}.g400-page .development-stage{position:relative;inset:auto;height:480px;order:1;margin-top:10px}.g400-page .development-veil{display:none}.g400-page .development-panel-toggle{display:flex;order:2;margin:0 5%;padding:17px 0;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);z-index:2;font-size:12px}.g400-page .development-panel{position:relative;top:auto;right:auto;width:auto;max-height:none;margin:16px 5% 0;padding:22px;order:3;box-shadow:none}.g400-page .development-bottom{bottom:55px;left:5%;right:5%}.g400-page .development-controls{position:static;margin:0 0 0 auto}.g400-page .development-controls small{display:none}.g400-page .development-footnote{left:5%;right:5%;max-width:none;bottom:18px}.g400-location{margin-top:8px;max-width:none}.g400-page .development-image-world{transform-origin:50% 50%}.g400-page .development-stage:after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(#f6f4ec,transparent 13%,transparent 90%,#f6f4ec)}.g400-page .development-model{inset:0}.g400-page .development-loading{top:50%}}
+@media(max-width:600px){.g400-page .development-stage{height:420px}.g400-page .development-intro{padding:22px 24px 0}.g400-page .development-intro h1{font-size:30px}.g400-page .development-intro .eyebrow{margin-bottom:15px}.g400-page .development-panel-toggle{margin:0 24px}.g400-page .development-panel{margin:14px 24px 0}.g400-page .development-controls{position:absolute;bottom:-1px;right:0}.g400-page .development-lighting>span{display:none}.g400-page .development-bottom{left:24px;right:24px;bottom:79px}.g400-page .development-controls>div{gap:3px}.g400-page .development-controls button{width:28px}.g400-page .development-lighting button{font-size:9px;padding:10px 8px}.g400-page .development-footnote{left:24px;right:24px;bottom:25px;font-size:8px}.g400-hotspot-roof{left:63%;top:21%}.g400-hotspot-interiors{left:21%;top:51%}.g400-hotspot-leisure{left:78%;top:74%}.g400-page .development-hotspot>span{font-size:9px}.g400-page .development-hotspot>i{width:26px;height:26px}.g400-page .development-gallery-caption strong{font-size:19px}.g400-dialog .development-gallery-caption{gap:12px;align-items:start}.g400-dialog .development-gallery-caption>span{white-space:nowrap}}
+@media(max-width:350px){.g400-page .development-controls{bottom:-40px}.g400-page .development-bottom{bottom:100px}.g400-page .development-stage{height:350px}}
+@media(prefers-reduced-motion:reduce){.g400-window-lights{transition:none}}
