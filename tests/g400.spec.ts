@@ -98,3 +98,46 @@ test('G400 can be discovered from home and the official navigation',async({page}
   await page.getByRole('link',{name:'Explorar G400',exact:true}).click();
   await expect(page.getByRole('heading',{level:1})).toContainText('G400');
 });
+
+test('G400 facade markers stay on the raster at desktop/mobile sizes and zoom',async({page})=>{
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await page.goto(route);
+  await page.locator('.development-image-world>img').evaluate((img:HTMLImageElement)=>img.decode());
+  await page.getByRole('button',{name:'6º andar',exact:true}).click();
+  for(const width of [1920,1440,820,390]){
+    await page.setViewportSize({width,height:1000});
+    await page.getByRole('button',{name:'Aproximar cenário',exact:true}).click();
+    const error=await page.evaluate(()=>{
+      const img=document.querySelector<HTMLImageElement>('.development-image-world>img')!;
+      const svg=document.querySelector<SVGSVGElement>('.g400-scene-overlay')!;
+      const bounds=img.getBoundingClientRect(),scale=Math.max(bounds.width/img.naturalWidth,bounds.height/img.naturalHeight);
+      // The corner of the sixth balcony in the source image.
+      const point=svg.createSVGPoint();point.x=744;point.y=317;
+      const actual=point.matrixTransform(svg.getScreenCTM()!);
+      return Math.hypot(actual.x-(bounds.x+(bounds.width-img.naturalWidth*scale)/2+744*scale),actual.y-(bounds.y+(bounds.height-img.naturalHeight*scale)/2+317*scale));
+    });
+    expect(error).toBeLessThan(.1);
+    await expect(page.getByTestId('g400-floor-band').locator('path')).toHaveAttribute('d','M 692,341 L 744,317 L 857,353');
+    await page.getByRole('button',{name:'Restaurar visão geral',exact:true}).click();
+    await page.getByRole('button',{name:'6º andar',exact:true}).click();
+  }
+  await page.getByRole('button',{name:'Noite',exact:true}).click();
+  await expect(page.getByTestId('g400-window-lights')).toHaveCSS('opacity','1');
+  await page.getByRole('button',{name:'Dia',exact:true}).click();
+  await expect(page.getByTestId('g400-window-lights')).toHaveCSS('opacity','0');
+});
+
+test('mobile G400 3D keeps framing and lights only selected rooms at night',async({page})=>{
+  test.setTimeout(60000);
+  await page.setViewportSize({width:390,height:844});await page.goto(route);
+  await page.getByRole('button',{name:'Explorar em 3D',exact:true}).click();
+  const model=page.getByTestId('g400-model');await expect(model).toHaveAttribute('data-camera',/,/,{timeout:45000});
+  await expect(model).toHaveAttribute('data-lit-windows','0');
+  await page.getByRole('button',{name:'Noite',exact:true}).click();await expect(model).toHaveAttribute('data-lighting','night');
+  const total=Number(await model.getAttribute('data-windows')),lit=Number(await model.getAttribute('data-lit-windows'));
+  expect(lit).toBeGreaterThan(0);expect(lit).toBeLessThan(total*.6);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await model.screenshot({path:'test-results/g400-model-mobile-night.png'});
+  await page.getByRole('button',{name:'Cenário',exact:true}).click();await expect(model).toHaveCount(0);
+  await page.getByRole('button',{name:'Explorar em 3D',exact:true}).click();await expect(model).toHaveAttribute('data-camera',/,/,{timeout:45000});
+});

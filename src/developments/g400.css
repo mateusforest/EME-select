@@ -40,3 +40,19 @@
 @media(max-width:600px){.g400-page .development-stage{height:420px}.g400-page .development-intro{padding:22px 24px 0}.g400-page .development-intro h1{font-size:30px}.g400-page .development-intro .eyebrow{margin-bottom:15px}.g400-page .development-panel-toggle{margin:0 24px}.g400-page .development-panel{margin:14px 24px 0}.g400-page .development-controls{position:absolute;bottom:-1px;right:0}.g400-page .development-lighting>span{display:none}.g400-page .development-bottom{left:24px;right:24px;bottom:79px}.g400-page .development-controls>div{gap:3px}.g400-page .development-controls button{width:28px}.g400-page .development-lighting button{font-size:9px;padding:10px 8px}.g400-page .development-footnote{left:24px;right:24px;bottom:25px;font-size:8px}.g400-hotspot-roof{left:63%;top:21%}.g400-hotspot-interiors{left:21%;top:51%}.g400-hotspot-leisure{left:78%;top:74%}.g400-page .development-hotspot>span{font-size:9px}.g400-page .development-hotspot>i{width:26px;height:26px}.g400-page .development-gallery-caption strong{font-size:19px}.g400-dialog .development-gallery-caption{gap:12px;align-items:start}.g400-dialog .development-gallery-caption>span{white-space:nowrap}}
 @media(max-width:350px){.g400-page .development-controls{bottom:-40px}.g400-page .development-bottom{bottom:100px}.g400-page .development-stage{height:350px}}
 @media(prefers-reduced-motion:reduce){.g400-window-lights{transition:none}}
+
+/* G400 facade: restrained light on the glass and a traced balcony edge. */
+.g400-page .development-stage--night .development-image-world>img{filter:brightness(.49) saturate(.65) hue-rotate(8deg)}
+.g400-floor-selection{pointer-events:none}
+.g400-floor-selection polygon{fill:#edd4ae;fill-opacity:.09;stroke:none}
+.g400-floor-selection path{fill:none;stroke:#f4dcba;stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.g400-scene-overlay .development-floor-hit:hover,.g400-scene-overlay .development-floor-hit:focus{fill:#e4c399;fill-opacity:.14;stroke:none}
+.g400-page .development-panel{border:1px solid #fff8;box-shadow:0 12px 50px #173b2e14;border-radius:3px}
+.g400-page .development-panel-heading h2{font-size:clamp(25px,2.1vw,34px);line-height:1.1;max-width:200px}
+.g400-page .development-floor-detail h3{font-size:24px;line-height:1.2}
+.g400-floors{gap:6px}
+.g400-floors button{min-height:44px;align-items:center}
+.g400-page .development-model{background:#bacdd3}
+@media(min-width:901px){.g400-page.development-page--model .development-model{left:26%;right:19%}.g400-page.development-page--model .development-veil{background:linear-gradient(90deg,#f6f4ec 0%,#f6f4ec 24%,transparent 35%,transparent 68%,#f6f4ec 84%),linear-gradient(0deg,#f6f4ec,transparent 23%,transparent 90%,#f6f4ec)}.g400-page .development-panel{top:24px;max-height:calc(100% - 172px)}}
+@media(max-width:900px){.g400-page.development-page--model .development-stage:after{background:linear-gradient(#f6f4ec,transparent 8%,transparent 94%,#f6f4ec)}.g400-page .development-panel-heading h2{max-width:none}}
+.g400-page .development-controls button:first-child{display:flex}

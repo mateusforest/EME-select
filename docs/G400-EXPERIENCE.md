@@ -31,3 +31,11 @@ Final image prompt:
 `npm run build`; `npx playwright test tests/g400.spec.ts tests/development.spec.ts`.
 
 Covers original unit mapping, five gallery groups (facades, interiors, leisure, residential plans and infrastructure plans), unit-specific inquiry links, plan zoom, keyboard navigation/focus restoration, 320/390/820 mobile layouts, 3D camera/floor/lighting/context loss, discovery links and Moradas regression.
+
+## Visual refinement — 2026-09-26
+
+Replaced approximate full-width floor polygons with balcony regions traced in the panoramic image coordinate system. The selected floor uses a fine warm edge and a restrained tint; recessed timber bays are not crossed by a green slab. Night overlays are individual glass panes, with varied brightness and no light painted onto opaque facade panels.
+
+The navigable model now has seven residential levels over the commercial podium, recessed timber cores, framed corner glazing, balcony slabs and clustered planting, stone/timber/paving textures, a stepped glazed crown and an entrance canopy. Instanced geometry limits draw calls. Environment reflections, directional shadows and selective warm interior emission replace uniformly luminous glazing. Mobile camera fit is responsive; the model remains a conceptual architectural interpretation, not BIM.
+
+Validation adds independent image/SVG cover-projection checks through desktop, tablet, mobile and zoom; selective night-window checks; mobile WebGL remount; plus existing galleries, plans, keyboard, fallback and Moradas regression. Local day/night desktop/mobile visual captures are in ignored `tmp/g400-refinement/`.
