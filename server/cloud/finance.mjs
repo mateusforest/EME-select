@@ -1,3 +1,4 @@
+import {peopleRecordId} from '../people.mjs';
 import {applyFinanceCommand} from '../../shared/finance.mjs';
 import {financeEnvelope, financeFingerprint, financeStateSize, financeAdmin} from '../finance.mjs';
 
@@ -6,7 +7,7 @@ export function attachCloudFinance({client,hashOf}) {
   const metadata=async()=>{
     const [members,properties]=await Promise.all([
       rest('eme_profiles?select=id,name,role,active&order=name'),
-      rest('eme_cases?select=id,data->>title&order=created_at.desc'),
+      rest('eme_cases?id=neq.'+peopleRecordId+'&select=id,data->>title&order=created_at.desc'),
     ]);
     return {members,properties:properties.map(item=>({id:item.id,title:item.title||'Imóvel sem título'}))};
   };

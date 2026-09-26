@@ -23,6 +23,7 @@ export const portalNavigation: PortalNavigationItem[] = [
   { id: 'padrao', label: 'Padrão de curadoria', title: 'O que faz um imóvel ser EME.', description: 'Os critérios utilizados nas novas avaliações, por tipo de imóvel.', icon: SlidersHorizontal, group: 'Gestão e inteligência', status: 'active' },
   { id: 'inteligencia', label: 'Central de IA', title: 'Inteligência com supervisão da EME.', description: 'Conferência da régua e análises com revisão da equipe.', icon: Sparkles, group: 'Gestão e inteligência', status: 'active' },
   { id: 'qualidade', label: 'Qualidade da equipe', title: 'Um padrão que se constrói em equipe.', description: 'Evidências de atendimento para orientar e desenvolver a equipe.', icon: ShieldCheck, group: 'Gestão e inteligência', status: 'active', adminOnly: true },
+  { id: 'pessoas', label: 'Quem faz a EME', title: 'Quem faz a EME.', description: 'Perfis, retratos e cargos apresentados na página inicial.', icon: Users, group: 'Gestão e inteligência', status: 'active', adminOnly: true },
   { id: 'equipe', label: 'Equipe e acessos', title: 'Pessoas certas. Responsabilidades claras.', description: 'Contas individuais e acesso conforme a função.', icon: Users, group: 'Gestão e inteligência', status: 'active', adminOnly: true },
   { id: 'conta', label: 'Minha conta', title: 'Seu acesso, sob seu cuidado.', description: 'Informações da sua conta na EME Select.', icon: KeyRound, group: 'Sua conta', status: 'active' },
 ];

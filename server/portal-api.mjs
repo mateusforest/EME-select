@@ -1,3 +1,4 @@
+import {createPeopleApi} from './people.mjs';
 import {createDevelopmentApi} from './developments.mjs';
 import {types} from './cloud/domain.mjs';
 import {submission} from './submission.mjs';
@@ -129,6 +130,14 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
     getImage:async id=>{const row=db.prepare('SELECT data FROM development_images WHERE id=?').get(id);if(!row)fail(404,'Planta não encontrada.');return row.data;},
     deleteImage:async id=>db.prepare('DELETE FROM development_images WHERE id=?').run(id),
   });
+  db.exec('CREATE TABLE IF NOT EXISTS people_config(id INTEGER PRIMARY KEY CHECK(id=1),version INTEGER NOT NULL,data TEXT NOT NULL); CREATE TABLE IF NOT EXISTS people_images(id TEXT PRIMARY KEY,data BLOB NOT NULL);');
+  const people=createPeopleApi({
+   read:async()=>{const row=db.prepare('SELECT * FROM people_config WHERE id=1').get();return row?{...row,data:JSON.parse(row.data)}:null;},
+   write:async(req,row,data,user,action)=>transaction(()=>{const current=db.prepare('SELECT version FROM people_config WHERE id=1').get();if((current?.version||0)!==(row?.version||0))fail(409,'O cadastro mudou. Recarregue.');const version=(row?.version||0)+1;db.prepare('INSERT INTO people_config(id,version,data) VALUES(1,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,data=excluded.data').run(version,JSON.stringify(data));audit(user.id,action,'Perfis públicos revisados.');return {version,data};}),
+   putImage:async(id,bytes)=>db.prepare('INSERT INTO people_images(id,data) VALUES(?,?)').run(id,bytes),
+   getImage:async id=>{const row=db.prepare('SELECT data FROM people_images WHERE id=?').get(id);if(!row)fail(404,'Retrato não encontrado.');return row.data;},
+   deleteImage:async id=>db.prepare('DELETE FROM people_images WHERE id=?').run(id),
+  });
   const listings = attachListings({db,fail,text,fields,caseFor,transaction,audit,stamp,requireAdmin,send,session});
   const finance = attachFinance({db,transaction,stamp,fail,send});
   const intelligence = attachIntelligence({db,dbPath,transaction,stamp,caseFor,consume,send});
@@ -151,13 +160,14 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
       if (req.method !== 'GET') {
         if (req.headers.origin !== host.origin || req.headers['sec-fetch-site'] === 'cross-site') fail(403, 'Origem não permitida.');
       }
+      if (await people.publicHandle(path,req,res,(status,value)=>send(res,status,value))) return true;
       if (await developments.publicHandle(path,req,res,(status,value)=>send(res,status,value))) return true;
       if (await listings.publicHandle(path,req,res)) return true;
-      const isPhotoUpload = path==='/api/developments/moradas-da-serra/images' || /^\/api\/listings\/[a-f0-9-]{36}\/photos$/.test(path);
+      const isPhotoUpload = path==='/api/people/images' || path==='/api/developments/moradas-da-serra/images' || /^\/api\/listings\/[a-f0-9-]{36}\/photos$/.test(path);
       if (isPhotoUpload) { const access=session(req); if(!access||access.must_change)fail(401,'Entre para enviar fotografias.'); }
       const isDocumentUpload = path === '/api/operations/commands';
       if (isDocumentUpload) { const access=session(req); if(!access||access.must_change)fail(401,'Entre para registrar a operação.'); }
-      const requestBody = req.method === 'GET' ? null : await json(req,isPhotoUpload?11300000:isDocumentUpload?3000000:path.startsWith('/api/developments/')?120000:32768);
+      const requestBody = req.method === 'GET' ? null : await json(req,isPhotoUpload?11300000:isDocumentUpload?3000000:(path.startsWith('/api/developments/')||path==='/api/people')?120000:32768);
       if(path==='/api/public/submissions'&&req.method==='POST'){
         consume('submission:'+digest(req.socket.remoteAddress||'unknown'),6);
         const entry=submission(requestBody),d=entry.data.draft,payloadHash=digest(JSON.stringify(entry.data));
@@ -237,6 +247,7 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
       if (await intelligence.handle(path,req,res,user,requestBody)) return true;
       if (await operations.handle(path,req,res,user,requestBody)) return true;
       if (await whatsapp.handle(path,req,res,user,requestBody)) return true;
+      if (await people.handle(path,req,res,user,requestBody,(status,value)=>send(res,status,value))) return true;
       if (await developments.handle(path,req,res,user,requestBody,(status,value)=>send(res,status,value))) return true;
       if (await listings.handle(path,req,res,user,requestBody)) return true;
       if (curation.handle(path,req,res,user,requestBody,caseDetails)) return true;

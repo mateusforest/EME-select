@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
 import {emptyDraft} from '../src/portal/listingModel';
 test.beforeEach(async({page})=>{
+ await page.route('**/api/public/people',r=>r.fulfill({json:{people:[]}}));
  await page.route('**/api/public/properties',r=>r.fulfill({json:{properties:[]}}));
  await page.route('**/api/auth/session',r=>r.fulfill({json:{user:{id:'test-admin',name:'Equipe EME',email:'admin@example.test',role:'admin',active:true,mustChangePassword:false},needsSetup:false}}));
 });
@@ -22,13 +23,6 @@ test('coast and mountain profiles display distinct scenes and keep responsive la
   expect(sources.size).toBe(3);
  }
  await page.getByRole('button',{name:'Centro',exact:true}).click();await page.screenshot({path:'test-results/serra-centro.png',fullPage:true});await page.setViewportSize({width:390,height:844});await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:'test-results/serra-centro-mobile.png',fullPage:true});expect(pageErrors).toEqual([]);
-});
-test('upscaler loads local model and doubles real pixel dimensions',async({page})=>{
- test.setTimeout(120000);await page.goto('/');
- const value=await page.evaluate(async()=>{
-  const {enhancePhoto}=await import('/src/portal/photoEnhancer.ts');const canvas=document.createElement('canvas');canvas.width=64;canvas.height=48;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#faf5e8';ctx.fillRect(0,0,64,48);ctx.fillStyle='#173c32';ctx.fillRect(12,8,30,32);
-  const progress:number[]=[];const url=await enhancePhoto(canvas.toDataURL(),v=>progress.push(v),new AbortController().signal);const image=new Image();image.src=url;await image.decode();return {width:image.naturalWidth,height:image.naturalHeight,progress};
- });expect(value.width).toBe(128);expect(value.height).toBe(96);expect(value.progress.at(-1)).toBe(100);
 });
 test('photo studio opens comparison and closes accessibly',async({page})=>{
  const item={id:'test-listing',version:1,draft:{...emptyDraft,title:'Casa real',city:'Vacaria · RS'},photos:[{id:'photo',url:'/assets/developments/moradas-da-serra/suite.jpg',caption:'Quarto',room:'Área íntima',width:1280,height:720,position:0}],stage:'Em avaliação',published:false,blockers:['Conclua a curadoria e a aprovação.']};

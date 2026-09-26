@@ -1,3 +1,4 @@
+import {peopleRecordId} from '../people.mjs';
 import {developmentRecordId} from '../../shared/development.mjs';
 import {applyOperationsCommand,operationsScope} from '../../shared/operations.mjs';
 import {financeFingerprint} from '../finance.mjs';
@@ -5,7 +6,7 @@ import {operationsUser,operationsEnvelope,operationsStateSize,prepareOperationsF
 const fail=(status,message)=>{const error=new Error(message);error.status=status;throw error;};
 export function attachCloudOperations({client,hashOf}){
  const {rest,rpc}=client;
- const metadata=async user=>{const [members,properties]=await Promise.all([rest('eme_profiles?select=id,name,role,active&order=name'+(user.role==='admin'?'':'&id=eq.'+user.id)),rest('eme_cases?id=neq.'+developmentRecordId+'&select=id,assignee_id,data->>title&order=created_at.desc'+(user.role==='admin'?'':'&assignee_id=eq.'+user.id))]);return {members,properties:properties.map(item=>({id:item.id,title:item.title||'Imóvel sem título',assigneeId:item.assignee_id}))};};
+ const metadata=async user=>{const [members,properties]=await Promise.all([rest('eme_profiles?select=id,name,role,active&order=name'+(user.role==='admin'?'':'&id=eq.'+user.id)),rest('eme_cases?id=neq.'+peopleRecordId+'&id=neq.'+developmentRecordId+'&select=id,assignee_id,data->>title&order=created_at.desc'+(user.role==='admin'?'':'&assignee_id=eq.'+user.id))]);return {members,properties:properties.map(item=>({id:item.id,title:item.title||'Imóvel sem título',assigneeId:item.assignee_id}))};};
  const row=async()=>{const current=(await rest('eme_operations_state?id=eq.company&select=version,data,updated_at'))[0];if(!current)fail(503,'Os módulos operacionais ainda não foram ativados no servidor.');return current;};
  const snapshot=async user=>{const [current,meta]=await Promise.all([row(),metadata(user)]);const scope=user.role==='admin'?'':'&property_id=in.('+meta.properties.map(item=>item.id).join(',')+')';const history=user.role!=='admin'&&!meta.properties.length?[]:await rest('eme_operations_audit?select=id,action,property_id,created_at,eme_profiles(name)&order=id.desc&limit=200'+scope);return operationsSnapshot(current,meta,user,history.map(item=>({id:item.id,action:item.action,propertyId:item.property_id,createdAt:item.created_at,author:item.eme_profiles?.name||'Equipe EME'})));};
  async function handle(path,req,res,user,body,send){

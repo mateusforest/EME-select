@@ -1,3 +1,4 @@
+import {prepareEnlargement} from './photo-preparation.mjs';
 import {draft as validateDraft} from './cloud/domain.mjs';
 import {photoPublicationIssues} from '../shared/photo-policy.mjs';
 import sharp from 'sharp';
@@ -66,6 +67,12 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
         });send(res,201,detail(row(id,user),user));return true;
       }
     }
+    const prepare=path.match(/^\/api\/listings\/([a-f0-9-]{36})\/prepare-photo$/);
+    if(prepare&&req.method==='POST'){
+      fields(body,['version','sourceId']);const current=row(prepare[1],user);checkVersion(current,body);
+      const source=db.prepare('SELECT data,original_data FROM listing_photos WHERE id=? AND listing_id=?').get(body.sourceId,prepare[1]);
+      if(!source)fail(404,'Fotografia não encontrada.');send(res,200,await prepareEnlargement(source.original_data||source.data));return true;
+    }
     const match=path.match(/^\/api\/listings\/([a-f0-9-]{36})(?:\/(photos|publish|unpublish))?$/);if(!match)return false;
     const id=match[1],r=row(id,user);
     if(!match[2]&&req.method==='GET'){send(res,200,detail(r,user));return true;}
@@ -83,13 +90,13 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
       });send(res,200,detail(row(id,user),user));return true;
     }
     if(match[2]==='photos'&&req.method==='POST'){
-      fields(body,['version','content','caption','room','sourceId','method','reviewed']);const source=body.sourceId?db.prepare('SELECT * FROM listing_photos WHERE id=? AND listing_id=?').get(body.sourceId,id):null;if(body.sourceId&&(!source||body.method!=='esrgan-slim-2x'||body.reviewed!==true))fail(400,'Confira a foto de origem e confirme a fidelidade da ampliação.');if(!source&&photos(id).length>=20)fail(400,'Limite de 20 fotografias por imóvel.');
+      fields(body,['version','content','caption','room','sourceId','method','reviewed']);const source=body.sourceId?db.prepare('SELECT * FROM listing_photos WHERE id=? AND listing_id=?').get(body.sourceId,id):null;if(body.sourceId&&(!source||!['esrgan-slim-2x','lanczos3-2x'].includes(body.method)||body.reviewed!==true))fail(400,'Confira a foto de origem e confirme a fidelidade da ampliação.');if(!source&&photos(id).length>=20)fail(400,'Limite de 20 fotografias por imóvel.');
       if(typeof body.content!=='string'||body.content.length>11200000||!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(body.content))fail(400,'Envie JPEG, PNG ou WebP de até 8 MB.');
       const caption=text(body.caption??'','Legenda',0,180),room=text(body.room??'','Ambiente',0,60),buffer=Buffer.from(body.content.split(',')[1],'base64');if(buffer.length>8*1024*1024)fail(413,'Cada fotografia pode ter até 8 MB.');
       if(processing>=2)fail(503,'Há fotos em processamento. Aguarde e tente novamente.');processing++;
       let output;try{const pipeline=sharp(buffer,{limitInputPixels:20000000,failOn:'warning'});const meta=await pipeline.metadata();if(!['jpeg','png','webp'].includes(meta.format)||meta.pages>1||Math.max(meta.width,meta.height)<600||Math.min(meta.width,meta.height)<200)fail(400,'Use uma fotografia estática com pelo menos 600 pixels no lado maior e 200 no menor.');output=await pipeline.rotate().resize({width:3200,height:3200,fit:'inside',withoutEnlargement:true}).webp({quality:90}).toBuffer({resolveWithObject:true});}catch(e){if(e.status)throw e;fail(400,'Não foi possível ler esta fotografia. Use JPEG, PNG ou WebP válido, até 20 megapixels.');}finally{processing--;}
       const freshUser=session(req);if(!freshUser||freshUser.must_change)fail(401,'Entre novamente.');
-      transaction(()=>{checkVersion(row(id,freshUser),body);if(['Entrada aprovada','Não selecionado'].includes(caseFor(id,freshUser).stage))requireAdmin(freshUser);if(!source&&photos(id).length>=20)fail(400,'Limite de 20 fotografias por imóvel.');if(source){db.prepare('UPDATE listing_photos SET id=?,data=?,width=?,height=?,original_data=?,enhancement=? WHERE id=?').run(randomUUID(),output.data,output.info.width,output.info.height,source.original_data||source.data,'ESRGAN Slim 2×',source.id);}else db.prepare('INSERT INTO listing_photos (id,listing_id,data,width,height,caption,position,room) VALUES (?,?,?,?,?,?,?,?)').run(randomUUID(),id,output.data,output.info.width,output.info.height,caption,photos(id).length,room);changed(id,freshUser,'Fotografia adicionada');});send(res,201,detail(row(id,freshUser),freshUser));return true;
+      transaction(()=>{checkVersion(row(id,freshUser),body);if(['Entrada aprovada','Não selecionado'].includes(caseFor(id,freshUser).stage))requireAdmin(freshUser);if(!source&&photos(id).length>=20)fail(400,'Limite de 20 fotografias por imóvel.');if(source){db.prepare('UPDATE listing_photos SET id=?,data=?,width=?,height=?,original_data=?,enhancement=? WHERE id=?').run(randomUUID(),output.data,output.info.width,output.info.height,source.original_data||source.data,body.method==='lanczos3-2x'?'Ampliação convencional 2×':'ESRGAN Slim 2×',source.id);}else db.prepare('INSERT INTO listing_photos (id,listing_id,data,width,height,caption,position,room) VALUES (?,?,?,?,?,?,?,?)').run(randomUUID(),id,output.data,output.info.width,output.info.height,caption,photos(id).length,room);changed(id,freshUser,'Fotografia adicionada');});send(res,201,detail(row(id,freshUser),freshUser));return true;
     }
     if(['publish','unpublish'].includes(match[2])&&req.method==='POST'){
       fields(body,['version','confirmed']);requireAdmin(user);

@@ -31,6 +31,11 @@ test('real listings: private photos, curation and explicit publication',async t=
   assert.equal(spoofedUpload.status,400);
   const uploaded=await req(admin,'/listings/'+item.id+'/photos',{version:item.version,content:lowContent,caption:'Sala pequena de referência',room:'Área social'});
   assert.equal(uploaded.status,201);item=uploaded.body;const lowId=item.photos.at(-1).id;
+  const preparation={version:item.version,sourceId:lowId};const endpoint='/listings/'+item.id+'/prepare-photo';
+  assert.equal((await req(anonymous,endpoint,preparation)).status,401);assert.equal((await req(broker,endpoint,preparation)).status,404);
+  assert.equal((await req(admin,endpoint,{...preparation,version:item.version-1})).status,409);
+  const prepared=await req(admin,endpoint,preparation);assert.equal(prepared.status,200,JSON.stringify(prepared.body));assert.equal(prepared.body.width,1740);assert.equal(prepared.body.height,1304);
+  assert.equal((await req(admin,'/listings/'+item.id)).body.version,item.version);
   assert.equal(item.photos.at(-1).width,870);assert.equal(item.photos.at(-1).height,652);
   const bytes=await req(admin,item.photos.at(-1).url.replace('/api',''));const decoded=await sharp(bytes.body).metadata();
   assert.equal(decoded.width,870);assert.equal(decoded.height,652);
@@ -46,7 +51,7 @@ test('real listings: private photos, curation and explicit publication',async t=
  });
  await t.test('reviewed photo replacement preserves private original, order and concurrency',async()=>{
   const source=item.photos[0],original=(await req(admin,source.url.replace('/api',''))).body,version=item.version;
-  const body={version,sourceId:source.id,content,method:'esrgan-slim-2x',reviewed:true,caption:source.caption,room:source.room};
+  const body={version,sourceId:source.id,content,method:'lanczos3-2x',reviewed:true,caption:source.caption,room:source.room};
   assert.equal((await req(admin,'/listings/'+item.id+'/photos',{...body,reviewed:false})).status,400);
   assert.equal((await req(admin,'/listings/'+item.id+'/photos',{...body,sourceId:item.id})).status,400);
   const result=await req(admin,'/listings/'+item.id+'/photos',body);assert.equal(result.status,201);item=result.body;
