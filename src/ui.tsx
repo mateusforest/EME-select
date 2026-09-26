@@ -3,7 +3,7 @@ import {createPortal} from 'react-dom';
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 
-export function Dialog({ title, children, onClose, wide = false }: { title: string; children: ReactNode; onClose: () => void; wide?: boolean }) {
+export function Dialog({ title, children, onClose, wide = false, className = '' }: { title: string; children: ReactNode; onClose: () => void; wide?: boolean; className?: string }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const closeRef = useRef(onClose);
@@ -20,7 +20,7 @@ export function Dialog({ title, children, onClose, wide = false }: { title: stri
       if (previous?.isConnected) previous.focus();
     };
   }, []);
-  return createPortal(<dialog ref={ref} className={`dialog${wide ? ' dialog--wide' : ''}`} aria-labelledby={titleId}
+  return createPortal(<dialog ref={ref} className={`dialog${wide ? ' dialog--wide' : ''} ${className}`} aria-labelledby={titleId}
     onKeyDown={event => {
       if (event.key !== 'Tab') return;
       const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), iframe, [tabindex="0"]')].filter(el => el.getClientRects().length > 0);
