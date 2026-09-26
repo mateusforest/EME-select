@@ -43,10 +43,6 @@
 
 /* G400 facade: restrained light on the glass and a traced balcony edge. */
 .g400-page .development-stage--night .development-image-world>img{filter:brightness(.49) saturate(.65) hue-rotate(8deg)}
-.g400-floor-selection{pointer-events:none}
-.g400-floor-selection polygon{fill:#edd4ae;fill-opacity:.09;stroke:none}
-.g400-floor-selection path{fill:none;stroke:#f4dcba;stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round}
-.g400-scene-overlay .development-floor-hit:hover,.g400-scene-overlay .development-floor-hit:focus{fill:#e4c399;fill-opacity:.14;stroke:none}
 .g400-page .development-panel{border:1px solid #fff8;box-shadow:0 12px 50px #173b2e14;border-radius:3px}
 .g400-page .development-panel-heading h2{font-size:clamp(25px,2.1vw,34px);line-height:1.1;max-width:200px}
 .g400-page .development-floor-detail h3{font-size:24px;line-height:1.2}
@@ -65,7 +61,7 @@
 .g400-scene[data-moving=true] .development-hotspots{opacity:0;pointer-events:none}
 .g400-window-lights{mix-blend-mode:normal}
 .g400-scene-overlay .development-floor-band{pointer-events:none;fill:#9fb88b38;stroke:#e8f0d8;stroke-width:1.4}
-.g400-scene-overlay .development-floor-hit:hover,.g400-scene-overlay .development-floor-hit:focus-visible{fill:#c6dfac45;fill-opacity:1;stroke:#f2f6dd;stroke-width:2;vector-effect:non-scaling-stroke}
+.g400-scene-overlay .development-floor-hit:is(:hover,:focus,:focus-visible){fill:transparent;stroke:none;outline:none}
 .g400-view-navigation{margin-top:19px;max-width:300px}
 .g400-view-navigation>span{font-size:9px;text-transform:uppercase;letter-spacing:.16em;display:block;margin-bottom:9px;color:#637664}
 .g400-view-navigation>div{display:flex;gap:5px}

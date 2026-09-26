@@ -34,7 +34,7 @@ Covers original unit mapping, five gallery groups (facades, interiors, leisure, 
 
 ## Visual refinement — 2026-09-26
 
-Replaced approximate full-width floor polygons with balcony regions traced in the panoramic image coordinate system. The selected floor uses a fine warm edge and a restrained tint; recessed timber bays are not crossed by a green slab. Night overlays are individual glass panes, with varied brightness and no light painted onto opaque facade panels.
+Floor regions follow the slab contours of each visible volume in the source image coordinate system. Selection and hover use a translucent green fill with a pale green outline. Recessed timber bays are not crossed by diagonals joining different facade planes. Night overlays use inset glass panes with varied brightness, preserving frames and planted balustrades.
 
 The navigable model now has seven residential levels over the commercial podium, recessed timber cores, framed corner glazing, balcony slabs and clustered planting, stone/timber/paving textures, a stepped glazed crown and an entrance canopy. Instanced geometry limits draw calls. Environment reflections, directional shadows and selective warm interior emission replace uniformly luminous glazing. Mobile camera fit is responsive; the model remains a conceptual architectural interpretation, not BIM.
 
@@ -46,6 +46,10 @@ The scene offers Lateral 1 / Frente / Lateral 2. Moving between lateral views go
 
 `scene-front.svg` and `scene-right.svg` frame the unchanged, embedded original WebP files (02 and 01 respectively) in the scene's 1672 × 941 viewport. They use a restrained sky background and edge mask; no generative change to the source architecture. Rebuild with `node scripts/g400-scene-assets.mjs`.
 
-Each perspective has its own source-coordinate floor outlines and window quads in `g400Projection.ts`. Hits cover both visible ends of the facade. Hover, focus and selection now use the Moradas floor treatment. Warm pane gradients, mullions, halos and sunset/night opacity follow Moradas as well, replacing the previous barely visible treatment.
+Each perspective has its own source-coordinate floor outlines and window quads in `g400Projection.ts`. Hits cover both visible ends of the facade. Hover, focus and selection use the Moradas floor treatment. Warm pane gradients and sunset/night opacity share that vocabulary. Exterior halos and artificial mullions were removed: the lighting stays within the traced glass and the original frames remain visible.
+
+Alignment correction: the lateral views use separate contours for the near corner and the distant wings; the front follows the slight perspective of its slab lines. Rows are traced separately rather than extrapolated with uniform spacing. Enlarged source-coordinate comparisons cover floors 1, 3, 6 and 7 in all three views.
+
+The 3D marker now has vertical green faces over the full 3.2-unit storey height, following the model's balcony footprint and recessed cores, plus a separate crown on floor 7. Both upper and lower edges are visible; there is no opaque horizontal cap. Pointer hover previews a floor, leaving the model restores the selected floor, and orbit drags do not select units. The former yellow slab-level line is removed.
 
 Additional checks exercise lateral-to-front-to-lateral order in both directions, cancellation, retained floor and lighting, pointer selection at both ends of all three views, and reduced-motion mobile navigation. Visual evidence: ignored `tmp/g400-views/`.

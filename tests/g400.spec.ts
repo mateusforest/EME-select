@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import sharp from 'sharp';
 import { g400UnitsOnFloor } from '../src/developments/g400';
 const route='/#/empreendimentos/g400';
 test.beforeEach(async({page})=>{
@@ -166,7 +167,7 @@ test('G400 crosses the front between both lateral views and retains floor and li
 test('hover and floor selection work on both ends of every G400 facade with visible night panes',async({page})=>{
   await page.emulateMedia({reducedMotion:'reduce'});await page.goto(route);
   for(const {view,label,points} of [
-    {view:'left',label:'Ver lateral 1',points:[[780,510],[1078,546]]},
+    {view:'left',label:'Ver lateral 1',points:[[780,510],[1078,567]]},
     {view:'front',label:'Ver frente',points:[[385,1030],[1180,1030]]},
     {view:'right',label:'Ver lateral 2',points:[[289,1080],[710,1045]]},
   ]){
@@ -191,4 +192,34 @@ test('G400 view changes remain usable on mobile with reduced motion',async({page
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.getByRole('button',{name:'Ver frente',exact:true}).click();await expect(page.getByTestId('g400-scene')).toHaveAttribute('data-view','front');
   await page.getByTestId('g400-stage').screenshot({path:'test-results/g400-front-mobile.png'});
+});
+
+test('G400 3D paints a full floor surface and hover restores the chosen floor',async({page})=>{
+  test.setTimeout(60000);
+  await page.setViewportSize({width:1440,height:1000});await page.goto(route);
+  await page.getByRole('button',{name:'Explorar em 3D',exact:true}).click();
+  const model=page.getByTestId('g400-model'),canvas=model.locator('canvas');
+  await expect(model).toHaveAttribute('data-camera',/,/,{timeout:45000});
+  await page.mouse.move(10,10);
+  const before=await sharp(await canvas.screenshot()).removeAlpha().raw().toBuffer();
+  await page.getByRole('button',{name:'2º andar',exact:true}).click();
+  await expect(model).toHaveAttribute('data-highlight-floor','2');
+  const {data:after,info}=await sharp(await canvas.screenshot()).removeAlpha().raw().toBuffer({resolveWithObject:true});
+  let changed=0;const rows=new Set<number>();
+  for(let i=0;i<before.length;i+=3){
+    if(Math.abs(after[i]-before[i])+Math.abs(after[i+1]-before[i+1])+Math.abs(after[i+2]-before[i+2])>25){changed++;rows.add(Math.floor(i/3/info.width));}
+  }
+  // A slab-level outline does not paint thousands of interior facade pixels.
+  expect(changed).toBeGreaterThan(3000);expect(rows.size).toBeGreaterThan(20);
+  const bounds=(await canvas.boundingBox())!;let hovered=false;
+  for(const fy of [.32,.4,.48,.56]){
+    await page.mouse.move(bounds.x+bounds.width*.55,bounds.y+bounds.height*fy);
+    const floor=await model.getAttribute('data-highlight-floor');
+    if(floor&&floor!=='2'){hovered=true;break;}
+  }
+  expect(hovered).toBe(true);await expect(model).toHaveAttribute('data-floor','2');
+  await page.mouse.move(10,10);await expect(model).toHaveAttribute('data-highlight-floor','2');
+  await page.getByRole('button',{name:'7º andar e coberturas',exact:true}).click();
+  await expect(model).toHaveAttribute('data-highlight-floor','7');
+  await canvas.screenshot({path:'test-results/g400-model-crown.png'});
 });

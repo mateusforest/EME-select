@@ -166,16 +166,38 @@ export default forwardRef<ModelControls,Props>(function G400Model(props,ref){
       leaves.forEach((leaf,i)=>{transform.position.set(leaf.x,leaf.y,leaf.z);transform.scale.set(leaf.s,leaf.s*.85,leaf.s);transform.updateMatrix();foliage.setMatrixAt(i,transform.matrix);foliage.setColorAt(i,new THREE.Color().setHSL(.27+(i%5)*.018,.22+(i%3)*.06,.28+(i%7)*.025));});
       foliage.castShadow=true;foliage.receiveShadow=true;scene.add(foliage);
       const selection=new THREE.Group();
-      // Slim perimeter at the slab: never a translucent box through the whole building.
-      const lineGeo=own(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-12.7,0,-8.7),new THREE.Vector3(12.7,0,-8.7),new THREE.Vector3(12.7,0,9.8),new THREE.Vector3(-12.7,0,9.8)]));
-      selection.add(new THREE.LineLoop(lineGeo,own(new THREE.LineBasicMaterial({color:'#e3b87e',depthTest:true}))));scene.add(selection);
+      // Vertical faces follow balcony projections and recessed cores. No horizontal
+      // cap: the floor stays readable from above instead of becoming a solid plate.
+      const bandMaterial=own(new THREE.MeshBasicMaterial({color:'#a9c594',transparent:true,opacity:.29,depthWrite:false,side:THREE.DoubleSide}));
+      const edgeMaterial=own(new THREE.LineBasicMaterial({color:'#e8efd6',transparent:true,opacity:.9,depthWrite:false}));
+      function floorBand(footprint:number[][],height:number){
+        const vertices:number[]=[],edges:number[]=[];
+        footprint.forEach(([x,z],i)=>{
+          const [nx,nz]=footprint[(i+1)%footprint.length];
+          vertices.push(x,0,z,nx,0,nz,nx,height,nz,x,0,z,nx,height,nz,x,height,z);
+          for(const y of [0,height])edges.push(x,y,z,nx,y,nz);
+        });
+        const geometry=own(new THREE.BufferGeometry());geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+        const outline=own(new THREE.BufferGeometry());outline.setAttribute('position',new THREE.Float32BufferAttribute(edges,3));
+        const group=new THREE.Group();group.add(new THREE.Mesh(geometry,bandMaterial),new THREE.LineSegments(outline,edgeMaterial));return group;
+      }
+      const footprint=[[-12.72,-8.86],[12.72,-8.86],[12.72,-1.65],[12.08,-1.65],[12.08,1.65],[12.72,1.65],[12.72,8.45],[12.12,8.45],[12.12,9.85],[4.35,9.85],[4.35,8.96],[-4.35,8.96],[-4.35,9.85],[-12.12,9.85],[-12.12,8.45],[-12.72,8.45],[-12.72,1.65],[-12.08,1.65],[-12.08,-1.65],[-12.72,-1.65]];
+      selection.add(floorBand(footprint,STOREY));scene.add(selection);
+      const crownSelection=floorBand([[-10.25,-7.65],[2.9,-7.65],[2.9,4.65],[-10.25,4.65]],3.3);crownSelection.position.y=31.08;scene.add(crownSelection);
+      let hoverFloor:number|null=null;
+      function updateSelection(){
+        const floor=hoverFloor??latest.current.floor;
+        selection.visible=floor!==null;selection.position.y=BASE+((floor||1)-1)*STOREY+.04;
+        crownSelection.visible=floor===7;
+        mount.dataset.highlightFloor=String(floor||'');mount.dataset.highlightHeight=String(floor?STOREY:0);
+      }
       const ambient=new THREE.HemisphereLight('#deeffb','#a0a48d',2.1);scene.add(ambient);
       const sun=new THREE.DirectionalLight('#fff3da',3.4);sun.position.set(-24,52,35);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-45;sun.shadow.camera.right=45;sun.shadow.camera.top=50;sun.shadow.camera.bottom=-40;sun.shadow.normalBias=.06;sun.shadow.bias=-.0001;scene.add(sun);
       const fill=new THREE.DirectionalLight('#9ccce8',.7);fill.position.set(30,30,-20);scene.add(fill);
       const entrance=new THREE.PointLight('#ffd09c',0,16,2);entrance.position.set(0,3,12);scene.add(entrance);
       function update(){
         const {floor,lighting}=latest.current,night=lighting==='night',sunset=lighting==='sunset';
-        selection.visible=floor!==null;selection.position.y=BASE+((floor||1)-1)*STOREY+.13;
+        hoverFloor=null;updateSelection();
         const background=night?'#233748':sunset?'#b4a79c':'#bacdd3';scene.background=new THREE.Color(background);scene.fog=new THREE.Fog(background,100,225);
         ambient.intensity=night?.7:sunset?1.35:2.1;sun.intensity=night?.75:sunset?2.3:3.4;
         sun.color.set(night?'#a6c9e5':sunset?'#ffca91':'#fff3da');sun.position.set(sunset?-40:-24,sunset?24:52,35);
@@ -186,16 +208,20 @@ export default forwardRef<ModelControls,Props>(function G400Model(props,ref){
       }
       const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down={x:0,y:0};
       const pointerDown=(event:PointerEvent)=>{down={x:event.clientX,y:event.clientY};};
-      const pointerUp=(event:PointerEvent)=>{if(Math.hypot(event.clientX-down.x,event.clientY-down.y)>5)return;const rect=canvas.getBoundingClientRect();pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(hits)[0];if(hit&&hit.instanceId!==undefined){const f=hit.object.userData.floors[hit.instanceId];if(f)latest.current.onSelectFloor(f);}};
+      const pickFloor=(event:PointerEvent)=>{const rect=canvas.getBoundingClientRect();pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(hits)[0];return hit&&hit.instanceId!==undefined?hit.object.userData.floors[hit.instanceId]||null:null;};
+      const pointerUp=(event:PointerEvent)=>{if(Math.hypot(event.clientX-down.x,event.clientY-down.y)>5)return;const floor=pickFloor(event);if(floor)latest.current.onSelectFloor(floor);};
+      const pointerMove=(event:PointerEvent)=>{if(event.buttons||event.pointerType==='touch')return;const floor=pickFloor(event);if(floor!==hoverFloor){hoverFloor=floor;canvas.style.cursor=floor?'pointer':'grab';updateSelection();}};
+      const pointerLeave=()=>{hoverFloor=null;canvas.style.cursor='grab';updateSelection();};
       const zoom=(direction:number)=>{camera.position.sub(controls.target).multiplyScalar(direction>0?.88:1.12).add(controls.target);controls.update();};
       const key=(event:KeyboardEvent)=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-','Home'].includes(event.key)){event.preventDefault();if(event.key==='Home')reset();else if(['+','=','-'].includes(event.key))zoom(event.key==='-'?-1:1);else{const offset=camera.position.clone().sub(controls.target);offset.applyAxisAngle(new THREE.Vector3(0,1,0),event.key==='ArrowLeft'||event.key==='ArrowUp'?-.12:.12);camera.position.copy(controls.target).add(offset);controls.update();}}};
       const lost=(event:Event)=>{event.preventDefault();latest.current.onFail();};
       canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('keydown',key);canvas.addEventListener('webglcontextlost',lost);
+      canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerleave',pointerLeave);
       let oldWidth=0;
       const resize=new ResizeObserver(()=>{if(!mount.clientWidth||!mount.clientHeight)return;renderer.setSize(mount.clientWidth,mount.clientHeight);camera.aspect=mount.clientWidth/mount.clientHeight;camera.updateProjectionMatrix();if(!oldWidth||Math.abs(oldWidth-mount.clientWidth)>100)reset();oldWidth=mount.clientWidth;});resize.observe(mount);
       api.current={reset,zoom,update};update();reset();
       renderer.setAnimationLoop(()=>{if(document.hidden)return;controls.update();renderer.render(scene,camera);mount.dataset.camera=camera.position.toArray().map(value=>value.toFixed(2)).join(',');});
-      cleanup=()=>{api.current=null;resize.disconnect();renderer.setAnimationLoop(null);canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('keydown',key);canvas.removeEventListener('webglcontextlost',lost);controls.dispose();for(const item of resources)item.dispose();foliage.dispose();sun.shadow.dispose();renderer.dispose();canvas.remove();};
+      cleanup=()=>{api.current=null;resize.disconnect();renderer.setAnimationLoop(null);canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerleave',pointerLeave);canvas.removeEventListener('keydown',key);canvas.removeEventListener('webglcontextlost',lost);controls.dispose();for(const item of resources)item.dispose();foliage.dispose();sun.shadow.dispose();renderer.dispose();canvas.remove();};
       latest.current.onReady();
     }
     setup().catch(()=>{cleanup?.();if(!cancelled)latest.current.onFail();});
