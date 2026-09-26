@@ -9,9 +9,10 @@ test('public header has no ambient player or audio requests', async ({ page }) =
     await page.goto('/#/empreendimentos/moradas-da-serra');
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Moradas');
     await expect(page.locator('.eme-atmosphere, audio')).toHaveCount(0);
-    await expect(page.locator('.brand--marble')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-    await expect(page.locator('.brand--marble')).toHaveCSS('box-shadow', 'none');
+    await expect(page.locator('.brand--emerald')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(page.locator('.brand--emerald')).toHaveCSS('box-shadow', 'none');
     await page.screenshot({ path: `test-results/header-${width}.png` });
   }
   expect(requests).toEqual([]);
 });
+

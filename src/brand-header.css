@@ -1,14 +1,13 @@
-.site-header .brand.brand--marble{width:84px;height:76px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;border:0;border-radius:0;background:none;box-shadow:none;margin-right:12px;text-decoration:none;isolation:isolate}
-.site-header .brand--marble .brand-monogram{display:block;width:64px;height:60px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 3px 2px #173c321c)}
-.site-header .brand--marble::after{content:'';position:absolute;z-index:-1;left:17px;right:14px;bottom:8px;height:5px;border-radius:50%;background:#173c3226;filter:blur(4px)}
-.site-header .brand--marble:focus-visible{outline:2px solid #51745e;outline-offset:5px;border-radius:4px}
-.site-header--tour .brand.brand--marble{background:none;border:0;box-shadow:none}
-@media(max-width:1150px){
- .site-header .brand.brand--marble{width:74px;height:68px;margin-right:4px}
- .site-header .brand--marble .brand-monogram{width:57px;height:54px}
-}
-@media(max-width:600px){
- .site-header .brand.brand--marble{width:62px;height:60px;margin-right:3px}
- .site-header .brand--marble .brand-monogram{width:49px;height:47px}
- .site-header .brand--marble::after{left:12px;right:10px;bottom:7px;height:4px}
-}
+/* The supplied mark stays intact; the SVG only frames its original white canvas. */
+.site-header .brand.brand--emerald{width:90px;height:76px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;border:0;border-radius:0;background:none;box-shadow:none;margin-right:12px;text-decoration:none}
+.site-header .brand--emerald .brand-monogram{position:relative;z-index:1;display:block;width:72px;height:56px;flex-shrink:0;mix-blend-mode:multiply;overflow:hidden;transition:transform .35s ease}
+.brand--emerald .brand-aura{position:absolute;inset:3px -8px;pointer-events:none;background:radial-gradient(ellipse at 56% 48%,#e0e9d994 0%,#c4d6b745 36%,transparent 69%)}
+.brand--emerald .brand-aura::before{content:'';position:absolute;left:-3%;top:45%;width:107%;height:11px;transform:rotate(-34deg);background:linear-gradient(90deg,transparent,#d7c59466 28%,#ffffedf2 51%,#c2d3b65c 74%,transparent);filter:blur(3px);opacity:.8;transition:opacity .35s ease}
+.brand--emerald .brand-aura::after{content:'';position:absolute;left:18%;right:16%;bottom:2px;height:7px;border-radius:50%;background:radial-gradient(ellipse,#143f3038,transparent 72%);filter:blur(3px)}
+.site-header .brand--emerald:hover .brand-monogram{transform:translateY(-1px)}
+.site-header .brand--emerald:hover .brand-aura::before{opacity:1}
+.site-header .brand--emerald:focus-visible{outline:2px solid #51745e;outline-offset:5px;border-radius:4px}
+.site-header--tour .brand--emerald .brand-aura{inset:-3px -10px;background:radial-gradient(ellipse,#f6f4ec 15%,#f6f4ecd9 40%,#f6f4ec00 72%)}
+@media(max-width:1150px){.site-header .brand.brand--emerald{width:78px;height:68px;margin-right:4px}.site-header .brand--emerald .brand-monogram{width:63px;height:49px}}
+@media(max-width:600px){.site-header .brand.brand--emerald{width:68px;height:60px;margin-right:3px}.site-header .brand--emerald .brand-monogram{width:56px;height:44px}.brand--emerald .brand-aura{inset:2px -5px}.brand--emerald .brand-aura::before{height:8px}.brand--emerald .brand-aura::after{bottom:0;height:5px}}
+@media(prefers-reduced-motion:reduce){.site-header .brand--emerald .brand-monogram,.brand--emerald .brand-aura::before{transition:none}.site-header .brand--emerald:hover .brand-monogram{transform:none}}

@@ -49,8 +49,11 @@ function Header({ tour, favorites, onFavorites, onContact }: { tour: boolean; fa
     return () => document.removeEventListener('pointerdown', outside);
   }, [exploreOpen]);
   return <header className={`site-header${tour ? ' site-header--tour' : ''}`}>
-    <a className="brand brand--marble" href="#/" aria-label="EME Select — início">
-      <img className="brand-monogram" src="/assets/brand-marble-monogram.png" width="76" height="64" alt="" />
+    <a className="brand brand--emerald" href="#/" aria-label="EME Select — início">
+      <span className="brand-aura" aria-hidden="true" />
+      <svg className="brand-monogram" viewBox="505 730 1770 1370" width="72" height="56" aria-hidden="true" focusable="false">
+        <image href="/assets/brand-emerald-reference.webp" width="2880" height="2880" />
+      </svg>
     </a>
     <nav className="desktop-nav" aria-label="Navegação principal">
       <div className="desktop-explore-wrap" ref={exploreRef} onKeyDown={event => { if (event.key === 'Escape') { setExploreOpen(false); exploreRef.current?.querySelector('button')?.focus(); } }} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setExploreOpen(false); }}>
