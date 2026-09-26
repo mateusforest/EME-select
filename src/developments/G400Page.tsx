@@ -4,7 +4,8 @@ import { whatsappUrl } from '../data';
 import { G400_ASSETS, G400_ROUTE, g400UnitsOnFloor, type G400GalleryId } from './g400';
 import type { Lighting } from './moradas';
 import type { ModelControls } from './DevelopmentModel';
-import G400Overlay from './G400Overlay';
+import G400Scene from './G400Scene';
+import { g400Views, type G400View } from './g400Projection';
 import G400Gallery from './G400Gallery';
 import './development.css';
 import './g400.css';
@@ -13,6 +14,7 @@ type GallerySelection={id:G400GalleryId;index:number;unit?:string};
 
 export default function G400Page(){
   const [floor,setFloor]=useState(3),[showFloor,setShowFloor]=useState(false);
+  const [view,setView]=useState<G400View>('left'),[displayedView,setDisplayedView]=useState<G400View>('left');
   const [lighting,setLighting]=useState<Lighting>('day');
   const [mode,setMode]=useState<'image'|'model'>('image');
   const [gallery,setGallery]=useState<GallerySelection|null>(null);
@@ -24,21 +26,13 @@ export default function G400Page(){
   const selectFloor=(value:number)=>{setFloor(value);setShowFloor(true);setToolsOpen(true);};
   const contact=whatsappUrl(`Olá! Gostaria de conhecer o G400 — Geraldo Andreola, da Yclodema, em Vacaria. Estou explorando o ${floor}º andar. Podemos confirmar plantas e disponibilidade?`);
   useEffect(()=>{if(!notice)return;const timer=setTimeout(()=>setNotice(''),4500);return()=>clearTimeout(timer);},[notice]);
-  function reset(){setZoom(1);setShowFloor(false);controls.current?.reset();}
+  function reset(){setView('left');setZoom(1);setShowFloor(false);controls.current?.reset();}
   function changeZoom(direction:number){if(mode==='model')controls.current?.zoom(direction);else setZoom(value=>Math.max(1,Math.min(1.6,value+direction*.15)));}
   async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await pageRef.current?.requestFullscreen();}catch{setNotice('Use a opção de tela cheia do navegador para ampliar a experiência.');}}
   async function share(){try{await navigator.clipboard.writeText(`${location.origin}/${G400_ROUTE}`);setNotice('Link do G400 copiado.');}catch{setNotice('Compartilhe o endereço desta página.');}}
   return <main id="conteudo" className={`development-page g400-page development-page--${mode}`} ref={pageRef}>
     <div className={`development-stage development-stage--${lighting}`} data-testid="g400-stage">
-      {mode==='image'?<div className="development-image-world" style={{transform:`scale(${zoom})`}}>
-        <img src={G400_ASSETS+'hero.webp'} alt="Cenário panorâmico conceitual do G400, inspirado nas perspectivas do projeto da Yclodema" fetchPriority="high"/>
-        <G400Overlay floor={showFloor?floor:null} lighting={lighting} onSelect={selectFloor}/>
-        <div className="development-hotspots">
-          <button className="development-hotspot g400-hotspot-roof" onClick={()=>openGallery('leisure',4)}><span>Rooftop <ArrowUpRight size={12}/></span><i><Plus size={16}/></i></button>
-          <button className="development-hotspot g400-hotspot-interiors" onClick={()=>openGallery('interiors',2)}><span>Interiores <ArrowUpRight size={12}/></span><i><Plus size={16}/></i></button>
-          <button className="development-hotspot g400-hotspot-leisure" onClick={()=>openGallery('leisure',1)}><span>Lazer <ArrowUpRight size={12}/></span><i><Plus size={16}/></i></button>
-        </div>
-      </div>:<Suspense fallback={<div className="development-loading" role="status">Preparando a maquete…</div>}><G400Model ref={controls} floor={showFloor?floor:null} lighting={lighting} onSelectFloor={selectFloor} onReady={()=>setReady(true)} onFail={()=>setFailed(true)}/></Suspense>}
+      {mode==='image'?<G400Scene view={view} floor={showFloor?floor:null} lighting={lighting} zoom={zoom} onSelect={selectFloor} onGallery={openGallery} onViewChange={setDisplayedView}/>:<Suspense fallback={<div className="development-loading" role="status">Preparando a maquete…</div>}><G400Model ref={controls} floor={showFloor?floor:null} lighting={lighting} onSelectFloor={selectFloor} onReady={()=>setReady(true)} onFail={()=>setFailed(true)}/></Suspense>}
       {mode==='model'&&!ready&&!failed&&<div className="development-loading" role="status">Preparando a maquete…</div>}
       {mode==='model'&&failed&&<div className="development-model-error"><h2>Explore pelas imagens.</h2><p>A maquete não pôde ser aberta neste navegador.</p><button className="primary-button" onClick={()=>setMode('image')}>Voltar ao cenário <ArrowRight size={16}/></button></div>}
     </div>
@@ -50,6 +44,7 @@ export default function G400Page(){
       <p>Apartamentos de 2 e 3 suítes, coberturas duplex e triplex. Um novo olhar para viver na Avenida Moreira Paz.</p>
       <div className="development-view-switch" role="group" aria-label="Visualização do empreendimento"><button aria-pressed={mode==='image'} onClick={()=>setMode('image')}><ImageIcon size={14}/> Cenário</button><button aria-pressed={mode==='model'} disabled={mode==='model'} onClick={()=>{setMode('model');setReady(false);setFailed(false);}}><Box size={15}/> Explorar em 3D</button></div>
       <span className="development-model-note">{mode==='model'?'Maquete conceitual · arraste para girar':'Cenário conceitual · explore os pontos do edifício'}</span>
+      {mode==='image'&&<nav className="g400-view-navigation" aria-label="Ângulos do edifício"><span>Contorne o G400</span><div>{(['left','front','right'] as const).map(id=><button key={id} aria-label={`Ver ${g400Views[id].label.toLowerCase()}`} aria-pressed={displayedView===id} onClick={()=>{setZoom(1);setView(id);}}>{id==='left'&&<ArrowLeft size={12}/>} {g400Views[id].label} {id==='right'&&<ArrowRight size={12}/>}</button>)}</div><small aria-live="polite">{g400Views[displayedView].label} · selecione os andares na fachada</small></nav>}
       <button className="g400-location" onClick={()=>openGallery('facades',1)}>Av. Moreira Paz, 400 <ArrowUpRight size={12}/><small>Esquina com a Rua João Borges Pinto</small></button>
     </section>
     <button className="development-panel-toggle" aria-expanded={toolsOpen} aria-controls="g400-floor-panel" onClick={()=>setToolsOpen(value=>!value)}>{toolsOpen?'Recolher andares e plantas':'Explorar andares e plantas'} {toolsOpen?<Minus size={14}/>:<Plus size={14}/>}</button>

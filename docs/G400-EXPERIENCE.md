@@ -39,3 +39,13 @@ Replaced approximate full-width floor polygons with balcony regions traced in th
 The navigable model now has seven residential levels over the commercial podium, recessed timber cores, framed corner glazing, balcony slabs and clustered planting, stone/timber/paving textures, a stepped glazed crown and an entrance canopy. Instanced geometry limits draw calls. Environment reflections, directional shadows and selective warm interior emission replace uniformly luminous glazing. Mobile camera fit is responsive; the model remains a conceptual architectural interpretation, not BIM.
 
 Validation adds independent image/SVG cover-projection checks through desktop, tablet, mobile and zoom; selective night-window checks; mobile WebGL remount; plus existing galleries, plans, keyboard, fallback and Moradas regression. Local day/night desktop/mobile visual captures are in ignored `tmp/g400-refinement/`.
+
+## Multi-view facade navigation — 2026-09-26
+
+The scene offers Lateral 1 / Frente / Lateral 2. Moving between lateral views goes through the front with a directional perspective crossfade and a short frontal hold; these are transitions between supplied renderings, not reconstructed photographic 3D. Reduced-motion preferences switch directly. New requests cancel in-flight animations; images decode before the transition, and failures retain the previous scene with a retry action. Floor and lighting state persist across views.
+
+`scene-front.svg` and `scene-right.svg` frame the unchanged, embedded original WebP files (02 and 01 respectively) in the scene's 1672 × 941 viewport. They use a restrained sky background and edge mask; no generative change to the source architecture. Rebuild with `node scripts/g400-scene-assets.mjs`.
+
+Each perspective has its own source-coordinate floor outlines and window quads in `g400Projection.ts`. Hits cover both visible ends of the facade. Hover, focus and selection now use the Moradas floor treatment. Warm pane gradients, mullions, halos and sunset/night opacity follow Moradas as well, replacing the previous barely visible treatment.
+
+Additional checks exercise lateral-to-front-to-lateral order in both directions, cancellation, retained floor and lighting, pointer selection at both ends of all three views, and reduced-motion mobile navigation. Visual evidence: ignored `tmp/g400-views/`.

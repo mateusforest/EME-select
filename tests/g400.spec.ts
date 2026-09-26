@@ -16,7 +16,7 @@ test('floor selection, original galleries, readable plans, lighting and contact 
   await page.goto(route);
   await expect(page).toHaveTitle(/G400.*Yclodema/);
   await expect(page.getByRole('heading',{level:1})).toContainText('G400');
-  await page.locator('.development-image-world>img').evaluate((img:HTMLImageElement)=>img.decode());
+  await page.locator('.g400-view-layer[data-active=true] .development-image-world>img').evaluate((img:HTMLImageElement)=>img.decode());
   await page.screenshot({path:'test-results/g400-desktop.png',fullPage:true});
   await page.getByRole('button',{name:'6º andar',exact:true}).click();
   await expect(page.getByTestId('g400-floor-band')).toHaveAttribute('data-floor','6');
@@ -57,7 +57,7 @@ test('G400 mobile navigation, plan dialog and gallery have no horizontal overflo
     await page.setViewportSize({width,height:844});
     await page.goto(route);
     await expect(page.getByRole('heading',{level:1})).toContainText('G400');
-    await page.locator('.development-image-world>img').evaluate((img:HTMLImageElement)=>img.decode());
+    await page.locator('.g400-view-layer[data-active=true] .development-image-world>img').evaluate((img:HTMLImageElement)=>img.decode());
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     await page.screenshot({path:`test-results/g400-mobile-${width}.png`,fullPage:true});
     await page.getByRole('button',{name:'Conhecer os interiores',exact:true}).click();
@@ -87,7 +87,7 @@ test('G400 3D camera, floor, lighting and graceful WebGL fallback',async({page})
   await page.screenshot({path:'test-results/g400-model.png',fullPage:true});
   await model.locator('canvas').dispatchEvent('webglcontextlost');
   await page.getByRole('button',{name:'Voltar ao cenário'}).click();
-  await expect(page.locator('.development-image-world')).toBeVisible();
+  await expect(page.locator('.g400-view-layer[data-active=true] .development-image-world')).toBeVisible();
 });
 test('G400 can be discovered from home and the official navigation',async({page})=>{
   await page.goto('/');
@@ -102,13 +102,13 @@ test('G400 can be discovered from home and the official navigation',async({page}
 test('G400 facade markers stay on the raster at desktop/mobile sizes and zoom',async({page})=>{
   await page.emulateMedia({reducedMotion:'reduce'});
   await page.goto(route);
-  await page.locator('.development-image-world>img').evaluate((img:HTMLImageElement)=>img.decode());
+  await page.locator('.g400-view-layer[data-active=true] .development-image-world>img').evaluate((img:HTMLImageElement)=>img.decode());
   await page.getByRole('button',{name:'6º andar',exact:true}).click();
   for(const width of [1920,1440,820,390]){
     await page.setViewportSize({width,height:1000});
     await page.getByRole('button',{name:'Aproximar cenário',exact:true}).click();
     const error=await page.evaluate(()=>{
-      const img=document.querySelector<HTMLImageElement>('.development-image-world>img')!;
+      const img=document.querySelector<HTMLImageElement>('.g400-view-layer[data-active=true] .development-image-world>img')!;
       const svg=document.querySelector<SVGSVGElement>('.g400-scene-overlay')!;
       const bounds=img.getBoundingClientRect(),scale=Math.max(bounds.width/img.naturalWidth,bounds.height/img.naturalHeight);
       // The corner of the sixth balcony in the source image.
@@ -117,14 +117,14 @@ test('G400 facade markers stay on the raster at desktop/mobile sizes and zoom',a
       return Math.hypot(actual.x-(bounds.x+(bounds.width-img.naturalWidth*scale)/2+744*scale),actual.y-(bounds.y+(bounds.height-img.naturalHeight*scale)/2+317*scale));
     });
     expect(error).toBeLessThan(.1);
-    await expect(page.getByTestId('g400-floor-band').locator('path')).toHaveAttribute('d','M 692,341 L 744,317 L 857,353');
+    await expect(page.getByTestId('g400-floor-band')).toHaveAttribute('data-floor','6');
     await page.getByRole('button',{name:'Restaurar visão geral',exact:true}).click();
     await page.getByRole('button',{name:'6º andar',exact:true}).click();
   }
   await page.getByRole('button',{name:'Noite',exact:true}).click();
-  await expect(page.getByTestId('g400-window-lights')).toHaveCSS('opacity','1');
+  await expect(page.locator('.g400-view-layer[data-active=true]').getByTestId('g400-window-lights')).toHaveCSS('opacity','1');
   await page.getByRole('button',{name:'Dia',exact:true}).click();
-  await expect(page.getByTestId('g400-window-lights')).toHaveCSS('opacity','0');
+  await expect(page.locator('.g400-view-layer[data-active=true]').getByTestId('g400-window-lights')).toHaveCSS('opacity','0');
 });
 
 test('mobile G400 3D keeps framing and lights only selected rooms at night',async({page})=>{
@@ -140,4 +140,55 @@ test('mobile G400 3D keeps framing and lights only selected rooms at night',asyn
   await model.screenshot({path:'test-results/g400-model-mobile-night.png'});
   await page.getByRole('button',{name:'Cenário',exact:true}).click();await expect(model).toHaveCount(0);
   await page.getByRole('button',{name:'Explorar em 3D',exact:true}).click();await expect(model).toHaveAttribute('data-camera',/,/,{timeout:45000});
+});
+
+test('G400 crosses the front between both lateral views and retains floor and lighting',async({page})=>{
+  await page.goto(route);
+  await page.getByRole('button',{name:'5º andar',exact:true}).click();
+  await page.getByRole('button',{name:'Entardecer',exact:true}).click();
+  await page.evaluate(()=>{const scene=document.querySelector('[data-testid="g400-scene"]')!;const history:string[]=[];(window as unknown as {g400Views:string[]}).g400Views=history;new MutationObserver(()=>{const view=scene.getAttribute('data-view')!;if(history.at(-1)!==view)history.push(view);}).observe(scene,{attributes:true,attributeFilter:['data-view']});});
+  await page.getByRole('button',{name:'Ver lateral 2',exact:true}).click();
+  const scene=page.getByTestId('g400-scene');
+  await expect(scene).toHaveAttribute('data-view','right');await expect(scene).toHaveAttribute('data-moving','false');
+  expect(await page.evaluate(()=>(window as unknown as {g400Views:string[]}).g400Views)).toEqual(['front','right']);
+  await expect(page.getByRole('button',{name:'5º andar',exact:true})).toHaveAttribute('aria-pressed','true');
+  const active=page.locator('.g400-view-layer[data-active=true]');
+  await expect(active.getByTestId('g400-floor-band')).toHaveAttribute('data-floor','5');
+  await expect(active.getByTestId('g400-window-lights')).toHaveCSS('opacity','0.74');
+  await page.getByRole('button',{name:'Ver lateral 1',exact:true}).click();await expect(scene).toHaveAttribute('data-view','left');await expect(scene).toHaveAttribute('data-moving','false');
+  expect(await page.evaluate(()=>(window as unknown as {g400Views:string[]}).g400Views)).toEqual(['front','right','front','left']);
+  // A new request while the movement is running must not strand the scene inert.
+  await page.getByRole('button',{name:'Ver lateral 2',exact:true}).click();await expect(scene).toHaveAttribute('data-moving','true');
+  await page.getByRole('button',{name:'Ver lateral 1',exact:true}).click();await expect(scene).toHaveAttribute('data-moving','false');
+  await expect(page.getByRole('button',{name:'Explorar 2º andar no cenário'})).toBeVisible();
+});
+
+test('hover and floor selection work on both ends of every G400 facade with visible night panes',async({page})=>{
+  await page.emulateMedia({reducedMotion:'reduce'});await page.goto(route);
+  for(const {view,label,points} of [
+    {view:'left',label:'Ver lateral 1',points:[[780,510],[1078,546]]},
+    {view:'front',label:'Ver frente',points:[[385,1030],[1180,1030]]},
+    {view:'right',label:'Ver lateral 2',points:[[289,1080],[710,1045]]},
+  ]){
+    await page.getByRole('button',{name:label,exact:true}).click();await expect(page.getByTestId('g400-scene')).toHaveAttribute('data-view',view);await expect(page.getByTestId('g400-scene')).toHaveAttribute('data-moving','false');
+    const active=page.locator('.g400-view-layer[data-active=true]');
+    for(const [x,y] of points){
+      const p=await active.locator('.development-floor-hit').first().evaluate((node:SVGGraphicsElement,coords)=>{const svg=node.ownerSVGElement!,p=svg.createSVGPoint();p.x=coords[0];p.y=coords[1];const result=p.matrixTransform(node.getScreenCTM()!);return {x:result.x,y:result.y};},[x,y]);
+      await page.mouse.move(p.x,p.y);await expect(active.getByTestId('g400-floor-band')).toHaveAttribute('data-floor','2');
+      await page.mouse.click(p.x,p.y);await expect(page.getByRole('button',{name:'2º andar',exact:true})).toHaveAttribute('aria-pressed','true');
+    }
+    await page.getByRole('button',{name:'Noite',exact:true}).click();await expect(active.getByTestId('g400-window-lights')).toHaveCSS('opacity','1');
+    expect(await active.getByTestId('g400-window-lights').locator('polygon').count()).toBeGreaterThan(30);
+    await page.screenshot({path:`test-results/g400-facade-${view}-night.png`});
+    await page.getByRole('button',{name:'Dia',exact:true}).click();await expect(active.getByTestId('g400-window-lights')).toHaveCSS('opacity','0');
+  }
+});
+
+test('G400 view changes remain usable on mobile with reduced motion',async({page})=>{
+  await page.emulateMedia({reducedMotion:'reduce'});await page.setViewportSize({width:390,height:844});await page.goto(route);
+  await page.getByRole('button',{name:'Ver lateral 2',exact:true}).click();await expect(page.getByTestId('g400-scene')).toHaveAttribute('data-view','right');await expect(page.getByTestId('g400-scene')).toHaveAttribute('data-moving','false');
+  await page.getByRole('button',{name:'3º andar',exact:true}).click();await expect(page.getByTestId('g400-floor-band')).toHaveAttribute('data-floor','3');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.getByRole('button',{name:'Ver frente',exact:true}).click();await expect(page.getByTestId('g400-scene')).toHaveAttribute('data-view','front');
+  await page.getByTestId('g400-stage').screenshot({path:'test-results/g400-front-mobile.png'});
 });
