@@ -22,9 +22,5 @@ export function photoPublicationIssues(photos) {
     if (typeof photo?.caption !== 'string' || photo.caption.trim().length < 3) issues.push(`${label}: descreva o ambiente com pelo menos 3 caracteres.`);
     if (typeof photo?.room !== 'string' || !photo.room.trim()) issues.push(`${label}: escolha o grupo do percurso.`);
   });
-  const cover = photos[0];
-  if (Number.isInteger(cover?.width) && Number.isInteger(cover?.height) && cover.width > 0 && cover.width < cover.height) {
-    issues.push('Escolha uma fotografia horizontal para a capa (primeira foto).');
-  }
   return issues;
 }

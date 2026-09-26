@@ -1,3 +1,4 @@
+import DecodedImage from './DecodedImage';
 import { emptyDevelopment, unitStatuses, type DevelopmentConfig, type DevelopmentPlan } from '../../shared/development.mjs';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Box, Check, ChevronLeft, ChevronRight, ImageIcon, Maximize, Minus, Plus, RotateCcw, Share2 } from 'lucide-react';
@@ -29,7 +30,6 @@ export default function DevelopmentPage() {
   const [notice, setNotice] = useState('');
   const [ready, setReady] = useState(false);
   const [modelFailed, setModelFailed] = useState(false);
-  const [photoFailed, setPhotoFailed] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(true);
   const pageRef = useRef<HTMLElement>(null);
   const controls = useRef<ModelControls | null>(null);
@@ -40,7 +40,6 @@ export default function DevelopmentPage() {
   const selectFloor = (level: number, selectedTower = tower) => { if(floorState(selectedTower,level,units)==='unavailable')return;setSelectedPlan(null);setTower(selectedTower); setFloor(level); setPlace('floors'); };
   const contact = whatsappUrl(`Olá! Gostaria de conhecer o Moradas da Serra, da DeVille, em Vacaria. Estou explorando a torre ${tower === 'a' ? '1' : '2'}, ${floor}º andar na apresentação conceitual. Podemos confirmar as plantas e a disponibilidade?`);
   useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(''), 4500); return () => clearTimeout(timer); }, [notice]);
-  useEffect(() => { setPhotoFailed(false); }, [gallery, imageIndex]);
   useEffect(() => { document.documentElement.dataset.developmentView = mode; return () => { delete document.documentElement.dataset.developmentView; }; }, [mode]);
   function choosePlace(next: Place) {
     setPlace(next);
@@ -111,7 +110,7 @@ export default function DevelopmentPage() {
     {selectedPlan&&<Dialog title={selectedPlan.title} onClose={()=>setSelectedPlan(null)} wide><img className="development-selected-plan" src={selectedPlan.imageUrl} alt={'Planta '+selectedPlan.title}/><p>{selectedPlan.area} m² · {selectedPlan.bedrooms??'—'} dormitórios · {selectedPlan.suites??'—'} suítes · {selectedPlan.parking??'—'} vagas</p></Dialog>}
     {media && <Dialog title={media.title} onClose={() => setGallery(null)} wide><div className="development-gallery" onKeyDown={event => { if (event.key === 'ArrowRight') setImageIndex(value => (value + 1) % media.images.length); if (event.key === 'ArrowLeft') setImageIndex(value => (value - 1 + media.images.length) % media.images.length); }}>
       <div className={`development-gallery-image${gallery === 'plans' ? ' is-plan' : ''}`}>
-        {!photoFailed ? <img key={media.images[imageIndex].file} src={`${ASSETS}${media.images[imageIndex].file}`} alt={media.images[imageIndex].caption} onError={() => setPhotoFailed(true)} /> : <p>Não foi possível carregar esta imagem. Selecione outra imagem ou tente novamente.</p>}
+        <DecodedImage src={`${ASSETS}${media.images[imageIndex].file}`} alt={media.images[imageIndex].caption}/>
         {media.images.length > 1 && <><button className="gallery-prev" aria-label="Imagem anterior" onClick={() => setImageIndex(value => (value - 1 + media.images.length) % media.images.length)}><ChevronLeft size={22} /></button><button className="gallery-next" aria-label="Próxima imagem" onClick={() => setImageIndex(value => (value + 1) % media.images.length)}><ChevronRight size={22} /></button></>}
       </div>
       <div className="development-gallery-caption" aria-live="polite"><strong>{media.images[imageIndex].caption}</strong><span>{String(imageIndex + 1).padStart(2, '0')} / {String(media.images.length).padStart(2, '0')}</span></div>

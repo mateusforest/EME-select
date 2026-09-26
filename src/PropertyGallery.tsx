@@ -47,7 +47,7 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
     setDimensions(previous => previous[url]?.width === width && previous[url]?.height === height ? previous : {...previous, [url]: {width, height}});
   }
   function framing(photo: Photograph, inDialog: boolean) {
-    if (!inDialog) return 'cover';
+    if (!inDialog) return (photo.width||0)<(photo.height||0)?'contained':'cover';
     // Decoded dimensions take precedence over metadata, including for older listings.
     const size = dimensions[photo.url] || (photo.width && photo.height ? {width: photo.width, height: photo.height} : null);
     // Unknown or undersized files stay in their original framing, never enlarged to cover.

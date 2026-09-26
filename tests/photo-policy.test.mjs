@@ -11,11 +11,11 @@ test('quality policy checks both edges and requires trustworthy decoded dimensio
  for(const size of [{width:1999,height:1200},{width:2000,height:1199},{width:870,height:652}])assert.match(photoQualityIssue(size),/2000 px.*1200 px/);
  for(const size of [{},{width:2000},{width:0,height:1200},{width:Infinity,height:1200},{width:2000,height:NaN},{width:2000.5,height:1200}])assert.match(photoQualityIssue(size),/verificar suas dimensões/);
 });
-test('publication requires caption, group and horizontal cover while accepting later portraits',()=>{
+test('publication requires caption, group and resolution while accepting uncropped portraits',()=>{
  assert.deepEqual(photoPublicationIssues([valid]),[]);
  assert.equal(photoPublicationIssues([]).length,1);
  assert.match(photoPublicationIssues([{...valid,caption:'  a  ',room:' '}]).join(' '),/3 caracteres.*grupo do percurso/);
- assert.match(photoPublicationIssues([{...valid,width:1200,height:2000}]).join(' '),/horizontal.*primeira foto/);
+ assert.deepEqual(photoPublicationIssues([{...valid,width:1200,height:2000}]),[]);
  assert.deepEqual(photoPublicationIssues([valid,{...valid,width:1200,height:2000}]),[]);
  assert.deepEqual(photoPublicationIssues([{...valid,width:2000,height:2000}]),[]);
  assert.ok(photoPublicationIssues([{caption:'Sala',room:'Área social'}]).some(message=>message.includes('dimensões')));

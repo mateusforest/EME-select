@@ -149,3 +149,10 @@ test('AI SQL boundary enforces private configuration, live assignment and human 
   await db.query('update public.eme_profiles set active=false where id=$1', [admin]);
   await assert.rejects(write('admin', 'settings', { version: 1, model: 'gpt-5-mini', enabled: false, secret: '' }), /UNAUTHORIZED/);
 });
+
+test('editorial suggestions use property facts without private policy or automatic approval',async()=>{
+ let payload;const context=aiProjection({data:{title:'Casa de teste',type:'Casa',city:'Vacaria',description:'Sala integrada, três dormitórios e jardim.',ownerName:'PRIVATE_OWNER',privateAddress:'PRIVATE_ADDRESS'}});
+ const result={summary:'Texto organizado',recommendation:'acao_sugerida',strengths:['Três dormitórios'],nextActions:['Integração entre os ambientes'],pending:['Conferir conservação'],draftReply:'Casa em Vacaria com três dormitórios e ambientes integrados. O jardim compõe a área externa e permite diferentes usos no dia a dia.'};
+ const answer=await requestAnalysis({apiKey:'fake',model:'gpt-5-mini',task:'atendimento',editorial:true,context,instruction:'',fetcher:async(_url,options)=>{payload=JSON.parse(options.body);return {ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(result)}]}]})};}});
+ assert.deepEqual(answer.result,result);assert.match(payload.instructions,/Fotos não foram analisadas/);assert.ok(!JSON.stringify(payload).includes('PRIVATE_OWNER'));assert.ok(!JSON.stringify(payload).includes('PRIVATE_ADDRESS'));assert.ok(!JSON.stringify(payload.input).includes('threshold'));
+});

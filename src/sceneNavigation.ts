@@ -1,13 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { environments, properties } from './data';
+import {sceneForLocation} from './sceneCategories';
 
 const prepared = new Map<string, Promise<void>>();
 const pathOf = (hash: string) => hash.split('?')[0];
 function imageFor(hash: string) {
   const path = pathOf(hash).replace(/^#\/?/, '').split('/');
   if (!path[0]) return environments[0].image;
-  if (path[0] === 'ambientes') return environments.find(env => env.id === path[1])?.image;
+  if (path[0] === 'ambientes') {const env=environments.find(env => env.id === path[1]);return env?sceneForLocation(env,'').image:undefined;}
   if (path[0] === 'visita' || path[0] === 'imovel') return properties.find(property => property.id === path[1])?.image;
 }
 

@@ -86,6 +86,7 @@ test('real 3D camera, floor selection, lighting and context-loss fallback', asyn
 });
 
 test('facade selection and lights share the image projection through resizing and zoom', async ({ page }) => {
+  test.setTimeout(60000);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto(route);

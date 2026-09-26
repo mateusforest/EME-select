@@ -1,5 +1,5 @@
-export async function preparePhoto(file:File):Promise<string>{
- if(file.size>8*1024*1024)throw Error('Cada foto pode ter até 8 MB.');
+export async function preparePhoto(file:File, generated=false):Promise<string>{
+ if(!generated&&file.size>8*1024*1024)throw Error('Cada foto pode ter até 8 MB.');
  const bitmap=await createImageBitmap(file);
  try{
   if(bitmap.width*bitmap.height>20000000)throw Error('Use fotos de até 20 megapixels.');

@@ -89,6 +89,7 @@ test('operation creates linked revenue and commission; recurring administration 
   await dialog.getByLabel('Descrição da recorrência',{exact:true}).fill('Administração apartamento');
   await dialog.getByLabel('Categoria',{exact:true}).selectOption('management_fee');
   await dialog.getByLabel('Valor mensal (R$)',{exact:true}).fill('450');
+  await dialog.getByLabel('Mês de término',{exact:true}).fill(month);
   await dialog.getByRole('button',{name:'Salvar registro',exact:true}).click();
   await expect(dialog).toHaveCount(0);
   for(let index=0;index<2;index++){
@@ -205,4 +206,9 @@ test('out-of-range month edits preserve the valid reporting period without crash
   await expect(period).toHaveValue('2025-12');
   await expect(page.getByRole('region',{name:'Central financeira'})).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test('entry form creates bounded monthly expense forecasts with BRL and original competence',async({page})=>{
+ const app=await setup(page);await tab(page,'Lançamentos');await page.getByRole('button',{name:'Novo lançamento',exact:true}).click();const dialog=page.getByRole('dialog');
+ await dialog.getByLabel('Descrição do lançamento',{exact:true}).fill('Aluguel do escritório');await dialog.getByLabel('Categoria',{exact:true}).selectOption('rent');await dialog.getByLabel('Valor (R$)',{exact:true}).fill('1.200,50');await dialog.getByLabel('Data de competência',{exact:true}).fill('2026-12-31');await dialog.getByLabel('Data de vencimento',{exact:true}).fill('2027-01-31');await dialog.getByLabel('Repetir este lançamento?',{exact:true}).selectOption('monthly');await dialog.getByLabel('Último mês da recorrência',{exact:false}).fill('2027-03');await dialog.getByRole('button',{name:'Salvar registro',exact:true}).click();await expect(dialog).toHaveCount(0);expect(app.state().entries).toHaveLength(3);expect(app.state().entries.every(e=>e.amountCents===120050&&e.recognition==='forecast')).toBe(true);expect(app.state().entries[0].competenceDate).toBe('2026-12-31');expect(app.state().entries[1].dueDate).toBe('2027-02-28');
 });

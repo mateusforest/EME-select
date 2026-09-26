@@ -1,3 +1,5 @@
+import './dialog.css';
+import {createPortal} from 'react-dom';
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 
@@ -18,7 +20,7 @@ export function Dialog({ title, children, onClose, wide = false }: { title: stri
       if (previous?.isConnected) previous.focus();
     };
   }, []);
-  return <dialog ref={ref} className={`dialog${wide ? ' dialog--wide' : ''}`} aria-labelledby={titleId}
+  return createPortal(<dialog ref={ref} className={`dialog${wide ? ' dialog--wide' : ''}`} aria-labelledby={titleId}
     onKeyDown={event => {
       if (event.key !== 'Tab') return;
       const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), iframe, [tabindex="0"]')].filter(el => el.getClientRects().length > 0);
@@ -31,5 +33,5 @@ export function Dialog({ title, children, onClose, wide = false }: { title: stri
     onClick={event => { if (event.target === ref.current) { const r = ref.current.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) closeRef.current(); } }}>
     <div className="dialog-top"><h2 id={titleId}>{title}</h2><button className="icon-button" aria-label="Fechar janela" onClick={onClose}><X size={22} /></button></div>
     <div className="dialog-content">{children}</div>
-  </dialog>;
+  </dialog>,document.fullscreenElement||document.body);
 }

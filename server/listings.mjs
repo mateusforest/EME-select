@@ -16,7 +16,8 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
   if(!db.prepare('PRAGMA table_info(listing_photos)').all().some(c=>c.name==='room'))db.exec("ALTER TABLE listing_photos ADD COLUMN room TEXT NOT NULL DEFAULT ''");
   db.exec('PRAGMA user_version=4');
   let processing=0;
-  const photos=id=>db.prepare('SELECT id,width,height,caption,position,room FROM listing_photos WHERE listing_id=? ORDER BY position,id').all(id).map(p=>({...p,url:'/api/photos/'+p.id}));
+  for(const [name,type] of [['original_data','BLOB'],['enhancement',"TEXT NOT NULL DEFAULT ''"]])if(!db.prepare('PRAGMA table_info(listing_photos)').all().some(c=>c.name===name))db.exec('ALTER TABLE listing_photos ADD COLUMN '+name+' '+type);
+  const photos=id=>db.prepare('SELECT id,width,height,caption,position,room,enhancement FROM listing_photos WHERE listing_id=? ORDER BY position,id').all(id).map(p=>({...p,url:'/api/photos/'+p.id}));
   function row(id,user){caseFor(id,user);const r=db.prepare('SELECT * FROM listings WHERE id=?').get(id);if(!r)fail(404,'Imóvel não encontrado.');return r;}
   const validate=validateDraft;
   function blockers(r){const d=JSON.parse(r.data), p=photos(r.id), reasons=[];
@@ -48,9 +49,9 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
     const match=path.match(/^\/api\/photos\/([a-f0-9-]{36})$/);if(!match||req.method!=='GET')return false;
     const p=db.prepare('SELECT listing_photos.*,listings.published,evaluations.stage FROM listing_photos JOIN listings ON listings.id=listing_photos.listing_id JOIN evaluations ON evaluations.id=listings.id WHERE listing_photos.id=?').get(match[1]);
     if(!p)fail(404,'Fotografia não encontrada.');
-    const published=p.published&&p.stage==='Entrada aprovada'&&JSON.parse(p.published).images.some(v=>v.url==='/api/photos/'+p.id);
+    const originalRequested=new URL(req.url,'https://eme.local').searchParams.get('original')==='1';const published=!originalRequested&&p.published&&p.stage==='Entrada aprovada'&&JSON.parse(p.published).images.some(v=>v.url==='/api/photos/'+p.id);
     if(!published){const user=session(req);if(!user||user.must_change)fail(404,'Fotografia não encontrada.');caseFor(p.listing_id,user);}
-    res.writeHead(200,{'Content-Type':'image/webp','Content-Length':p.data.length,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});res.end(Buffer.from(p.data));return true;
+    const bytes=originalRequested&&p.original_data?p.original_data:p.data;res.writeHead(200,{'Content-Type':'image/webp','Content-Length':bytes.length,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});res.end(Buffer.from(bytes));return true;
   }
   async function handle(path,req,res,user,body){
     if(path==='/api/listings'){
@@ -82,13 +83,13 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
       });send(res,200,detail(row(id,user),user));return true;
     }
     if(match[2]==='photos'&&req.method==='POST'){
-      fields(body,['version','content','caption','room']);if(photos(id).length>=20)fail(400,'Limite de 20 fotografias por imóvel.');
+      fields(body,['version','content','caption','room','sourceId','method','reviewed']);const source=body.sourceId?db.prepare('SELECT * FROM listing_photos WHERE id=? AND listing_id=?').get(body.sourceId,id):null;if(body.sourceId&&(!source||body.method!=='esrgan-slim-2x'||body.reviewed!==true))fail(400,'Confira a foto de origem e confirme a fidelidade da ampliação.');if(!source&&photos(id).length>=20)fail(400,'Limite de 20 fotografias por imóvel.');
       if(typeof body.content!=='string'||body.content.length>11200000||!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(body.content))fail(400,'Envie JPEG, PNG ou WebP de até 8 MB.');
       const caption=text(body.caption??'','Legenda',0,180),room=text(body.room??'','Ambiente',0,60),buffer=Buffer.from(body.content.split(',')[1],'base64');if(buffer.length>8*1024*1024)fail(413,'Cada fotografia pode ter até 8 MB.');
       if(processing>=2)fail(503,'Há fotos em processamento. Aguarde e tente novamente.');processing++;
       let output;try{const pipeline=sharp(buffer,{limitInputPixels:20000000,failOn:'warning'});const meta=await pipeline.metadata();if(!['jpeg','png','webp'].includes(meta.format)||meta.pages>1||Math.max(meta.width,meta.height)<600||Math.min(meta.width,meta.height)<200)fail(400,'Use uma fotografia estática com pelo menos 600 pixels no lado maior e 200 no menor.');output=await pipeline.rotate().resize({width:3200,height:3200,fit:'inside',withoutEnlargement:true}).webp({quality:90}).toBuffer({resolveWithObject:true});}catch(e){if(e.status)throw e;fail(400,'Não foi possível ler esta fotografia. Use JPEG, PNG ou WebP válido, até 20 megapixels.');}finally{processing--;}
       const freshUser=session(req);if(!freshUser||freshUser.must_change)fail(401,'Entre novamente.');
-      transaction(()=>{checkVersion(row(id,freshUser),body);if(['Entrada aprovada','Não selecionado'].includes(caseFor(id,freshUser).stage))requireAdmin(freshUser);if(photos(id).length>=20)fail(400,'Limite de 20 fotografias por imóvel.');db.prepare('INSERT INTO listing_photos (id,listing_id,data,width,height,caption,position,room) VALUES (?,?,?,?,?,?,?,?)').run(randomUUID(),id,output.data,output.info.width,output.info.height,caption,photos(id).length,room);changed(id,freshUser,'Fotografia adicionada');});send(res,201,detail(row(id,freshUser),freshUser));return true;
+      transaction(()=>{checkVersion(row(id,freshUser),body);if(['Entrada aprovada','Não selecionado'].includes(caseFor(id,freshUser).stage))requireAdmin(freshUser);if(!source&&photos(id).length>=20)fail(400,'Limite de 20 fotografias por imóvel.');if(source){db.prepare('UPDATE listing_photos SET id=?,data=?,width=?,height=?,original_data=?,enhancement=? WHERE id=?').run(randomUUID(),output.data,output.info.width,output.info.height,source.original_data||source.data,'ESRGAN Slim 2×',source.id);}else db.prepare('INSERT INTO listing_photos (id,listing_id,data,width,height,caption,position,room) VALUES (?,?,?,?,?,?,?,?)').run(randomUUID(),id,output.data,output.info.width,output.info.height,caption,photos(id).length,room);changed(id,freshUser,'Fotografia adicionada');});send(res,201,detail(row(id,freshUser),freshUser));return true;
     }
     if(['publish','unpublish'].includes(match[2])&&req.method==='POST'){
       fields(body,['version','confirmed']);requireAdmin(user);

@@ -1,3 +1,4 @@
+import PropertyPresentation from './PropertyPresentation';
 import {
   ArrowLeft, ArrowRight, ArrowUpRight, Bath, BedDouble, CarFront,
   FileText, Heart, LayoutTemplate, MapPin, Maximize2, MoveVertical, Ruler, Share2, Truck,
@@ -77,10 +78,7 @@ export default function PropertyDetails({
 
           <div className="details-story">
             <span className="details-eyebrow">{residential ? 'Uma forma de viver' : 'Possibilidades do espaço'}</span>
-            <p>{property.description}</p>
-            <ul className="details-tags" aria-label="Características do ambiente">
-              {property.tags.slice(0, 4).map(tag => <li key={tag}>{tag}</li>)}
-            </ul>
+            <PropertyPresentation description={property.description} features={property.tags}/>
           </div>
         </section>
 

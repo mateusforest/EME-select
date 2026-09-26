@@ -16,7 +16,7 @@ export const PROPERTY_TYPE_OPTIONS = ['', ...residentialTypes, ...commercialType
 export const PROPERTY_TYPE_OPTIONS_BY_ENVIRONMENT: Record<EnvironmentId, string[]> = {
   todos: PROPERTY_TYPE_OPTIONS,
   litoral: ['', 'Casa', 'Apartamento', 'Cobertura', 'Compacto', 'Condomínio', 'Condomínio horizontal', 'Condomínio vertical'],
-  serra: ['', 'Casa', 'Cabana', 'Apartamento', 'Cobertura', 'Condomínio', 'Condomínio horizontal'],
+  serra: ['', 'Casa', 'Cabana', 'Apartamento', 'Cobertura', 'Compacto', 'Condomínio', 'Condomínio horizontal', 'Condomínio vertical'],
   urbano: ['', 'Casa', 'Apartamento', 'Cobertura', 'Compacto', 'Condomínio', 'Condomínio horizontal', 'Condomínio vertical'],
   condominios: ['', 'Casa', 'Apartamento', 'Condomínio', 'Condomínio horizontal', 'Condomínio vertical'],
   comercial: ['', ...commercialTypes],

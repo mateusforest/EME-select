@@ -59,7 +59,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 
 export default function PhotographicHome({ environment = homeEnvironment, selectedId, onSelect }: Props) {
   const scene = photographicScenes[environment.id];
-  const landmarks = useMemo(() => environment.markers.map(marker => ({ ...marker, ...(environment.image.includes('urbano-bairro') ? {} : scene.anchors[marker.propertyId]) })), [environment, scene]);
+  const landmarks = useMemo(() => environment.markers.map(marker => ({ ...marker, ...(environment.image.endsWith('.webp') ? {} : scene.anchors[marker.propertyId]) })), [environment, scene]);
   const root = useRef<HTMLDivElement>(null);
   const viewport = useRef<HTMLDivElement>(null);
   const photograph = useRef<HTMLImageElement>(null);
@@ -298,7 +298,7 @@ export default function PhotographicHome({ environment = homeEnvironment, select
         zoomTo(destination.current.scale > 1.7 ? 1 : 1.85, { x: event.clientX - rect.left, y: event.clientY - rect.top }, .85);
       }}>
       <img ref={photograph} className={`photographic-home__image${imageState === 'ready' ? ' is-loaded' : ''}`} src={imageAttempt ? `${environment.image}?attempt=${imageAttempt}` : environment.image} width={scene.width} height={scene.height}
-        alt={environment.image.includes('urbano-bairro') ? 'Bairro residencial ilustrativo com casas, jardins e edifício baixo de apartamentos.' : scene.alt}
+        alt={environment.image.endsWith('.webp') ? 'Cenário ilustrativo: '+environment.subtitle : scene.alt}
         draggable={false} fetchPriority="high" onLoad={() => setImageState('ready')} onError={() => setImageState('error')} />
       <div className="photographic-home__scrim" aria-hidden="true" />
       <div className="photographic-home__pins" hidden={imageState !== 'ready'}>

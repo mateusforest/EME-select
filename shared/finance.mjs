@@ -88,6 +88,13 @@ export const percentCents = (amountCents, basisPoints) => {
   integer(amountCents, 'Valor'); integer(basisPoints, 'Percentual', 0, 10000)
   return Number((BigInt(amountCents) * BigInt(basisPoints) + 5000n) / 10000n)
 }
+const recurrenceDate=(period,day)=>period+'-'+String(Math.min(day,new Date(Date.UTC(Number(period.slice(0,4)),Number(period.slice(5,7)),0)).getUTCDate())).padStart(2,'0');
+const offsetMonth=(period,offset)=>{const d=new Date(period+'-01T00:00:00Z');d.setUTCMonth(d.getUTCMonth()+offset);return d.toISOString().slice(0,7);};
+function generatePeriod(state,recurrence,period,context){
+ if(state.entries.some(e=>e.recurrenceId===recurrence.id&&e.recurrenceMonth===period))return;
+ const item=entryDraft({...recurrence,id:undefined,description:recurrence.name,recognition:'forecast',competenceDate:recurrenceDate(offsetMonth(period,recurrence.competenceOffset||0),recurrence.competenceDay||1),dueDate:recurrenceDate(period,recurrence.dueDay)},null,state,context);
+ state.entries.push({...item,recurrenceId:recurrence.id,recurrenceMonth:period});
+}
 export function emptyFinance() {
   return { version: 1, accounts: [], entries: [], recurrences: [], operations: [], partners: [], settings: { reserveBps: null, defaultCommissionBps: null, cashTargetCents: null, initialInvestmentCents: null }, adjustments: [] }
 }
@@ -190,9 +197,17 @@ export function applyFinanceCommand(input, command, rawContext) {
       const merged = { ...prior, ...data }
       const kind = category(merged.category)
       if (kind.direction === 'transfer' || ['partner_distribution', 'capital_in', 'loan_in', 'investment'].includes(kind.id)) fail('Esta categoria exige um lançamento individual.')
-      const result = { id: prior?.id || newId(data.id), name: text(merged.name, 'Nome da recorrência'), category: kind.id, amountCents: integer(merged.amountCents, 'Valor mensal', 1), behavior: choice(merged.behavior || 'fixed', ['fixed', 'variable'], 'Comportamento'), costCenter: text(merged.costCenter, 'Centro de custo', 100, false), ...dimensions(merged, prior, state, context), startMonth: month(merged.startMonth, 'Mês inicial'), endMonth: merged.endMonth ? month(merged.endMonth, 'Mês final') : null, dueDay: integer(merged.dueDay, 'Dia de vencimento', 1, 28), active: bool(merged.active), ...metadata(prior, context) }
+      const result = { id: prior?.id || newId(data.id), name: text(merged.name, 'Nome da recorrência'), category: kind.id, amountCents: integer(merged.amountCents, 'Valor mensal', 1), behavior: choice(merged.behavior || 'fixed', ['fixed', 'variable'], 'Comportamento'), costCenter: text(merged.costCenter, 'Centro de custo', 100, false), ...dimensions(merged, prior, state, context), startMonth: month(merged.startMonth, 'Mês inicial'), endMonth: merged.endMonth ? month(merged.endMonth, 'Mês final') : null, dueDay: integer(merged.dueDay, 'Dia de vencimento', 1, 31), competenceDay: integer(merged.competenceDay??1,'Dia de competência',1,31), competenceOffset:integer(merged.competenceOffset??0,'Intervalo da competência',-12,12), notes:text(merged.notes,'Observações',1200,false), active: bool(merged.active), ...metadata(prior, context) }
       if (result.endMonth && result.endMonth < result.startMonth) fail('O mês final não pode anteceder o inicial.')
-      put(state.recurrences, result); break
+      put(state.recurrences, result);
+      if(data.generateAll===true){
+        if(!result.endMonth||!result.active)fail('Defina o mês de término e mantenha a recorrência ativa para gerar os lançamentos.');
+        const start=Number(result.startMonth.slice(0,4))*12+Number(result.startMonth.slice(5,7))-1;
+        const end=Number(result.endMonth.slice(0,4))*12+Number(result.endMonth.slice(5,7))-1;
+        if(end-start>=60)fail('Use um período de até 60 meses por recorrência.');
+        for(let n=start;n<=end;n++)generatePeriod(state,result,String(Math.floor(n/12))+'-'+String(n%12+1).padStart(2,'0'),context);
+      }
+      break
     }
     case 'recurrence.generate': {
       const recurrence = found(state.recurrences, data.id, 'Recorrência')
@@ -200,9 +215,7 @@ export function applyFinanceCommand(input, command, rawContext) {
       if (!recurrence.active || period < recurrence.startMonth || (recurrence.endMonth && period > recurrence.endMonth)) fail('A recorrência não está ativa nesse mês.')
       // A cancelled period stays recorded; a correction is always explicit, never regenerated silently.
       if (state.entries.some(entry => entry.recurrenceId === recurrence.id && entry.recurrenceMonth === period)) return state
-      const dueDate = `${period}-${String(recurrence.dueDay).padStart(2, '0')}`
-      const item = entryDraft({ ...recurrence, id: undefined, description: recurrence.name, recognition: 'forecast', competenceDate: `${period}-01`, dueDate }, null, state, context)
-      state.entries.push({ ...item, recurrenceId: recurrence.id, recurrenceMonth: period }); break
+      generatePeriod(state,recurrence,period,context); break
     }
     case 'operation.create': {
       const operationId = newId(data.id)
@@ -337,7 +350,7 @@ export function financeReport(state, { from, to, asOf }, members = []) {
     const projected = open.filter(item => item.dueDate <= end && (index === 0 || item.dueDate >= `${periodMonth}-01`))
     for (const recurrence of state.recurrences.filter(item => recurrenceActive(item, periodMonth))) {
       if (state.entries.some(item => item.recurrenceId === recurrence.id && item.recurrenceMonth === periodMonth)) continue
-      projected.push({ ...recurrence, dueDate: `${periodMonth}-${String(recurrence.dueDay).padStart(2, '0')}` })
+      projected.push({ ...recurrence, dueDate: recurrenceDate(periodMonth,recurrence.dueDay) })
     }
     const receivableCents = sum(projected.filter(item => category(item.category).direction === 'in' && !retained(item)).map(item => item.amountCents))
     const payableCents = sum(projected.filter(item => category(item.category).direction === 'out').map(item => item.amountCents))
@@ -367,7 +380,7 @@ export function financeReport(state, { from, to, asOf }, members = []) {
   for (let periodMonth = currentMonth; periodMonth <= payableHorizon.slice(0, 7); periodMonth = addMonths(`${periodMonth}-01`, 1)) {
     for (const recurrence of state.recurrences.filter(item => recurrenceActive(item, periodMonth) && item.category !== 'third_party_out' && category(item.category).direction === 'out')) {
       if (state.entries.some(item => item.recurrenceId === recurrence.id && item.recurrenceMonth === periodMonth)) continue
-      const dueDate = `${periodMonth}-${String(recurrence.dueDay).padStart(2, '0')}`
+      const dueDate = recurrenceDate(periodMonth,recurrence.dueDay)
       if (dueDate <= payableHorizon) ownPayables = safeAdd(ownPayables, recurrence.amountCents)
     }
   }
