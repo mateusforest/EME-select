@@ -1,0 +1,306 @@
+/* Public surfaces only. A shared light source unifies photos, controls and dialogs. */
+.eme-public {
+  --relief-surface: #f3f1e9;
+  --relief-edge: #ffffffa8;
+  --relief-raised: 5px 5px 11px #b3b6a950, -4px -4px 10px #ffffffde,
+    inset 1px 1px 1px #ffffffb8, inset -1px -1px 1px #a0aa921c;
+  --relief-hover: 7px 7px 15px #a8b09f60, -5px -5px 12px #ffffffed,
+    inset 1px 1px 1px #fff, inset -1px -1px 1px #a0aa9226;
+  --relief-inset: inset 3px 3px 7px #a7af9d50, inset -3px -3px 7px #ffffffed;
+  --relief-panel: 12px 12px 28px #aeb4a442, -9px -9px 24px #ffffffc7,
+    inset 1px 1px 1px #ffffffe0, inset -1px -1px 1px #b3bcaa24;
+  --relief-forest: linear-gradient(135deg, #285346, #173c32 75%);
+  --relief-forest-raised: 5px 6px 12px #0c2b293b, -3px -3px 9px #ffffffb3,
+    inset 1px 1px 1px #89ab9266, inset -1px -1px 2px #061d244d;
+  --relief-forest-inset: inset 3px 3px 7px #061f24b3, inset -2px -2px 5px #64846b59,
+    1px 1px 1px #ffffffb3;
+}
+
+/* Rectangular controls: raised at rest, inset on selection and press. */
+.eme-public :is(
+  .primary-button, .secondary-button, .contact-button, .text-link,
+  .form-primary, .cmp-button, .eme-profile-contact,
+  .environment-selector nav a, .scene-location-tabs button,
+  .development-view-switch button, .development-floors > button,
+  .development-bottom button, .g400-view-navigation button, .development-primary,
+  .development-plan-link, .development-consult,
+  .development-model-pin, .development-panel-toggle,
+  .photographic-home__overview, .spatial-mode button,
+  .catalog-collections a, .catalog-mobile-filter, .catalog-compare-button,
+  .catalog-share, .catalog-apply, .catalog-reset, .catalog-active-filters a,
+  .details-feature-link, .pg-toolbar button, .pg-toolbar a
+) {
+  border: 1px solid var(--relief-edge);
+  border-radius: 12px;
+  background: var(--relief-surface);
+  color: var(--forest);
+  box-shadow: var(--relief-raised);
+  transition: box-shadow .22s ease, background-color .22s ease, border-color .22s ease;
+}
+.eme-public :is(.text-link, .eme-profile-contact) {
+  padding: 12px 16px;
+  gap: 16px;
+  max-width: 100%;
+}
+.eme-public :is(.development-panel-toggle, .details-feature-link) { padding-inline: 16px; }
+.eme-public :is(.development-plan-link, .development-consult) { padding: 12px; margin-top: 10px; }
+.eme-public [class]:is(.primary-button, .form-primary, .cmp-button--solid, .development-primary, .catalog-apply) {
+  background: var(--relief-forest);
+  color: #fffdf4;
+  border-color: #31584b;
+  box-shadow: var(--relief-forest-raised);
+}
+
+/* The logo keeps its approved artwork, sitting on a softly sculpted plinth. */
+.eme-public .site-header .brand.brand--emerald {
+  background: var(--relief-surface);
+  border: 1px solid var(--relief-edge);
+  border-radius: 20px;
+  box-shadow: var(--relief-raised);
+  transition: box-shadow .25s ease;
+}
+.eme-public .site-header .brand--emerald .brand-monogram { width: 66px; height: 52px; }
+.eme-public .site-header .brand--emerald .brand-aura { inset: 6px; border-radius: 16px; }
+.eme-public .site-header .brand--emerald .brand-aura::after { opacity: .4; }
+.eme-public .site-header .brand--emerald:hover { box-shadow: var(--relief-hover); }
+.eme-public .site-header .brand--emerald:active { box-shadow: var(--relief-inset); }
+
+/* Circular actions remain distinct from the rectangular navigation. */
+.eme-public :is(
+  .icon-button, .mobile-menu-toggle, .details-icon-button, .cmp-remove,
+  .eme-person-photo-open, .explore-env-arrow
+) {
+  background: var(--relief-surface);
+  color: var(--forest);
+  border: 1px solid var(--relief-edge);
+  border-radius: 50%;
+  box-shadow: var(--relief-raised);
+  flex-shrink: 0;
+  transition: box-shadow .22s ease;
+}
+.eme-public .explore-env-arrow { width: 34px; height: 34px; padding: 8px; margin-top: 0; }
+.eme-public .explore-env-link:hover .explore-env-arrow { transform: none; box-shadow: var(--relief-inset); }
+.eme-public .mobile-menu-toggle { width: 40px; height: 40px; padding: 10px; }
+.eme-public .desktop-explore-trigger {
+  padding: 12px 15px;
+  border-radius: 12px;
+  border: 1px solid var(--relief-edge);
+  background: var(--relief-surface);
+  box-shadow: var(--relief-raised);
+}
+.eme-public .desktop-explore-trigger[aria-expanded=true] { box-shadow: var(--relief-inset); }
+.eme-public :is(.desktop-explore-menu, .mobile-menu) {
+  background: var(--relief-surface);
+  border: 1px solid var(--relief-edge);
+  border-radius: 18px;
+  box-shadow: var(--relief-panel);
+}
+.eme-public .desktop-explore-menu a { border-radius: 8px; }
+.eme-public .desktop-explore-menu a:hover { box-shadow: var(--relief-inset); background: var(--relief-surface); }
+
+/* Search is recessed, while its submit control sits above the field. */
+.eme-public :is(.search-line, .catalog-search-input, .catalog-unit-input) {
+  border: 1px solid #c4ccbd;
+  background: var(--relief-surface);
+  border-radius: 14px;
+  box-shadow: var(--relief-inset);
+}
+.eme-public .search-line > button {
+  border: 1px solid #41634d;
+  border-radius: 10px;
+  background: var(--relief-forest);
+  box-shadow: var(--relief-forest-raised);
+}
+.eme-public :is(.search-line, .catalog-search-input, .catalog-unit-input) input { background: transparent; box-shadow: none; }
+.eme-public .operation-tabs { gap: 10px; padding-bottom: 4px; }
+.eme-public .operation-tabs button {
+  border: 1px solid var(--relief-edge);
+  border-radius: 10px;
+  padding: 10px 18px;
+  background: var(--relief-surface);
+  box-shadow: var(--relief-raised);
+}
+.eme-public .operation-tabs button[aria-pressed=true] {
+  box-shadow: var(--relief-inset);
+  border-color: #a9b9a7;
+  color: var(--forest);
+}
+.eme-public :is(.search-filters select, .catalog-field select, .catalog-field > input, .catalog-sort select,
+  .form-field input, .form-field select, .form-field textarea) {
+  border: 1px solid #c4ccbd;
+  border-radius: 10px;
+  background-color: var(--relief-surface);
+  box-shadow: var(--relief-inset);
+}
+.eme-public .search-filters select { padding: 9px 22px 9px 10px; }
+.eme-public :is(.search-line, .catalog-search-input, .catalog-unit-input):focus-within {
+  outline: 2px solid #51745e;
+  outline-offset: 3px;
+}
+.eme-public .form-field [aria-invalid=true] { border-color: #a34f3d; }
+
+/* Photographs keep their own colors; relief is applied to their frames. */
+.eme-public :is(.development-feature > img, .explore-env-image, .row-image,
+  .catalog-property-image, .details-image-link, .cmp-property-image, .curation-landscape,
+  .pg-stage, .development-gallery-image) {
+  border: 7px solid var(--relief-surface);
+  border-radius: 20px;
+  box-shadow: var(--relief-panel);
+  background-color: var(--relief-surface);
+}
+.eme-public :is(.explore-env-image, .catalog-property-image, .details-image-link, .cmp-property-image) {
+  isolation: isolate;
+  overflow: hidden;
+}
+.eme-public :is(.explore-env-image, .catalog-property-image, .details-image-link)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  box-shadow: inset 2px 2px 6px #061d293b, inset -1px -1px 2px #ffffff4d;
+  pointer-events: none;
+}
+.eme-public .explore-env-link { padding: 12px; border-radius: 23px; background: var(--relief-surface); box-shadow: var(--relief-panel); }
+.eme-public .explore-env-image { border-width: 3px; border-radius: 14px; box-shadow: var(--relief-inset); }
+.eme-public .explore-env-caption { padding: 20px 7px 14px; column-gap: 10px; }
+.eme-public .explore-env-story h3 { font-size: clamp(22px, 2vw, 30px); }
+.eme-public .explore-env-number { font-size: 19px; }
+.eme-public .development-feature { background: var(--ivory); }
+
+/* Floating cards have deeper relief than their nested controls. */
+.eme-public :is(.scene-selection, .development-page .development-panel, .catalog-filter-panel,
+  .owner-form-panel, .cmp-empty, .comparison-tray, .toast, .collection-connection-notice) {
+  background: var(--relief-surface);
+  border: 1px solid var(--relief-edge);
+  border-radius: 20px;
+  box-shadow: var(--relief-panel);
+}
+.eme-public :is(.scene-selection, .development-page .development-panel) {
+  box-shadow: 10px 14px 32px #102e3440, -3px -3px 10px #ffffff38,
+    inset 1px 1px 1px #fff, inset -1px -1px 1px #a4b29838;
+}
+.eme-public .dialog {
+  background: var(--relief-surface);
+  border: 1px solid #ffffff85;
+  border-radius: 22px;
+  box-shadow: 18px 24px 70px #041f2566, -4px -4px 18px #ffffff21, inset 1px 1px 1px #fff;
+}
+.eme-public .dialog .dialog-top { background: var(--relief-surface); }
+.eme-public .curation-principles article { padding: 24px; border-radius: 20px; background: var(--relief-surface); box-shadow: var(--relief-panel); }
+.eme-public .catalog-property { border-radius: 20px; }
+.eme-public .catalog-property-copy { padding-inline: 12px; }
+.eme-public .development-floors { gap: 9px; }
+.eme-public .development-towers { gap: 10px; }
+.eme-public .development-towers button { border-radius: 9px; padding: 9px 12px; box-shadow: var(--relief-raised); background: var(--relief-surface); border: 1px solid var(--relief-edge); }
+.eme-public .development-towers button[aria-pressed=true] { box-shadow: var(--relief-inset); border-color: #a9b9a7; }
+.eme-public :is(.development-unit-list, .g400-unit-list) > button { border-radius: 10px; padding-inline: 10px; }
+.eme-public :is(.development-unit-list, .g400-unit-list) > button:hover { box-shadow: var(--relief-inset); color: var(--forest); }
+
+/* Only the visible pin surfaces are styled; their projected hit areas stay intact. */
+.eme-public :is(.photographic-home__label, .spatial-pin-label, .marker-label, .development-hotspot > span) {
+  background: var(--relief-surface);
+  color: var(--forest);
+  border: 1px solid var(--relief-edge);
+  border-radius: 11px;
+  box-shadow: 4px 5px 12px #0b293635, -2px -2px 6px #ffffff73, inset 1px 1px 1px #fff;
+}
+.eme-public :is(.photographic-home__dot, .spatial-pin-dot, .marker-dot, .development-hotspot > i) {
+  background: var(--relief-surface);
+  color: var(--forest);
+  border: 1px solid #fff9;
+  border-radius: 50%;
+  box-shadow: 0 0 0 6px #f6f4ec38, 4px 5px 10px #071e3259, -2px -2px 6px #ffffff7a,
+    inset 1px 1px 2px #fff, inset -2px -2px 4px #9aaa8d66;
+}
+.eme-public :is(.photographic-home__pin, .spatial-pin, .scene-marker, .development-hotspot):is(:hover, [aria-pressed=true]) > :is(span, i) {
+  background: var(--relief-forest);
+  color: #fffdf4;
+  box-shadow: var(--relief-forest-inset);
+}
+.eme-public :is(.photographic-home__zoom, .photographic-interior__toolbar, .spatial-zoom) {
+  background: var(--relief-surface);
+  border: 1px solid var(--relief-edge);
+  border-radius: 12px;
+  box-shadow: var(--relief-raised);
+}
+.eme-public :is(.photographic-home__zoom, .photographic-interior__toolbar, .spatial-zoom) button { border-radius: 9px; }
+.eme-public :is(.photographic-home__zoom, .photographic-interior__toolbar, .spatial-zoom) button:is(:hover, :active) { background: var(--relief-surface); box-shadow: var(--relief-inset); }
+
+/* The same sculpted finish on the forest surfaces and interior photography. */
+.eme-public .eme-people-stage { border-radius: 24px; border: 1px solid #53795e66; box-shadow: var(--relief-panel); }
+.eme-public :is(.eme-person-photo, .eme-profile-portrait) {
+  border: 5px solid #214b3e;
+  box-shadow: 9px 11px 24px #041f296b, -5px -5px 13px #7a9e7959, inset 1px 1px 1px #aac19a5c;
+}
+.eme-public .eme-person-frame-line { opacity: .5; }
+.eme-public :is(.eme-person-discover > span, .eme-people-arrows button, .tour-side-actions .icon-button,
+  .tour-room-nav nav button, .tour-cta > button, .pg-controls button) {
+  background: var(--relief-forest);
+  color: #fffdf4;
+  border: 1px solid #7a9e795c;
+  box-shadow: 4px 5px 10px #031c2b70, -3px -3px 8px #adc39b2b,
+    inset 1px 1px 1px #bad3a938, inset -1px -1px 2px #031c294d;
+}
+.eme-public :is(.tour-room-nav nav button, .tour-cta > button) { border-radius: 12px; }
+.eme-public .eme-person-discover:hover > span { transform: none; box-shadow: var(--relief-forest-inset); }
+.eme-public .eme-people-roster { padding: 18px 10px; gap: 18px; border: 0; }
+.eme-public .eme-people-roster button { padding: 16px; border: 1px solid var(--relief-edge); border-radius: 14px; background: var(--relief-surface); box-shadow: var(--relief-raised); }
+.eme-public .eme-people-roster button[aria-pressed=true] { box-shadow: var(--relief-inset); border-color: #a9b9a7; }
+
+/* State changes do not shift layout or the scene's interaction coordinates. */
+@media (hover: hover) {
+  .eme-public :is(.secondary-button, .contact-button, .text-link, .icon-button,
+    .environment-selector nav a, .scene-location-tabs button, .development-view-switch button,
+    .development-floors > button, .development-bottom button, .g400-view-navigation button,
+    .development-plan-link, .development-consult,
+    .photographic-home__overview, .catalog-collections a, .eme-profile-contact):hover:not(:disabled) {
+    box-shadow: var(--relief-hover);
+  }
+  .eme-public :is(.primary-button, .form-primary, .cmp-button--solid, .development-primary):hover:not(:disabled) {
+    background: linear-gradient(135deg, #346350, #204a3c);
+  }
+}
+.eme-public :is(.environment-selector nav a, .scene-location-tabs button, .development-view-switch button,
+  .development-floors > button, .development-bottom button, .g400-view-navigation button,
+  .catalog-collections a, .tour-room-nav nav button):is([aria-pressed=true], [aria-current=page], .is-selected),
+.eme-public [class]:is(.primary-button, .form-primary, .cmp-button--solid, .development-primary):active:not(:disabled),
+.eme-public .search-line > button:active:not(:disabled) {
+  background: var(--relief-forest);
+  color: #fffdf4;
+  border-color: #31584b;
+  box-shadow: var(--relief-forest-inset);
+}
+.eme-public :is(.secondary-button, .contact-button, .text-link, .icon-button, .details-icon-button,
+  .environment-selector nav a, .scene-location-tabs button, .development-view-switch button,
+  .development-floors > button, .development-bottom button, .g400-view-navigation button,
+  .development-plan-link, .development-consult,
+  .photographic-home__overview, .catalog-collections a, .eme-profile-contact):active:not(:disabled) { box-shadow: var(--relief-inset); }
+.eme-public :is(.icon-button, .details-icon-button)[aria-pressed=true] { box-shadow: var(--relief-inset); border-color: #a9b9a7; }
+.eme-public :is(.primary-button, .secondary-button, .form-primary, .development-primary,
+  .development-floors > button, .development-bottom button):disabled { box-shadow: none; }
+.eme-public :is(a, button, input, select, textarea):focus-visible { outline: 2px solid #51745e; outline-offset: 4px; }
+.eme-public :is(.eme-people-stage, .tour-page) :is(a, button):focus-visible { outline-color: #edf1d4; }
+
+@media (max-width: 1150px) {
+  .eme-public .site-header .brand--emerald .brand-monogram { width: 58px; height: 46px; }
+  .eme-public .explore-env-arrow { width: 28px; height: 28px; padding: 6px; }
+  .eme-public .explore-env-caption { column-gap: 7px; padding-inline: 3px; }
+}
+@media (max-width: 600px) {
+  .eme-public { --relief-panel: 7px 8px 19px #aeb4a44d, -5px -5px 16px #ffffffc7, inset 1px 1px 1px #fff; }
+  .eme-public .site-header .brand.brand--emerald { border-radius: 16px; }
+  .eme-public .site-header .brand--emerald .brand-monogram { width: 50px; height: 40px; }
+  .eme-public .search-filters select { padding: 8px 17px 8px 8px; }
+  .eme-public .environment-selector nav a { border-radius: 9px; }
+  .eme-public .photographic-home__caption { top: 416px; }
+  .eme-public .explore-env-caption { padding: 18px 7px 12px; column-gap: 12px; }
+  .eme-public .explore-env-story h3 { font-size: 28px; }
+  .eme-public .explore-env-number { font-size: 22px; }
+  .eme-public .explore-env-arrow { width: 34px; height: 34px; padding: 8px; }
+  .eme-public :is(.development-feature > img, .curation-landscape, .pg-stage) { border-width: 5px; border-radius: 16px; }
+  .eme-public .development-page .development-panel { border-radius: 16px; }
+  .eme-public .eme-person-photo { border-width: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .eme-public :is(a, button, .explore-env-arrow) { transition: none; }
+}

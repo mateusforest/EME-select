@@ -8,8 +8,13 @@ import './spatial/photographic-interior.css';
 import './scene-navigation.css';
 import './environments.css';
 import './brand-header.css';
+import './soft-relief.css';
 export default function PublicApp(){
  const [ready,setReady]=useState(false),[failed,setFailed]=useState(false),[attempt,setAttempt]=useState(0);
+ useEffect(()=>{
+  document.documentElement.classList.add('eme-public');
+  return()=>document.documentElement.classList.remove('eme-public');
+ },[]);
  useEffect(()=>{
   let active=true;const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),8000);
   fetch('/api/public/properties',{signal:controller.signal,cache:'no-store'}).then(async res=>{
