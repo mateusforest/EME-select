@@ -305,6 +305,59 @@
   .eme-public :is(a, button, .explore-env-arrow) { transition: none; }
 }
 
+/* The collection is the primary action; the compact category stays on its landmark. */
+.eme-public .hero-copy .collection-link {
+  background: var(--relief-forest); color: #fffdf4; border-color: #31584b;
+  box-shadow: var(--relief-forest-raised); padding: 14px 19px;
+}
+.eme-public .hero-copy .collection-link:hover { box-shadow: var(--relief-forest-inset); }
+.eme-public .scene-page--todos .photographic-home__pin[aria-label="Compactos"] .photographic-home__label {
+  bottom: auto; top: 51px;
+}
+
+/* The standalone owner journey shares the same public surface system. */
+.eme-public .submission-brand > span {
+  width: 88px; height: 76px; border-radius: 20px;
+  background: var(--relief-surface); border-color: var(--relief-edge); box-shadow: var(--relief-raised);
+}
+.eme-public .submission-brand svg { display: block; mix-blend-mode: multiply; }
+.eme-public :is(.submission-back, .submission-form-link, .submission-help) {
+  padding: 13px 16px; border: 1px solid var(--relief-edge); border-radius: 12px;
+  background: var(--relief-surface); box-shadow: var(--relief-raised);
+}
+.eme-public :is(.submission-back, .submission-form-link, .submission-help):hover { box-shadow: var(--relief-hover); }
+.eme-public :is(.submission-back, .submission-form-link, .submission-help):active { box-shadow: var(--relief-inset); }
+.eme-public .submission-form-link { background: var(--relief-forest); color: #fffdf4; box-shadow: var(--relief-forest-raised); border-color: #31584b; }
+.eme-public :is(.submission-form-card, .submission-checklist article) {
+  background: var(--relief-surface); border: 1px solid var(--relief-edge); border-radius: 22px; box-shadow: var(--relief-panel);
+}
+.eme-public .submission-checklist article { padding: 23px; margin-bottom: 22px; }
+.eme-public .submission-checklist article > div { min-width: 0; }
+.eme-public .submission-checklist article > svg { box-sizing: content-box; padding: 10px; border-radius: 50%; box-shadow: var(--relief-inset); }
+.eme-public :is(.submission-photo-note, .owner-support-note, .owner-protocol) {
+  background: var(--relief-surface); border-color: #c4ccbd; border-radius: 12px; box-shadow: var(--relief-inset);
+}
+.eme-public .owner-steps { gap: 10px; }
+.eme-public .owner-steps li { border: 0; padding: 10px 8px; border-radius: 12px; background: var(--relief-surface); box-shadow: var(--relief-raised); flex-wrap: wrap; line-height: 1.5; }
+.eme-public .owner-steps [aria-current=step] { box-shadow: var(--relief-inset); }
+.eme-public .owner-steps li > span { box-shadow: var(--relief-inset); }
+.eme-public .owner-steps [aria-current=step] > span { box-shadow: var(--relief-forest-inset); }
+.eme-public .owner-success-icon { background: var(--relief-surface); box-shadow: var(--relief-raised); }
+.eme-public .owner-review { border: 0; padding: 10px 18px; border-radius: 14px; box-shadow: var(--relief-inset); }
+.eme-public .owner-actions { gap: 12px; flex-wrap: wrap; }
+.eme-public .owner-actions .form-text-button { padding: 10px 12px; border-radius: 10px; }
+.eme-public .owner-actions .form-text-button:hover { box-shadow: var(--relief-inset); }
+.eme-public .submission-page, .submission-page.eme-public { overflow-wrap: anywhere; }
+.eme-public .form-primary > svg { flex-shrink: 0; }
+@media (max-width: 760px) {
+  .eme-public .submission-brand > span { width: 68px; height: 60px; border-radius: 16px; }
+  .eme-public .submission-brand svg { width: 50px; height: 40px; }
+  .eme-public .submission-checklist article { gap: 14px; padding: 18px; }
+  .eme-public .submission-checklist article > svg { padding: 7px; width: 18px; height: 18px; }
+  .eme-public .submission-back { padding: 12px; }
+  .eme-public .owner-steps li { padding: 9px 6px; gap: 7px; }
+}
+
 /* Surface content needs its own gutter, including when filters expand. */
 .eme-public .catalog-layout { grid-template-columns: 280px minmax(0, 1fr); gap: 36px; }
 .eme-public .catalog-filter-panel { min-width: 0; padding: 24px; }

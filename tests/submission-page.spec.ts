@@ -9,7 +9,7 @@ test('o link público abre a ficha sem login e confirma envio privado com protoc
   await page.goto('/enviar-imovel');
   await expect(page).toHaveTitle('Apresente seu imóvel — EME Select');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Seu imóvel.');
-  await expect(page.getByText('O envio não cria uma conta nem libera acesso', { exact: false })).toBeVisible();
+  await expect(page.getByText('O envio inicia uma avaliação e não garante a aceitação do imóvel nem a publicação de um anúncio.', { exact: false })).toBeVisible();
   const form = page.getByRole('region', { name: 'Envio de imóvel para avaliação' });
   await form.getByLabel('Cidade e estado', { exact: true }).fill('Cidade de Teste, RS');
   await form.getByLabel('Tipo de imóvel', { exact: true }).selectOption('Apartamento');

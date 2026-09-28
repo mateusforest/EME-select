@@ -4,6 +4,7 @@ import OwnerSubmission from './OwnerSubmission';
 import { whatsappUrl } from './data';
 import './styles.css';
 import './submission-page.css';
+import './soft-relief.css';
 
 export default function SubmissionPage() {
   const heading = useRef<HTMLHeadingElement>(null);
@@ -14,11 +15,11 @@ export default function SubmissionPage() {
     window.scrollTo(0, 0);
   }, []);
 
-  return <div className="submission-page">
+  return <div className="submission-page eme-public">
     <a className="skip-link" href="#ficha-imovel">Ir para o formulário</a>
     <header className="submission-site-header">
       <a className="submission-brand" href="/#/" aria-label="EME Select — início">
-        <span><img src="/assets/brand-marble-monogram.png" width="60" height="58" alt="" /></span>
+        <span><svg viewBox="505 730 1770 1370" width="66" height="52" aria-hidden="true" focusable="false"><image href="/assets/brand-emerald-reference.webp" width="2880" height="2880" /></svg></span>
       </a>
       <a className="submission-back" href="/#/">Conheça a EME <ArrowUpRight size={16} aria-hidden="true" /></a>
     </header>
