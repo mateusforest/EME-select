@@ -12,3 +12,15 @@
 
 .development-editor-card{padding:22px 0;border-top:1px solid #173c3226;margin-top:18px}.development-editor-plan{max-width:300px;max-height:240px;object-fit:contain;margin:14px 0}.development-editor-confirm{display:flex!important;align-items:center;gap:10px;margin:18px 0}.development-editor-confirm input{width:auto!important}.development-editor .ps-card{margin-bottom:20px}.development-editor .ps-text-button{margin:12px}
 .select-portal .development-editor-confirm{flex-direction:row;justify-content:flex-start;text-align:left}.select-portal .development-editor-confirm input{flex:0 0 auto}
+.pl-publication-checks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:24px 0}
+.pl-publication-checks>div{min-width:0;padding:20px;border:1px solid #dce2d5;border-radius:14px;background:#fafbf6}
+.pl-publication-checks strong{display:flex;align-items:center;gap:9px;font-size:14px;color:#173c32}
+.pl-publication-checks p,.pl-publication-checks small,.pl-publication-checks li{font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+.pl-publication-checks small{display:block;color:#6c775f;margin-top:12px}
+.pl-publication-checks ul{padding-left:18px}
+.pl-publication-checks summary,.pl-publication-note summary,.pl-quality-guide summary{cursor:pointer;font-size:13px;line-height:1.6}
+.pl-publication-checks .ps-button,.pl-publication-checks .ps-text-button{margin-top:12px;white-space:normal}
+.pl-inline-curation{border-top:1px solid #dce2d5;padding-top:24px;margin-top:24px}
+.pl-publication-final{border-top:1px solid #dce2d5;padding-top:24px;margin-top:24px}
+.pl-publication-note{margin-top:24px;color:#65745b;font-size:12px;line-height:1.7}
+@media(max-width:1100px){.pl-publication-checks{grid-template-columns:minmax(0,1fr)}}

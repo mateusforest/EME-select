@@ -43,7 +43,7 @@ test('real listings: private photos, curation and explicit publication',async t=
   const spoofedPatch=await req(admin,'/listings/'+item.id,{version:item.version,draft,photos:item.photos.map(({id,caption,room})=>({id,caption,room,...(id===lowId?{width:4000,height:3000}:{})}))},'PATCH');
   assert.equal(spoofedPatch.status,400);
   const blocked=await req(admin,'/listings/'+item.id+'/publish',{version:item.version,confirmed:true});
-  assert.equal(blocked.status,409);assert.match(blocked.body.error,/2000/);
+  assert.equal(blocked.status,409);assert.match(blocked.body.error,/1280/);
   assert.deepEqual((await req(anonymous,'/public/properties')).body.properties,[]);
   assert.equal((await req(anonymous,item.photos.at(-1).url.replace('/api',''))).status,404);
   const removed=await req(admin,'/listings/'+item.id,{version:item.version,draft,photos:item.photos.filter(photo=>photo.id!==lowId).map(({id,caption,room})=>({id,caption,room}))},'PATCH');
@@ -69,6 +69,18 @@ test('real listings: private photos, curation and explicit publication',async t=
  await t.test('edits retract publication and require new sign-offs',async()=>{
   const edited=await req(admin,'/listings/'+item.id,{version:item.version,draft:{...draft,price:660000},photos:item.photos.map(({id,caption,room})=>({id,caption,room}))},'PATCH');assert.equal(edited.status,200);item=edited.body;assert.equal(item.published,false);assert.equal(item.stage,'Em avaliação');assert.equal((await req(anonymous,'/public/properties')).body.properties.length,0);assert.equal((await req(anonymous,item.photos[0].url.replace('/api',''))).status,404);
   const evaluation=(await req(admin,'/evaluations/'+item.id)).body;assert.ok(evaluation.curation.checks.every(c=>c.state==='Em revisão'));assert.equal((await req(admin,'/listings/'+item.id+'/publish',{version:item.version,confirmed:true})).status,409);
+ });
+ await t.test('web-sized portraits with optional metadata publish only after approval and authorization',async()=>{
+  const previous=item;
+  item=(await req(admin,'/listings',{draft})).body;
+  const bytes=await sharp({create:{width:900,height:1600,channels:3,background:'#678576'}}).webp().toBuffer();
+  item=(await req(admin,'/listings/'+item.id+'/photos',{version:item.version,content:'data:image/webp;base64,'+bytes.toString('base64')})).body;
+  assert.equal(item.photos[0].width,900);assert.equal(item.photos[0].caption,'');assert.equal(item.photos[0].room,'');
+  assert.equal((await req(admin,'/listings/'+item.id+'/publish',{version:item.version,confirmed:true})).status,409);
+  await approve();assert.deepEqual(item.blockers,[]);
+  assert.equal((await req(admin,'/listings/'+item.id+'/publish',{version:item.version,confirmed:false})).status,400);
+  const result=await req(admin,'/listings/'+item.id+'/publish',{version:item.version,confirmed:true});assert.equal(result.status,200);
+  item=result.body;await req(admin,'/listings/'+item.id+'/unpublish',{version:item.version});item=previous;
  });
  await t.test('withdrawal revokes public media and approval reopening never resurrects snapshot',async()=>{
   await approve();item=(await req(admin,'/listings/'+item.id+'/publish',{version:item.version,confirmed:true})).body;
