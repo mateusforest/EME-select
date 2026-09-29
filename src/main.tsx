@@ -3,10 +3,12 @@ import ReactDOM from 'react-dom/client';
 
 const isPortal = /^\/portalselect(?:\/|$)/.test(window.location.pathname);
 const isSubmission = /^\/enviar-imovel\/?$/.test(window.location.pathname);
+const isPresentation = /^\/apresentar\/(g400|cenario)\/?$/.test(window.location.pathname);
+const Presentation = lazy(() => import('./presentation/Presentation'));
 const PublicApp = lazy(() => import('./PublicApp'));
 const PortalApp = lazy(() => import('./portal/PortalEntry'));
 const SubmissionPage = lazy(() => import('./SubmissionPage'));
-const App = isPortal ? PortalApp : isSubmission ? SubmissionPage : PublicApp;
+const App = isPresentation ? Presentation : isPortal ? PortalApp : isSubmission ? SubmissionPage : PublicApp;
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode><Suspense fallback={<div role="status" style={{ padding: 32, color: '#173c32', fontFamily: 'Arial, sans-serif' }}>Carregando EME Select…</div>}><App /></Suspense></React.StrictMode>,

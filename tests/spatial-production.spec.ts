@@ -11,6 +11,7 @@ test('studio builds, saves and reloads scenes, walks in 3D and downloads real PD
  await page.goto('/portalselect/spatial');await page.getByRole('button',{name:'03 · Cenário',exact:true}).click();
  await page.getByRole('button',{name:'Montar cenário',exact:true}).click();await expect(page.locator('.spatial-photo-stage h3')).toHaveText('Fachada · lateral 1');
  await page.getByRole('navigation',{name:'Percurso de apresentação'}).getByRole('button',{name:'Suíte',exact:true}).click();await expect(page.locator('.spatial-photo-stage h3')).toHaveText('Suíte');
+ const clientLink=await page.getByRole('link',{name:'Abrir este cenário em apresentação ↗',exact:true}).getAttribute('href');const exported=JSON.parse(decodeURIComponent(new URL(clientLink!).hash.slice(1)));expect(Object.keys(exported).sort()).toEqual(['scene','title','version']);expect(exported).not.toHaveProperty('hourCost');
  await page.getByRole('button',{name:'Salvar projeto',exact:true}).click();await page.reload();await page.locator('.spatial-toolbar select').selectOption(record.id);
  await page.getByRole('button',{name:'03 · Cenário',exact:true}).click();await expect(page.locator('.spatial-photo-stage h3')).toHaveText('Fachada · lateral 1');
  await page.getByRole('button',{name:'Compor cenário com IA',exact:true}).click();await expect(page.locator('.spatial-photo-stage h3')).toHaveText('Piscina');

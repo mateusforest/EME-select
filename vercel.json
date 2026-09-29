@@ -4,6 +4,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
+    { "source": "/apresentar/:path*", "destination": "/index.html" },
     {
       "source": "/api/webhooks/whatsapp",
       "destination": "/api/whatsappWebhook"

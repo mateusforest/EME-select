@@ -88,3 +88,4 @@
 .g400-view-error button{text-decoration:underline}
 @media(max-width:900px){.g400-view-navigation{max-width:350px}.g400-view-navigation button{min-height:42px;flex:1}.g400-page .g400-location{margin-top:12px}.g400-view-error{left:10%;right:10%}}
 @media(prefers-reduced-motion:reduce){.g400-window-lights{transition:none}.g400-view-layer{will-change:auto}}
+.g400-presentation-link{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 14px;border:1px solid #173c3233;background:#f6f4ec;border-radius:8px;font-size:12px}

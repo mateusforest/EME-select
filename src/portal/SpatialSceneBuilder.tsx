@@ -3,9 +3,10 @@ import {ArrowDown,ArrowUp,Box,Download,Play,Sparkles} from 'lucide-react';
 import {defaultScene,sceneAssets,sceneFinishes,sceneRooms,validateScene,type SpatialScene} from '../../shared/spatial-scene.mjs';
 import {exportSpatialModel} from './spatial-export';
 import '../developments/g400-residence.css';
+import {presentationLink} from '../presentation/config';
 const Model=lazy(()=>import('../developments/G400ApartmentModel'));
 const base='/assets/developments/g400/';
-export default function SpatialSceneBuilder({scene,onBuild,onAI,aiEnabled,busy}:{scene?:SpatialScene|null;onBuild:(scene:SpatialScene)=>void;onAI:()=>void;aiEnabled:boolean;busy:boolean}){
+export default function SpatialSceneBuilder({scene,onBuild,onAI,aiEnabled,busy,title='G400'}:{title?:string;scene?:SpatialScene|null;onBuild:(scene:SpatialScene)=>void;onAI:()=>void;aiEnabled:boolean;busy:boolean}){
  const [draft,setDraft]=useState<SpatialScene>(()=>scene||defaultScene()),[index,setIndex]=useState(0),[inside,setInside]=useState(false),[room,setRoom]=useState(scene?.room||'living'),[ready,setReady]=useState(false),[failed,setFailed]=useState(false),[exporting,setExporting]=useState(false),[error,setError]=useState('');
  const changed=JSON.stringify(scene)!==JSON.stringify(draft);
  function change<K extends keyof SpatialScene>(key:K,value:SpatialScene[K]){setDraft(p=>({...p,[key]:value}));}
@@ -26,6 +27,7 @@ export default function SpatialSceneBuilder({scene,onBuild,onAI,aiEnabled,busy}:
    {scene&&changed&&<p className="spatial-notice">Existem ajustes na oficina. Clique em Atualizar cenário para aplicá-los à visualização.</p>}
   </div></div>
   {error&&<p role="alert" className="pt-error">{error}</p>}
+  <section className="spatial-delivery"><h3>Apresente em qualquer tela.</h3><p>Link direto para TV, tela touch ou notebook. Sem login e sem dados internos do projeto.</p><div className="spatial-document-actions"><a className="ps-button" href="/apresentar/g400" target="_blank" rel="noreferrer">Apresentar empreendimento G400 ↗</a>{scene&&<><a className="ps-button ps-button--primary" href={presentationLink(title,scene)} target="_blank" rel="noreferrer">Abrir este cenário em apresentação ↗</a><button className="ps-button" onClick={async()=>{try{await navigator.clipboard.writeText(presentationLink(title,scene));setError('Link da versão atual copiado.');}catch{setError('Abra a apresentação e copie o endereço do navegador.');}}}>Copiar link para o cliente</button></>}</div><p className="spatial-help">O link deste cenário contém apenas título, imagens e ajustes visuais. É uma cópia da configuração atual: alterações futuras exigem um novo link. Quem receber pode abrir e encaminhar. Nesta versão, não há revogação nem edição pelo cliente.</p></section>
   <h3>Acervo e ordem da visita</h3><p>Escolha pelo menos duas referências. A ordem abaixo define o percurso da apresentação e a primeira imagem será a capa do PDF.</p>
   <div className="spatial-asset-grid">{sceneAssets.map(a=><label key={a.id}><img src={base+a.file} alt="" loading="lazy"/><span><input type="checkbox" checked={draft.assets.includes(a.id)} onChange={()=>toggle(a.id)}/>{a.label}</span></label>)}</div>
   <ol className="spatial-order">{draft.assets.map((id,i)=><li key={id}><span>{sceneAssets.find(a=>a.id===id)?.label}</span><button aria-label={'Mover '+id+' para cima'} disabled={i===0} onClick={()=>move(id,-1)}><ArrowUp size={15}/></button><button aria-label={'Mover '+id+' para baixo'} disabled={i===draft.assets.length-1} onClick={()=>move(id,1)}><ArrowDown size={15}/></button></li>)}</ol>
