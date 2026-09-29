@@ -2,6 +2,7 @@ import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { tipo5Outline, tipo5Walls, tipo5Windows, tipo5Doors, TIPO5_SCALE } from './tipo5Navigation';
 import { G400_ASSETS } from './g400';
+import {upholstered,piping,vesselBasin,mixer,diningChair} from './tipo5Craft';
 
 export const planPoint=(x:number,z:number,y=0)=>new T.Vector3((x-1200)*TIPO5_SCALE,y,(z-530)*TIPO5_SCALE);
 
@@ -13,6 +14,7 @@ export function buildTipo5(){
   const plaster=mat('#e9e5dc'),cream=mat('#d4ccbd'),dark=mat('#253e36'),black=mat('#202523',.34),ceramic=mat('#faf7ed',.2);
   const bronze=new T.MeshStandardMaterial({color:'#b49a74',metalness:.78,roughness:.25});
   const linen=new T.MeshPhysicalMaterial({color:'#d7d1c2',roughness:.95,sheen:.8,sheenColor:'#fbf3e5',sheenRoughness:.8});
+  const finishFollowers:[T.MeshStandardMaterial,T.MeshStandardMaterial][]=[];
   const sage=linen.clone();sage.color.set('#355244');sage.sheenColor.set('#8eaa80');
   const weave=new Uint8Array(64*64*4);for(let y=0;y<64;y++)for(let x=0;x<64;x++){const i=(y*64+x)*4,v=(x%4<2)===(y%4<2)?188:238;weave.set([v,v,v,255],i);}
   const fabricMap=new T.DataTexture(weave,64,64);fabricMap.wrapS=fabricMap.wrapT=T.RepeatWrapping;fabricMap.repeat.set(28,28);fabricMap.needsUpdate=true;linen.bumpMap=sage.bumpMap=fabricMap;linen.bumpScale=sage.bumpScale=.016;
@@ -27,7 +29,7 @@ export function buildTipo5(){
     const map=new T.CanvasTexture(canvas);map.colorSpace=T.SRGBColorSpace;map.wrapS=map.wrapT=T.RepeatWrapping;map.repeat.set(wood?3:5,wood?4:3);map.anisotropy=4;return map;
   }
   const oak=mat('#d1b296');oak.map=texture(true);
-  const tile=mat('#fffdf6',.64);tile.map=texture(false);
+  const tile=mat('#dbd4c5',.48);tile.map=texture(false);tile.map.repeat.set(.5/1.2,.5/1.2);
   const marbleCanvas=document.createElement('canvas');marbleCanvas.width=marbleCanvas.height=1024;const mc=marbleCanvas.getContext('2d')!;mc.fillStyle='#e6e5df';mc.fillRect(0,0,1024,1024);
   for(let k=0;k<12;k++){mc.beginPath();for(let y=-30;y<1060;y+=8){const x=k*137-420+y*.55+Math.sin(y*.012+k)*42+Math.sin(y*.046+k*4)*10;if(y===-30)mc.moveTo(x,y);else mc.lineTo(x,y);}mc.strokeStyle=k%3?'#898b862a':'#a98f6c39';mc.lineWidth=k%3?1.2:2.8;mc.stroke();}
   const marble=new T.CanvasTexture(marbleCanvas);marble.colorSpace=T.SRGBColorSpace;marble.wrapS=marble.wrapT=T.RepeatWrapping;marble.anisotropy=4;
@@ -40,6 +42,7 @@ export function buildTipo5(){
     }
   };
   oak.color.set('#cdc4b4');pbr(oak,'oak_wood_planks',[2,1.4]);oak.normalScale.set(.18,.18);oak.roughness=.7;
+  const floorOak=mat('#bda88d',.72);pbr(floorOak,'oak_wood_planks',[.45,.45]);floorOak.normalScale.set(.15,.15);
   // Sample one uninterrupted slab, keeping grout lines off counters and tables.
   pbr(stone,'marble_01',[.17,.15],false,[.51,.60]);stone.color.set('#f4f1e9');stone.normalScale.set(.025,.025);stone.roughness=.32;
   pbr(linen,'fabric_pattern_07',[3,3],false);linen.normalScale.set(.25,.25);pbr(sage,'fabric_pattern_07',[3,3],false);sage.normalScale.set(.25,.25);
@@ -58,7 +61,7 @@ export function buildTipo5(){
   const slabGeometry=new T.ExtrudeGeometry(shape,{depth:.18,bevelEnabled:false});slabGeometry.rotateX(-Math.PI/2);
   const slab=new T.Mesh(slabGeometry,tile);slab.position.y=-.18;slab.receiveShadow=true;slab.castShadow=true;slab.userData.navigation='floor';root.add(slab);
   // Floors and ceiling use the same non-mirrored footprint.
-  const woodArea=(points:[number,number][])=>{const area=new T.Shape();points.forEach(([x,z],i)=>{const p=planPoint(x,z);if(i)area.lineTo(p.x,-p.z);else area.moveTo(p.x,-p.z);});area.closePath();const g=new T.ShapeGeometry(area);g.rotateX(-Math.PI/2);const floor=new T.Mesh(g,oak);floor.position.y=.008;floor.receiveShadow=true;root.add(floor);};
+  const woodArea=(points:[number,number][])=>{const area=new T.Shape();points.forEach(([x,z],i)=>{const p=planPoint(x,z);if(i)area.lineTo(p.x,-p.z);else area.moveTo(p.x,-p.z);});area.closePath();const g=new T.ShapeGeometry(area);g.rotateX(-Math.PI/2);const floor=new T.Mesh(g,floorOak);floor.position.y=.008;floor.receiveShadow=true;root.add(floor);};
   woodArea([[1160,320],[1340,320],[1340,565],[1160,565]]);
   woodArea([[1525,320],[1695,320],[1695,610],[1440,610],[1440,505],[1525,505]]);
   woodArea([[1200,570],[1345,570],[1345,500],[1435,500],[1435,690],[1200,690]]);
@@ -83,17 +86,24 @@ export function buildTipo5(){
     if(entrance){const door=block(x,z,width-4,3,2.28,oak,1.14,walls);door.name='Porta de entrada · corredor comum';block(x+width*.32,z-2.5,2,3,.23,bronze,1.04,walls);}
   }
   // Furniture is a restrained interpretation of the furnished plan, not a specification.
-  block(970,440,255,220,.025,linen,.028,root,.01);
-  block(940,353,180,53,.38,linen,.29,root,.1);block(852,424,50,155,.38,linen,.29,root,.1);
-  block(940,329,180,13,.52,linen,.5,root,.06);block(830,420,14,163,.52,linen,.5,root,.06);
-  for(let i=0;i<3;i++)block(880+i*53,350,46,37,.12,linen,.52,root,.05);
-  for(let i=0;i<2;i++)block(850,398+i*52,37,45,.12,linen,.52,root,.05);
+  const seam=mat('#bcb3a3',.95),rug=mat('#b9b1a2',1);rug.bumpMap=fabricMap;rug.bumpScale=.009;
+  block(970,440,255,220,.018,rug,.018,root,.02);
+  function sofaPart(x:number,z:number,w:number,d:number,h:number,y:number,piped=false){
+    const mesh=upholstered(w*TIPO5_SCALE,h,d*TIPO5_SCALE,linen);mesh.position.copy(planPoint(x,z,y));root.add(mesh);
+    if(piped){const edge=piping(w*TIPO5_SCALE-.012,d*TIPO5_SCALE-.012,seam,h*.27);edge.position.copy(mesh.position);root.add(edge);}return mesh;
+  }
+  // The L stays inside the sofa footprint used by the walking system.
+  sofaPart(974,353,218,46,.25,.235);sofaPart(884,425,43,145,.25,.235);
+  sofaPart(974,333,217,9,.59,.555);sofaPart(867,424,9,143,.59,.555);sofaPart(1078,352,8,46,.54,.51);sofaPart(884,492,43,8,.54,.51);
+  for(const x of [914,977,1040])sofaPart(x,357,61,35,.16,.434,true);
+  for(const z of [401,456])sofaPart(887,z,32,53,.16,.434,true);
+  for(const [x,z] of [[873,340],[1071,340],[1071,368],[876,484],[900,484]]){const foot=new T.Mesh(new T.CylinderGeometry(.025,.021,.11,12),oak);foot.position.copy(planPoint(x,z,.055));foot.castShadow=true;root.add(foot);}
   block(980,460,76,48,.14,oak,.35,root,.06);block(980,460,48,26,.29,dark,.15);
   block(1125,440,15,150,.35,oak,.3);block(1136,430,4,78,.71,black,1.12);
   // Marble and oak media wall, inspired by the supplied G400 interiors.
   block(1146,440,5,175,2.52,stone,1.27,walls);
   for(const z of [340,350,360,520,530,540])block(1141,z,6,4,2.52,oak,1.27,walls);
-  for(const [i,[x,z,angle]] of [[885,346,.15],[946,346,-.1],[849,402,1.3],[850,468,1.6]].entries()){
+  for(const [i,[x,z,angle]] of [[922,344,.15],[989,344,-.1],[877,401,1.3],[878,457,1.6]].entries()){
     const geometry=new T.SphereGeometry(1,24,16),vertices=geometry.attributes.position;
     for(let j=0;j<vertices.count;j++){
       const soft=(v:number)=>Math.sign(v)*Math.pow(Math.abs(v),.58);
@@ -102,10 +112,12 @@ export function buildTipo5(){
     geometry.computeVertexNormals();const cushion=new T.Mesh(geometry,i%3===1?linen:sage);
     cushion.position.copy(planPoint(x,z,.74));cushion.rotation.set(-.2,angle,.06*(i%2?1:-1));cushion.castShadow=true;cushion.receiveShadow=true;root.add(cushion);
   }
-  for(const z of [366,409,451])block(835,z,1,1,.22,linen,.7);
   // Kitchen L, refrigerator and laundry follow the supplied plan exactly in position.
   const steel=new T.MeshStandardMaterial({color:'#a7ada9',metalness:.72,roughness:.34});
-  block(880,775,166,36,.84,oak,.42);block(880,775,170,39,.04,stone,.88);
+  block(880,775,166,36,.65,oak,.325);
+  // Four countertop pieces leave a real opening around the drop-in sink.
+  block(833.25,775,76.5,39,.04,stone,.88);block(938.25,775,53.5,39,.04,stone,.88);
+  block(891.5,761.5,40,12,.04,stone,.88);block(891.5,788.5,40,12,.04,stone,.88);
   block(948,730,31,82,.84,oak,.42);block(948,730,35,84,.04,stone,.88);
   block(770,770,44,45,2.16,cream,1.08);block(770,746.5,41,1,2.08,steel,1.08);
   block(770,745.8,41,.7,.018,black,.82);block(788,745,1,2,.42,bronze,1.43);
@@ -114,8 +126,14 @@ export function buildTipo5(){
   for(const x of [940,954])for(const z of [707,730]){const burner=new T.Mesh(new T.TorusGeometry(.055,.005,8,24),steel);burner.rotation.x=Math.PI/2;burner.position.copy(planPoint(x,z,.926));root.add(burner);}
   block(931,724,1,39,.55,black,.43);block(930,724,1,29,.34,steel,.42);block(929,724,1,26,.24,black,.45);block(928,724,2,28,.018,steel,.68);
   // Sink on the south run, with a recessed bowl and mixer against the backsplash.
-  block(888,776,38,23,.018,steel,.912);block(888,776,31,17,.02,black,.922);
-  const tap=new T.Mesh(new T.TorusGeometry(.09,.013,10,24,Math.PI),bronze);tap.position.copy(planPoint(889,786,1.11));root.add(tap);block(889+.09/TIPO5_SCALE,786,1.5,1.5,.2,bronze,1.01);
+  const sinkMaterial=steel.clone();sinkMaterial.color.set('#8d9997');sinkMaterial.roughness=.28;
+  block(891.5,775,40,18,.018,sinkMaterial,.722);
+  for(const x of [871.5,911.5])block(x,775,1,19,.174,sinkMaterial,.809);
+  for(const z of [766,784])block(891.5,z,41,1,.174,sinkMaterial,.809);
+  for(const x of [870.5,912.5])block(x,775,2,21,.015,steel,.91);
+  for(const z of [765,785])block(891.5,z,44,2,.015,steel,.91);
+  const kitchenDrain=new T.Mesh(new T.CylinderGeometry(.025,.025,.007,24),black);kitchenDrain.position.copy(planPoint(891.5,775,.735));root.add(kitchenDrain);
+  const tap=mixer(bronze,.32);tap.position.copy(planPoint(889,790,.92));root.add(tap);
   block(880,794,169,2,.57,stone,1.19,walls);
   for(const x of [819,867,915]){block(x,785,45,20,.66,cream,2.06,walls);block(x,774,44,1,.63,cream,2.06,walls);block(x,773,17,1,.014,bronze,1.81,walls);block(x,776,41,1,.012,lamp,1.72,walls);}
   // Gourmet counter beside living; the tall block is the grill, not a refrigerator.
@@ -124,15 +142,11 @@ export function buildTipo5(){
   for(const x of [885,931]){block(x,546,27,25,.09,linen,.58,root,.03);for(const dx of [-9,9])for(const dz of [-8,8])block(x+dx,546+dz,1,1,.55,bronze,.275);}
   block(760,640,94,34,.85,cream,.425);block(760,640,97,37,.045,stone,.89);block(735,641,27,22,.017,steel,.922);block(735,641,23,18,.018,black,.932);
   block(829,645,24,53,2.1,cream,1.05);for(let z=623;z<677;z+=7)block(842,z,1,4,1.9,oak,1.08);
-  // Rectangular dining table and six upholstered chairs.
+  // Rectangular dining table and eight upholstered chairs.
   block(1050,693,62,112,.09,stone,.8,root,.035);
   for(const z of [655,730])block(1050,z,30,10,.74,dark,.37);
-  function chair(x:number,z:number,angle:number){
-    const group=new T.Group();group.position.copy(planPoint(x,z));group.rotation.y=angle;root.add(group);
-    const seat=new T.Mesh(new RoundedBoxGeometry(.43,.12,.43,2,.045),linen);seat.position.y=.46;seat.castShadow=true;group.add(seat);
-    const back=new T.Mesh(new RoundedBoxGeometry(.43,.42,.085,2,.035),sage);back.position.set(0,.69,.22);back.castShadow=true;group.add(back);
-    for(const sx of [-.16,.16])for(const sz of [-.16,.16]){const leg=new T.Mesh(new T.CylinderGeometry(.016,.012,.4,6),bronze);leg.position.set(sx,.2,sz);group.add(leg);}
-  }
+  const chairFabric=linen.clone();chairFabric.side=T.DoubleSide;const chairWood=oak.clone();chairWood.side=T.DoubleSide;finishFollowers.push([chairFabric,linen],[chairWood,oak]);
+  function chair(x:number,z:number,angle:number){const group=diningChair(chairWood,chairFabric);group.position.copy(planPoint(x,z));group.rotation.y=angle;root.add(group);}
   for(const z of [657,696,731]){chair(1009,z,Math.PI/2);chair(1093,z,-Math.PI/2);}chair(1050,626,Math.PI);chair(1050,768,0);
   for(const z of [662,720])for(const x of [1036,1066]){const plate=new T.Mesh(new T.CylinderGeometry(.135,.12,.018,32),ceramic);plate.position.copy(planPoint(x,z,.86));root.add(plate);}
   // Styling follows the warm stone, linen and green palette of the G400 references.
@@ -146,9 +160,14 @@ export function buildTipo5(){
   function bed(x:number,z:number,rotation:number){
     const group=new T.Group();group.position.copy(planPoint(x,z));group.rotation.y=rotation;root.add(group);
     const part=(dx:number,dz:number,w:number,d:number,h:number,material:T.Material,y:number)=>{const mesh=new T.Mesh(new RoundedBoxGeometry(w*TIPO5_SCALE,h,d*TIPO5_SCALE,3,.04),material);mesh.position.set(dx*TIPO5_SCALE,y,dz*TIPO5_SCALE);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);};
-    part(0,0,99,126,.27,oak,.19);part(0,0,98,124,.22,linen,.435);part(0,25,98,70,.05,sage,.565);
-    part(0,-64,112,5,1.05,oak,.56);for(const dx of [-25,25])part(dx,-39,42,27,.12,linen,.605);
-    for(const dx of [-70,70])part(dx,-43,27,29,.39,oak,.215);
+    part(0,0,99,126,.27,oak,.19);part(0,0,98,124,.22,linen,.435);
+    const duvet=upholstered(98*TIPO5_SCALE,.13,93*TIPO5_SCALE,linen);duvet.position.set(0,.565,14*TIPO5_SCALE);group.add(duvet);
+    const throwGeo=new T.PlaneGeometry(2.08,.6,56,16),v=throwGeo.attributes.position;
+    for(let i=0;i<v.count;i++){const x=v.getX(i),z=v.getY(i);v.setZ(i,Math.sin(z*21+x*5)*.004-Math.sin(Math.max(0,(Math.abs(x)-.925)/.115)*Math.PI/2)*.22);}throwGeo.computeVertexNormals();
+    const throwMaterial=sage.clone();throwMaterial.side=T.DoubleSide;finishFollowers.push([throwMaterial,sage]);const cover=new T.Mesh(throwGeo,throwMaterial);cover.rotation.x=-Math.PI/2;cover.position.set(0,.695,.65);cover.castShadow=true;cover.receiveShadow=true;group.add(cover);
+    part(0,-64,112,5,1.05,oak,.56);const headboard=upholstered(108*TIPO5_SCALE,.87,.085,linen);headboard.position.set(0,.65,-61*TIPO5_SCALE);group.add(headboard);for(const dx of [-25,25]){const pillow=upholstered(.7,.18,.46,linen);pillow.position.set(dx*TIPO5_SCALE,.635,-39*TIPO5_SCALE);pillow.rotation.y=dx>0?.04:-.05;group.add(pillow);}
+
+    for(const dx of [-70,70]){part(dx,-43,27,29,.39,oak,.215);const lampBase=new T.Mesh(new T.CylinderGeometry(.065,.075,.025,24),bronze);lampBase.position.set(dx*TIPO5_SCALE,.423,-43*TIPO5_SCALE);group.add(lampBase);const globe=new T.Mesh(new T.SphereGeometry(.082,24,16),lamp);globe.position.set(dx*TIPO5_SCALE,.52,-43*TIPO5_SCALE);group.add(globe);}
   }
   bed(1228,409,Math.PI/2);bed(1628,409,-Math.PI/2);
   block(1235,549,104,30,2.35,cream,1.175);block(1568,591,251,32,2.35,cream,1.175);
@@ -164,8 +183,8 @@ export function buildTipo5(){
   }
   function vanity(x:number,z:number,w:number,d:number,side=false){
     block(x,z,w,d,.63,oak,.44);block(x,z,w+1,d+1,.035,stone,.78);
-    const basin=new T.Mesh(new T.TorusGeometry(.12,.025,10,32),ceramic);basin.rotation.x=Math.PI/2;basin.scale.set(1.2,.8,1);basin.position.copy(planPoint(x,z,.82));root.add(basin);
-    block(x+(side?8:0),z+(side?0:8),2,2,.17,bronze,.89);
+    const basin=vesselBasin(ceramic,steel);basin.scale.z=.72;if(side)basin.rotation.y=Math.PI/2;basin.position.copy(planPoint(x,z,.8));root.add(basin);
+    const tap=mixer(bronze,.25);tap.position.copy(planPoint(x+(side?11:0),z+(side?0:11),.8));if(side)tap.rotation.y=Math.PI/2;root.add(tap);
     const mirror=block(x+(side?14:0),z+(side?0:18),side?1:w,side?d:1,.83,steel,1.43,walls);mirror.name='Espelho acima da bancada';
   }
   // Two separate en-suite bathrooms; shower screens stay clear of their access doors.
@@ -196,10 +215,14 @@ export function buildTipo5(){
   for(const [x,z,w,d] of [[980,325,310,2],[980,588,310,2],[822,453,2,263],[1137,453,2,263]])block(x,z,w,d,.022,lamp,2.64,ceiling);
   for(const z of [671,716]){const ring=new T.Mesh(new T.TorusGeometry(.25,.017,10,48),bronze);ring.rotation.x=Math.PI/2;ring.position.copy(planPoint(1050,z,2.1));ceiling.add(ring);const glow=new T.Mesh(new T.TorusGeometry(.24,.009,8,48),lamp);glow.rotation.x=Math.PI/2;glow.position.copy(ring.position);glow.position.y-=.017;ceiling.add(glow);block(1050,z,1,1,.6,bronze,2.38,ceiling);}
   // Ceiling lamps only appear inside, preventing floating geometry in the cutaway.
-  for(const [x,z] of [[970,440],[1050,690],[1240,414],[1610,429],[860,710],[1377,440],[1470,440],[1260,746]])block(x,z,45,7,.04,lamp,2.66,ceiling,.01);
+  for(const [x,z] of [[930,414],[1070,414],[930,530],[1070,530],[1050,690],[1240,414],[1610,429],[860,710],[1377,440],[1470,440],[1260,746]]){
+    const recess=new T.Mesh(new T.CylinderGeometry(.075,.075,.027,28),black);recess.position.copy(planPoint(x,z,2.69));ceiling.add(recess);
+    const trim=new T.Mesh(new T.TorusGeometry(.07,.006,8,32),bronze);trim.rotation.x=Math.PI/2;trim.position.copy(planPoint(x,z,2.674));ceiling.add(trim);
+    const lens=new T.Mesh(new T.CylinderGeometry(.057,.057,.012,28),lamp);lens.position.copy(planPoint(x,z,2.672));ceiling.add(lens);
+  }
   const lights=[[990,450],[1080,690],[1250,450],[1620,450],[860,700],[1377,440],[1470,440],[1260,746]].map(([x,z])=>{const light=new T.PointLight('#ffdbab',0,7,2);light.position.copy(planPoint(x,z,2.4));root.add(light);return light;});
   root.traverse(o=>{if(o instanceof T.Mesh&&!o.userData.navigation)o.userData.navigation='furniture';});
-  const applyFinish=(finish='original')=>{plaster.color.set(finish==='olive'?'#d9ddd0':'#e9e5dc');linen.color.set(finish==='linen'?'#ede2cf':'#d7d1c2');sage.color.set(finish==='linen'?'#ae9070':finish==='olive'?'#51613c':'#355244');oak.color.set(finish==='olive'?'#a8a08d':finish==='linen'?'#e1c7a4':'#cdc4b4');};
+  const applyFinish=(finish='original')=>{plaster.color.set(finish==='olive'?'#d9ddd0':'#e9e5dc');linen.color.set(finish==='linen'?'#ede2cf':'#d7d1c2');sage.color.set(finish==='linen'?'#ae9070':finish==='olive'?'#51613c':'#355244');oak.color.set(finish==='olive'?'#a8a08d':finish==='linen'?'#e1c7a4':'#cdc4b4');finishFollowers.forEach(([target,source])=>target.color.copy(source.color));};
   const sectionPlane=new T.Plane(new T.Vector3(0,-1,0),.95);
   const setCutaway=(cut:boolean)=>root.traverse(o=>{if(o instanceof T.Mesh){for(const material of Array.isArray(o.material)?o.material:[o.material]){material.clippingPlanes=cut?[sectionPlane]:null;material.clipShadows=true;}}});
   const setDaylight=(hour:number)=>{const evening=Math.max(0,Math.min(1,(hour-16)/5));frost.color.set('#edf2ef').lerp(new T.Color('#647b84'),evening);frost.emissiveIntensity=.23*(1-evening)+.025;};

@@ -5,6 +5,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import {RectAreaLightUniformsLib} from 'three/addons/lights/RectAreaLightUniformsLib.js';
+import {InteriorOcclusion} from './InteriorOcclusion';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import { G400_ASSETS } from './g400';
@@ -46,8 +48,12 @@ export default function G400ApartmentModel(props:Props){
       scene.environment=env.texture;scene.environmentIntensity=.4;environment.dispose();pmrem.dispose();
       let studio:T.WebGLRenderTarget|undefined;
       const environmentReady=new Promise<void>(resolve=>{new HDRLoader().load(G400_ASSETS+'materials/studio-small-03.hdr',texture=>{if(!disposed){const generator=new T.PMREMGenerator(renderer!);studio=generator.fromEquirectangular(texture);scene.environment=studio.texture;generator.dispose();}texture.dispose();resolve();},undefined,()=>resolve());});
-      const composer=new EffectComposer(renderer),renderPass=new RenderPass(scene,camera),output=new OutputPass();
-      composer.addPass(renderPass);composer.addPass(output);
+      RectAreaLightUniformsLib.init();
+      const windowLights=[[990,5.1],[1260,2.3],[1605,2.45]].map(([x,width])=>{const light=new T.RectAreaLight('#e4ebed',1,width,2.1);light.position.copy(planPoint(x,320,1.45));light.lookAt(planPoint(x,500,1.2));scene.add(light);return light;});
+      const livingLight=new T.SpotLight('#ffe2b5',4,10,Math.PI*.39,.65,2);livingLight.position.copy(planPoint(990,435,2.59));livingLight.target.position.copy(planPoint(990,435,0));livingLight.castShadow=true;livingLight.shadow.mapSize.set(1024,1024);livingLight.shadow.bias=-.0003;livingLight.shadow.normalBias=.018;livingLight.shadow.radius=3;scene.add(livingLight,livingLight.target);
+      const composer=new EffectComposer(renderer),renderPass=new RenderPass(scene,camera),output=new OutputPass(),occlusion=new InteriorOcclusion(scene,camera);
+      occlusion.updateGtaoMaterial({radius:.32,thickness:.08,distanceFallOff:.7,scale:.85,samples:12});occlusion.updatePdMaterial({radius:5,samples:12});occlusion.blendIntensity=.72;occlusion.enabled=false;
+      composer.addPass(renderPass);composer.addPass(occlusion);composer.addPass(output);
       controls=new OrbitControls(camera,canvas);const orbit=controls;
       orbit.enableDamping=true;orbit.dampingFactor=.1;orbit.enablePan=false;orbit.minDistance=6;orbit.maxDistance=44;orbit.maxPolarAngle=Math.PI/2-.15;
       const destinationMarker=new T.Mesh(new T.RingGeometry(.16,.205,40),new T.MeshBasicMaterial({color:'#e6ddc1',transparent:true,opacity:.9,depthWrite:false}));destinationMarker.rotation.x=-Math.PI/2;destinationMarker.renderOrder=4;destinationMarker.visible=false;scene.add(destinationMarker);
@@ -95,10 +101,11 @@ export default function G400ApartmentModel(props:Props){
         mount.dataset.exterior='screened';mount.dataset.glazing='frosted';
         sun.position.set(-8+((p.hour-8)/12)*16,12*(1-evening)+2,-9);
         sun.color.set(p.hour<16?'#fff1d8':'#ffbc7d');sun.intensity=1.8*(1-evening)+.12;
-        hemisphere.intensity=(p.inside?.4:.62)*(1-evening)+.23;fill.intensity=.32*(1-evening)+.08;scene.environmentIntensity=.42*(1-evening)+.18;
-        model.lamp.emissiveIntensity=.65+evening*2;model.lights.forEach(l=>l.intensity=2.5+evening*10);
+        hemisphere.intensity=(p.inside?.14:.62)*(1-evening)+.12;fill.intensity=.14*(1-evening)+.035;scene.environmentIntensity=.27*(1-evening)+.13;
+        windowLights.forEach(light=>{light.intensity=p.inside?2.8*(1-evening)+.05:0;light.color.set(p.hour<17?'#e4ebed':'#f3c89d');});livingLight.intensity=p.inside?3+evening*8:0;
+        model.lamp.emissiveIntensity=.35+evening*1.6;model.lights.forEach(l=>l.intensity=.8+evening*4);
         renderer!.setClearColor(new T.Color('#d9ddd5').lerp(new T.Color('#30454e'),evening));renderer!.shadowMap.needsUpdate=true;
-        orbit.enabled=!p.inside;camera.fov=p.inside?66:42;camera.updateProjectionMatrix();
+        orbit.enabled=!p.inside;camera.fov=p.inside?66:42;camera.far=p.inside?65:450;camera.updateProjectionMatrix();
         const internal=notifiedRoom===p.room;notifiedRoom='';
         if(previousInside!==p.inside||previousReset!==p.reset){
           stop();const target=p.inside?planPoint(...station.look,eyeHeight+Math.tan(station.pitch??-.1)*Math.hypot(station.look[0]-station.eye[0],station.look[1]-station.eye[1])*TIPO5_SCALE):planPoint(1200,540,.4);
@@ -140,12 +147,12 @@ export default function G400ApartmentModel(props:Props){
           camera.position.lerpVectors(new T.Vector3(35,27,43).multiplyScalar(Math.max(1,1.5/camera.aspect)),home(),eased);orbit.target.lerpVectors(new T.Vector3(-3,3,4),planPoint(1200,540,.4),eased);orbit.update();
         }else orbit.update();
         if(latest.current.inside){reveal=1;section.update(1,true);}
-        mount.dataset.section=reveal<1?'opening':'third-floor';mount.dataset.panorama='disabled';composer.render();
+        occlusion.enabled=latest.current.inside&&!flight&&model.ceiling.visible;mount.dataset.shading=occlusion.enabled?'interior-contact':'section';mount.dataset.section=reveal<1?'opening':'third-floor';mount.dataset.panorama='disabled';composer.render();
         const p=toPlan(camera.position);mount.dataset.camera=camera.position.toArray().map(n=>n.toFixed(3)).join(',');mount.dataset.position=p.map(n=>n.toFixed(2)).join(',');mount.dataset.heading=yaw.toFixed(3);mount.dataset.pitch=pitch.toFixed(4);mount.dataset.walking=String(Boolean(walk));mount.dataset.navigable=String(!latest.current.inside||Boolean(flight)||canWalk(p));
         if(marker.current){marker.current.setAttribute('cx',String(p[0]));marker.current.setAttribute('cy',String(p[1]));}
         if(heading.current)heading.current.setAttribute('d',`M${p[0]},${p[1]}l${Math.sin(yaw)*42},${Math.cos(yaw)*42}`);
       });
-      disposeScene=()=>{model.dispose();const geometries=new Set<T.BufferGeometry>(),materials=new Set<T.Material>(),textures=new Set<T.Texture>();scene.traverse(o=>{if(o instanceof T.Mesh){geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){materials.add(m);for(const value of Object.values(m))if(value instanceof T.Texture)textures.add(value);}}});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());env.dispose();studio?.dispose();sun.shadow.dispose();renderPass.dispose();output.dispose();composer.dispose();};
+      disposeScene=()=>{model.dispose();const geometries=new Set<T.BufferGeometry>(),materials=new Set<T.Material>(),textures=new Set<T.Texture>();scene.traverse(o=>{if(o instanceof T.Mesh){geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){materials.add(m);for(const value of Object.values(m))if(value instanceof T.Texture)textures.add(value);}}});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());env.dispose();studio?.dispose();sun.shadow.dispose();livingLight.shadow.dispose();occlusion.dispose();renderPass.dispose();output.dispose();composer.dispose();};
       void Promise.all([model.ready,environmentReady]).then(()=>{if(!disposed){revealStart=performance.now();latest.current.onReady();}});
     }catch(error){console.warn('G400 apartment viewer unavailable',error);latest.current.onFail();}
     return()=>{disposed=true;update.current=null;command.current=null;mapClick.current=null;renderer?.setAnimationLoop(null);observer?.disconnect();removers.forEach(remove=>remove());controls?.dispose();disposeScene?.();renderer?.dispose();renderer?.domElement.remove();};
