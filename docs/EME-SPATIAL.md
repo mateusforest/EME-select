@@ -58,4 +58,14 @@ O investimento de desenvolvimento do EME Spatial deve ser acompanhado separadame
 
 ## Situação de implantação
 
-Código preparado localmente; não publicado em produção. A migração `20260929_spatial_studio.sql` foi criada e testada em banco de teste, mas não aplicada ao serviço de produção. O fluxo de interface usa testes com respostas simuladas; isso não comprova a qualidade artística do futuro motor.
+A primeira versão foi publicada em 29/09/2026. A migração `20260929_spatial_studio.sql` foi aplicada ao projeto de produção, com acesso protegido. A evolução abaixo utiliza o mesmo registro e dispensa nova migração. Os testes de interface e de composição assistida usam respostas de IA simuladas; isso não comprova a qualidade artística das sugestões do provedor.
+
+## Evolução: oficina e documentos
+
+A oficina do Spatial Studio agora monta apresentações com seleção e ordenação das referências do G400 e permite configurar o piloto geométrico do Tipo 5. Três acabamentos, horário de luz e ponto inicial da visita são editáveis. A caminhada reutiliza o percurso e as colisões do piloto já existente; não representa uma nova reconstrução automática a partir de plantas.
+
+A composição com IA usa somente o objetivo e o catálogo de identificadores autorizados. A resposta configura recursos existentes e é validada no servidor. Não envia imagens, custos internos ou credenciais para o navegador. O usuário revisa o resultado e salva a configuração no projeto. A qualidade da resposta do provedor não foi avaliada com chamadas pagas nesta entrega.
+
+A exportação principal é agora PDF: capa com a primeira referência selecionada, escopo, nível, entregáveis personalizáveis, investimento, cortesia, condições e referências visuais. O relatório interno acrescenta custos, capacidade e margem; a proposta externa omite essas premissas. O JSON continua disponível como dados editáveis e a oficina 3D exporta GLB com geometria, materiais e metadados do estudo. A exportação GLB não inclui o aplicativo de caminhada, câmera ou ambiente HDR do visualizador.
+
+Os novos campos são opcionais no registro existente e não exigem migração adicional. Projetos anteriores permanecem válidos. Importação de novas plantas, geração de geometria por IA, nível Signature fotorrealista, processamento em fila e publicação autônoma continuam fora desta entrega. A atualização do estúdio não altera o cenário público do empreendimento.

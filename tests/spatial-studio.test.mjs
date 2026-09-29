@@ -7,6 +7,23 @@ import {PGlite} from '@electric-sql/pglite';
 import {initialSpatialProject,estimateSpatialProject,validateSpatialProject,applySpatialScope} from '../shared/spatial-studio.mjs';
 import {attachLocalSpatial,createSpatialApi,attachCloudSpatial} from '../server/spatial-studio.mjs';
 import {requestSpatialPlan} from '../server/spatial-ai.mjs';
+import {requestSpatialScene} from '../server/spatial-ai.mjs';
+import {defaultScene,validateScene} from '../shared/spatial-scene.mjs';
+
+test('scene schema accepts legacy projects and blocks foreign assets, modes and excessive proposal text',()=>{
+ assert.ok(validateSpatialProject(initialSpatialProject()));
+ const scene=defaultScene();assert.deepEqual(validateScene(scene),scene);
+ for(const update of [{assets:['https://foreign.invalid','living']},{mode:'unreal'},{hour:100},{assets:['living','living']},{room:'outside'},{unknown:true}])assert.throws(()=>validateScene({...scene,...update}));
+ const p={...initialSpatialProject(),scene,proposal:{recipient:'Yclodema',deliverables:'Piloto Tipo 5',conditions:'Revisão'}};assert.deepEqual(validateSpatialProject(p).scene,scene);
+ assert.throws(()=>validateSpatialProject({...p,proposal:{...p.proposal,conditions:'x'.repeat(2000)}}));
+});
+test('AI composition uses approved assets only and does not send economics',async()=>{
+ let payload;const scene=defaultScene();
+ const fetcher=async(url,options)=>{payload=JSON.parse(options.body);return {ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(scene)}]}]})};};
+ assert.deepEqual(await requestSpatialScene({apiKey:'test',model:'test',project:initialSpatialProject(),fetcher}),scene);
+ const input=JSON.parse(payload.input);assert.equal(input.hourCost,undefined);assert.ok(input.availableAssets);scene.assets=['external'];
+ await assert.rejects(requestSpatialScene({apiKey:'test',model:'test',project:initialSpatialProject(),fetcher}),/inválida/);
+});
 test('estimates separate effort, team time, price, waiver and platform investment',()=>{
  const p=initialSpatialProject(),r=estimateSpatialProject(p);
  assert.equal(r.remainingHours,140);assert.equal(r.weeks,4);assert.equal(r.payable,0);
@@ -26,7 +43,10 @@ test('private studio persists versioned drafts; AI plan does not silently mutate
  await assert.rejects(call('/api/spatial-studio/'+id,'PATCH',{version:0,project:initialSpatialProject()}),e=>e.status===409);
  await call('/api/spatial-studio/'+id+'/plan','POST',{version:1});assert.equal(calls,1);assert.equal(result.value.sourceVersion,1);
  await call('/api/spatial-studio','GET');assert.equal(result.value.projects[0].project.plan,null);assert.equal(result.value.productionReady,false);
- await call('/api/spatial-studio/'+id,'PATCH',{version:1,project:{...initialSpatialProject(),name:'G400 salvo'}});assert.equal(result.value.version,2);
+ await call('/api/spatial-studio/'+id,'PATCH',{version:1,project:{...initialSpatialProject(),name:'G400 salvo',scene:defaultScene()}});assert.equal(result.value.version,2);
+ await call('/api/spatial-studio','GET');assert.deepEqual(result.value.projects[0].project.scene,defaultScene());
+ await assert.rejects(call('/api/spatial-studio/'+id+'/scene','POST',{version:1}),e=>e.status===409);
+ await assert.rejects(call('/api/spatial-studio/'+id+'/scene','POST',{version:2},{role:'corretor'}),e=>e.status===403);
  db.close();
 });
 test('AI sends minimal project brief, validates completion and does not transmit costs or images',async()=>{

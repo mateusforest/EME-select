@@ -12,13 +12,13 @@ export function createSpatialApi({store,ai}){
   if(path==='/api/spatial-studio'&&req.method==='POST'){
    const project=validateSpatialProject(body?.project);const saved=await store.save(req,user,randomUUID(),0,project);send(201,saved);return true;
   }
-  const match=path.match(/^\/api\/spatial-studio\/([a-f0-9-]{36})(\/plan)?$/);
+  const match=path.match(/^\/api\/spatial-studio\/([a-f0-9-]{36})(\/plan|\/scene)?$/);
   if(!match)fail(404,'Projeto não encontrado.');
   const row=await store.find(match[1]);if(!row)fail(404,'Projeto não encontrado.');
   if(!Number.isInteger(body?.version)||body.version!==row.version)fail(409,'O projeto mudou. Recarregue antes de continuar.');
   if(match[2]&&req.method==='POST'){
    // The plan is returned for review. It neither replaces saved data nor starts a 3D job.
-   const plan=await ai.studioPlan(user,row.project);send(200,{plan,sourceVersion:row.version});return true;
+   const kind=match[2]==='/scene'?'scene':'plan'; const result=await ai.studioPlan(user,row.project,kind);send(200,{[kind]:result,sourceVersion:row.version});return true;
   }
   if(!match[2]&&req.method==='PATCH'){
    const project=validateSpatialProject(body?.project);send(200,await store.save(req,user,row.id,row.version,project));return true;

@@ -13,7 +13,7 @@ import { buildTipo5, planPoint } from './buildTipo5';
 import { g400Residences, tipo5Stations } from './g400Residences';
 import { canWalk, clearWalk, nearestWalk, roomAt, tipo5Outline, tipo5Walls, walkRoute, type PlanPoint } from './tipo5Navigation';
 
-interface Props { room:string; inside:boolean; hour:number; reset:number; onEnter:()=>void; onSelect:(id:string)=>void; onReady:()=>void; onFail:()=>void }
+interface Props { room:string; inside:boolean; hour:number; reset:number; finish?:string; onEnter:()=>void; onSelect:(id:string)=>void; onReady:()=>void; onFail:()=>void }
 const toPlan=(point:T.Vector3):PlanPoint=>[point.x/.014+1200,point.z/.014+530];
 const eyeHeight=1.6;
 const angleDelta=(from:number,to:number)=>Math.atan2(Math.sin(to-from),Math.cos(to-from));
@@ -24,7 +24,7 @@ export default function G400ApartmentModel(props:Props){
   const command=useRef<((action:string,active?:boolean)=>void)|null>(null),mapClick=useRef<((p:PlanPoint)=>void)|null>(null);
   const [walking,setWalking]=useState(false),[message,setMessage]=useState('');
   latest.current=props;
-  useEffect(()=>{update.current?.();},[props.room,props.inside,props.hour,props.reset]);
+  useEffect(()=>{update.current?.();},[props.room,props.inside,props.hour,props.reset,props.finish]);
   useEffect(()=>{
     const mount=host.current!;let disposed=false,renderer:T.WebGLRenderer|undefined,controls:OrbitControls|undefined,observer:ResizeObserver|undefined,disposeScene:(()=>void)|undefined;
     const removers:(()=>void)[]=[];
@@ -85,6 +85,7 @@ export default function G400ApartmentModel(props:Props){
       command.current=(action,active=true)=>{if(action==='stop'){stop();return;}if(!latest.current.inside)return;if(active){finishFlight();stop();autoLook=false;held.add(action);}else held.delete(action);};
       mapClick.current=p=>{if(latest.current.inside)navigate(p);};
       function sync(){
+        model.applyFinish(latest.current.finish);
         const p=latest.current,station=tipo5Stations[p.room]||tipo5Stations.living,evening=Math.max(0,Math.min(1,(p.hour-16)/4));
         sun.position.set(-8+((p.hour-8)/12)*16,12*(1-evening)+2,-9);
         sun.color.set(p.hour<16?'#fff1d8':'#ffbc7d');sun.intensity=3.4*(1-evening)+.12;

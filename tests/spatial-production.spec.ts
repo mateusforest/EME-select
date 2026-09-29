@@ -1,0 +1,30 @@
+import {test,expect} from '@playwright/test';
+import {readFileSync} from 'node:fs';
+test('studio builds, saves and reloads scenes, walks in 3D and downloads real PDF and GLB',async({page},info)=>{
+ test.setTimeout(120000);page.setDefaultTimeout(15000);let record:any=null;
+ await page.route('**/api/**',async route=>{const url=new URL(route.request().url()),method=route.request().method();let data:any={};
+  if(url.pathname==='/api/auth/session')data={user:{id:'admin',name:'Admin Teste',role:'admin',active:true,mustChangePassword:false}};
+  else if(url.pathname==='/api/spatial-studio'&&method==='GET')data={projects:record?[record]:[],aiReady:true,productionReady:false};
+  else if(url.pathname.endsWith('/scene'))data={scene:{version:1,mode:'presentation',assets:['piscina','living','suite'],finish:'olive',hour:18,room:'cozinha'}};
+  else if(url.pathname.startsWith('/api/spatial-studio')&&['PATCH','POST'].includes(method)){record={id:'00000000-0000-4000-8000-000000000001',version:(record?.version||0)+1,project:route.request().postDataJSON().project};data=record;}
+  await route.fulfill({json:data});});
+ await page.goto('/portalselect/spatial');await page.getByRole('button',{name:'03 · Cenário',exact:true}).click();
+ await page.getByRole('button',{name:'Montar cenário',exact:true}).click();await expect(page.locator('.spatial-photo-stage h3')).toHaveText('Fachada · lateral 1');
+ await page.getByRole('navigation',{name:'Percurso de apresentação'}).getByRole('button',{name:'Suíte',exact:true}).click();await expect(page.locator('.spatial-photo-stage h3')).toHaveText('Suíte');
+ await page.getByRole('button',{name:'Salvar projeto',exact:true}).click();await page.reload();await page.locator('.spatial-toolbar select').selectOption(record.id);
+ await page.getByRole('button',{name:'03 · Cenário',exact:true}).click();await expect(page.locator('.spatial-photo-stage h3')).toHaveText('Fachada · lateral 1');
+ await page.getByRole('button',{name:'Compor cenário com IA',exact:true}).click();await expect(page.locator('.spatial-photo-stage h3')).toHaveText('Piscina');
+ await page.getByLabel('Base do cenário').selectOption('tipo5');await page.getByLabel('Acabamento').selectOption('linen');await page.getByLabel('Iluminação inicial').selectOption('21');await page.getByLabel('Início da caminhada').selectOption('cozinha');
+ await page.getByRole('button',{name:'Atualizar cenário',exact:true}).click();const enter=page.getByRole('button',{name:'Entrar e caminhar',exact:true});await expect(enter).toBeEnabled({timeout:45000});await enter.click();
+ await expect(page.getByTestId('g400-apartment-model')).toHaveAttribute('data-view','inside');await expect(page.getByTestId('g400-apartment-model')).toHaveAttribute('data-room','cozinha');
+ await page.locator('.spatial-scene-nav').getByRole('button',{name:'Living',exact:true}).click();await expect(page.getByTestId('g400-apartment-model')).toHaveAttribute('data-walking','true');
+ await page.screenshot({path:info.outputPath('oficina-desktop.png'),fullPage:true});
+ const modelDownload=page.waitForEvent('download');await page.getByRole('button',{name:'Baixar modelo 3D (.glb)',exact:true}).click();const glb=await modelDownload;await glb.saveAs(info.outputPath('scene.glb'));expect(readFileSync(info.outputPath('scene.glb')).subarray(0,4).toString()).toBe('glTF');
+ await page.getByRole('button',{name:'Salvar projeto',exact:true}).click();await page.getByRole('button',{name:'04 · Proposta',exact:true}).click();await page.getByLabel('Preparado para').fill('Yclodema · G400');
+ await page.getByLabel('Entregáveis específicos').fill('Piloto Tipo 5 com caminhada entre cozinha, living e suítes. Apresentação das áreas comuns com as perspectivas fornecidas. Validação da geometria antes da expansão para outras tipologias.');
+ const doc=page.waitForEvent('download');await page.getByRole('button',{name:'Baixar PDF para o cliente',exact:true}).click();await(await doc).saveAs(info.outputPath('proposta.pdf'));expect(readFileSync(info.outputPath('proposta.pdf')).subarray(0,4).toString()).toBe('%PDF');
+ const internal=page.waitForEvent('download');await page.getByRole('button',{name:'Relatório interno em PDF',exact:true}).click();await(await internal).saveAs(info.outputPath('interno.pdf'));
+ await page.getByLabel('Preparado para').fill('W'.repeat(180));await page.getByLabel('Entregáveis específicos').fill(('Entrega com revisão e validação. ').repeat(65));await page.getByLabel('Condições da proposta').fill(('Condição a definir conforme escopo. ').repeat(45));
+ const longDoc=page.waitForEvent('download');await page.getByRole('button',{name:'Baixar PDF para o cliente',exact:true}).click();await(await longDoc).saveAs(info.outputPath('proposta-longa.pdf'));
+ await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'03 · Cenário',exact:true}).click();await page.screenshot({path:info.outputPath('oficina-mobile.png'),fullPage:true});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});

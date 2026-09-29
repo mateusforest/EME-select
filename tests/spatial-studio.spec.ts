@@ -16,7 +16,7 @@ test('Spatial Studio saves a project, estimates a pilot and requests a reviewed 
  await page.getByRole('button',{name:'02 · Orçamento e prazo'}).click();await expect(page.getByText('3 semanas',{exact:true})).toBeVisible();await expect(page.getByText('R$ 0',{exact:true})).toBeVisible();
  await page.getByLabel('Pessoas equivalentes').fill('1');await expect(page.getByText('5 semanas',{exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Salvar projeto',exact:true}).click();
- await page.getByRole('button',{name:'03 · Produção'}).click();await page.getByRole('button',{name:'Criar plano com IA'}).click();await expect(page.getByText('Plano de teste para revisão')).toBeVisible();expect(aiCalls).toBe(1);
+ await page.getByRole('button',{name:'03 · Cenário'}).click();await page.getByRole('button',{name:'Criar plano com IA'}).click();await expect(page.getByText('Plano de teste para revisão')).toBeVisible();expect(aiCalls).toBe(1);
  await expect(page.getByRole('button',{name:'Criar plano com IA'})).toBeDisabled();
  await page.getByRole('button',{name:'01 · Projeto'}).click();await page.screenshot({path:testInfo.outputPath('spatial-desktop.png'),fullPage:true});
  await page.setViewportSize({width:390,height:844});await page.screenshot({path:testInfo.outputPath('spatial-mobile.png'),fullPage:true});

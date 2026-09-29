@@ -150,5 +150,6 @@ export function buildTipo5(){
   for(const [x,z] of [[970,440],[1070,686],[1240,414],[1610,429],[880,720]])block(x,z,45,7,.04,lamp,2.66,ceiling,.01);
   const lights=[[990,450],[1080,690],[1250,450],[1620,450],[860,700]].map(([x,z])=>{const light=new T.PointLight('#ffdbab',0,7,2);light.position.copy(planPoint(x,z,2.4));root.add(light);return light;});
   root.traverse(o=>{if(o instanceof T.Mesh&&!o.userData.navigation)o.userData.navigation='furniture';});
-  return {root,walls,ceiling,lamp,lights,ready:Promise.all(loads),dispose:()=>{disposed=true;extraTextures.forEach(t=>t.dispose());}};
+  const applyFinish=(finish='original')=>{plaster.color.set(finish==='olive'?'#d9ddd0':'#e9e5dc');linen.color.set(finish==='linen'?'#ede2cf':'#d7d1c2');sage.color.set(finish==='linen'?'#ae9070':finish==='olive'?'#51613c':'#355244');oak.color.set(finish==='olive'?'#a8a08d':finish==='linen'?'#e1c7a4':'#cdc4b4');};
+  return {root,walls,ceiling,lamp,lights,applyFinish,ready:Promise.all(loads),dispose:()=>{disposed=true;extraTextures.forEach(t=>t.dispose());}};
 }
