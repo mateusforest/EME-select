@@ -21,3 +21,15 @@ O vídeo mostra a passagem do edifício para o pavimento e a unidade, interiores
 5. Validar na TV touch e no computador reais antes de prometer desempenho ou resolução. A medição no navegador de desenvolvimento é apenas uma referência local.
 
 Não apresentar esta etapa como equivalente à referência ou como fotorrealismo final. O piloto ainda usa mobiliário simplificado em vários pontos e contexto externo ilustrativo.
+
+
+## Continuidade e resposta — segunda revisão de 29/09/2026
+
+- A apresentação conserva a fachada enquanto prepara o apartamento e oferece retorno durante a espera. A abertura vai diretamente ao corte do terceiro andar; foi removida a exibição inicial da maquete inteira e sua descida de 1,9 s.
+- O renderizador e o apartamento permanecem montados ao alternar entre planta, galeria e fachada, com desenho suspenso enquanto estão ocultos. A página pública também reutiliza a visita dentro do diálogo aberto.
+- Preparação antecipada dos programas gráficos do corte e do interior, incluindo oclusão. Planos de corte conservam a mesma quantidade entre as vistas. A entrada dura 650 ms, respeitando movimento reduzido.
+- Removido o segundo ambiente HDR de 1,69 MB e sua conversão, mantendo o ambiente de estúdio calculado localmente. Os materiais fotográficos continuam aguardados antes de revelar o modelo.
+- Referências carousel-apartament-01 a 04: estofados claros, verde, madeira, mesa com base de madeira, painéis ripados atrás das cabeceiras, cortinas mais largas e quadros decorativos. Não foram incorporados escadas, mezanino ou pé-direito duplo ao Tipo 5.
+- Oito testes de navegador/rotas passaram, incluindo carregamento atrasado, retorno durante preparação, reutilização da mesma instância, entrada, cômodos, dia/noite e toque.
+
+Limite ainda aberto: as perspectivas principais são imagens, não o modelo original do edifício. Esta revisão não fornece rotação livre fotorrealista da fachada. O contexto do corte ainda é volumétrico e ilustrativo. O próximo salto exige obter o modelo original com materiais (preferível) ou modelar e validar as fachadas, cortes e implantação antes de otimizar o conjunto para navegação.

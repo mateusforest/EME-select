@@ -1,0 +1,34 @@
+import {test,expect} from '@playwright/test';
+
+test('facade stays visible during preparation and the prepared apartment survives navigation',async({page},info)=>{
+ test.setTimeout(90000);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ let release!:()=>void;const gate=new Promise<void>(r=>release=r);
+ await page.route('**/materials/*',async route=>{await gate;await route.continue();});
+ await page.goto('/apresentar/g400');const start=Date.now();
+ await page.getByRole('button',{name:'Visitar Tipo 5',exact:true}).click();
+ await expect(page.getByRole('status')).toContainText('Preparando a unidade 305');
+ await expect(page.getByTestId('g400-scene')).toBeVisible();
+ await expect(page.locator('.sp-model-layer')).toHaveAttribute('aria-hidden','true');
+ await page.getByRole('button',{name:'Voltar ao edifício',exact:true}).click();
+ await expect(page.locator('main.sp-show')).toHaveAttribute('data-mode','building');
+ release();const model=page.getByTestId('g400-apartment-model');
+ await expect(model).toHaveAttribute('data-prepared','true',{timeout:45000});
+ const prepared=Date.now()-start;await model.evaluate(el=>el.setAttribute('data-instance-test','same'));
+ const warm=Date.now();await page.getByRole('button',{name:'Visitar Tipo 5',exact:true}).click();
+ await expect(page.locator('.sp-model-layer')).toHaveAttribute('data-visible','true');
+ await expect(model).toHaveAttribute('data-instance-test','same');
+ await expect(page.getByRole('status')).toHaveCount(0);
+ await page.getByRole('button',{name:'Caminhar',exact:true}).click();
+ await expect.poll(async()=>Number((await model.getAttribute('data-camera'))?.split(',')[1])).toBe(1.6);
+ const entered=Date.now()-warm;
+ await page.getByRole('button',{name:'Plantas',exact:true}).click();
+ await expect(page.locator('.sp-photo')).toBeVisible();
+ const last=await model.getAttribute('data-camera');await page.waitForTimeout(150);
+ expect(await model.getAttribute('data-camera')).toBe(last);
+ await page.getByRole('button',{name:'Visitar Tipo 5',exact:true}).click();
+ await expect(model).toHaveAttribute('data-instance-test','same');
+ await expect(page.getByRole('button',{name:'Caminhar',exact:true})).toBeEnabled();
+ await page.screenshot({path:info.outputPath('ready-section.png')});
+ await info.attach('timings',{body:JSON.stringify({preparationIncludingTestGateMs:prepared,warmVisitAndEntryMs:entered}),contentType:'application/json'});
+ expect(errors).toEqual([]);
+});

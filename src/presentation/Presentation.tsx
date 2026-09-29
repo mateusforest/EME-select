@@ -9,7 +9,8 @@ import '../developments/development.css';
 import '../developments/g400.css';
 import '../developments/g400-residence.css';
 import './presentation.css';
-const Model=lazy(()=>import('../developments/G400ApartmentModel'));
+const loadModel=()=>import('../developments/G400ApartmentModel');
+const Model=lazy(loadModel);
 type Mode='building'|'gallery'|'model';
 type Gallery={images:G400Image[];title:string;note:string;plan?:boolean};
 
@@ -27,6 +28,7 @@ function PresentationView(){
  const [floor,setFloor]=useState<number|null>(null),[panel,setPanel]=useState<'floors'|'rooms'|'info'|null>(null),[clean,setClean]=useState(false);
  const [view,setView]=useState<G400View>('left'),[shown,setShown]=useState<G400View>('left'),[zoom,setZoom]=useState(1),[scale,setScale]=useState(1);
  const [hour,setHour]=useState(scene.hour),[room,setRoom]=useState(scene.room),[inside,setInside]=useState(false),[reset,setReset]=useState(0);
+ const [modelStarted,setModelStarted]=useState(initialMode==='model');
  const [ready,setReady]=useState(false),[failed,setFailed]=useState(false),[full,setFull]=useState(false),[notice,setNotice]=useState(''),[imageFailed,setImageFailed]=useState(false);
  const host=useRef<HTMLElement>(null),menu=useRef<HTMLButtonElement>(null),drawer=useRef<HTMLElement>(null);
  const lighting=hour>=20?'night':hour>=17?'sunset':'day';
@@ -38,7 +40,7 @@ function PresentationView(){
  function closePanel(){setPanel(null);menu.current?.focus();}
  function selectFloor(n:number){setFloor(n);setClean(false);setPanel('floors');}
  function openGallery(id:G400GalleryId,i=0){setGallery({...g400Galleries[id],plan:id==='plans'||id==='infrastructure'});setIndex(i);setScale(1);setMode('gallery');setPanel(null);}
- function enterModel(){setMode('model');setInside(false);setReady(false);setFailed(false);setPanel(null);}
+ function enterModel(){setModelStarted(true);setMode('model');setInside(false);setPanel(null);}
  function changeImage(n:number){setIndex(i=>(i+n+gallery.images.length)%gallery.images.length);setScale(1);}
  function restart(){setMode(initialMode);setGallery(initialGallery);setIndex(0);setView('left');setZoom(1);setScale(1);setFloor(null);setInside(false);setHour(scene.hour);setRoom(scene.room);setReset(v=>v+1);setPanel(null);setClean(false);}
  async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else if(host.current?.requestFullscreen)await host.current.requestFullscreen();else throw Error();}catch{setNotice('A apresentação já ocupa a janela. Neste navegador, use a opção de tela cheia do próprio navegador.');}}
@@ -47,9 +49,10 @@ function PresentationView(){
  if(input.error)return <main className="sp-show sp-error"><h1>Apresentação indisponível</h1><p>{input.error}</p><a href="/apresentar/g400">Abrir apresentação do G400</a></main>;
  return <main ref={host} className={`sp-show${clean?' sp-show--clean':''}`} data-mode={mode}>
   <div className={`sp-stage development-stage development-stage--${lighting}`}>
-   {mode==='building'&&<G400Scene complete view={view} floor={floor} lighting={lighting} zoom={zoom} onSelect={selectFloor} onGallery={openGallery} onViewChange={setShown} onRequestView={setView} onZoom={d=>setZoom(z=>Math.max(1,Math.min(1.9,z+d*.12)))}/>}
+   {(mode==='building'||mode==='model'&&!ready)&&<G400Scene complete view={view} floor={floor} lighting={lighting} zoom={zoom} onSelect={selectFloor} onGallery={openGallery} onViewChange={setShown} onRequestView={setView} onZoom={d=>setZoom(z=>Math.max(1,Math.min(1.9,z+d*.12)))}/>}
    {mode==='gallery'&&<div className={`sp-photo${gallery.plan?' sp-photo--plan':''}`} tabIndex={0} aria-label="Imagem da apresentação, use as setas para navegar" style={{overflow:scale>1?'auto':'hidden'}}>{!imageFailed?<img key={gallery.images[index].file} src={G400_ASSETS+gallery.images[index].file} alt={gallery.images[index].caption} style={{width:scale>1?`${scale*100}%`:undefined,height:scale>1?`${scale*100}%`:undefined,maxWidth:'none'}} onError={()=>setImageFailed(true)}/>:<p role="alert">Não foi possível carregar esta imagem. Selecione outra vista.</p>}</div>}
-   {mode==='model'&&!failed&&<Suspense fallback={<p className="sp-loading" role="status">Preparando o apartamento…</p>}><Model room={room} inside={inside} hour={hour} finish={scene.finish} reset={reset} onEnter={()=>setInside(true)} onSelect={setRoom} onReady={()=>setReady(true)} onFail={()=>setFailed(true)}/></Suspense>}
+   {modelStarted&&!failed&&<div className="sp-model-layer" aria-hidden={mode!=='model'||!ready} inert={mode!=='model'||!ready} data-visible={mode==='model'&&ready}><Suspense fallback={null}><Model active={mode==='model'} room={room} inside={inside} hour={hour} finish={scene.finish} reset={reset} onEnter={()=>setInside(true)} onSelect={setRoom} onReady={()=>setReady(true)} onFail={()=>setFailed(true)}/></Suspense></div>}
+   {mode==='model'&&!ready&&!failed&&<div className="sp-preparing" role="status">Preparando a unidade 305…<button onClick={()=>setMode('building')}>Voltar ao edifício</button></div>}
    {mode==='model'&&failed&&<div className="sp-loading" role="alert"><p>O 3D não está disponível neste dispositivo.</p><button onClick={()=>openGallery('interiors')}>Ver imagens dos interiores</button></div>}
   </div>
   {!clean&&<><header className="sp-top"><div><span>EME SPATIAL</span><h1>{title}</h1>{mode==='model'&&<span className="sp-model-label">Unidade 305 · Tipo 5 · piloto conceitual</span>}</div><div><button onClick={share} aria-label="Copiar link da apresentação"><Share2/></button><button onClick={fullscreen} aria-label={full?'Sair da tela cheia':'Entrar em tela cheia'}>{full?<Minimize/>:<Maximize/>}<span>{full?'Sair':'Tela cheia'}</span></button></div></header>
@@ -57,7 +60,7 @@ function PresentationView(){
    <button onClick={()=>{setMode('building');setPanel(null);}} aria-pressed={mode==='building'}><Building2/><span>Edifício</span></button>
    <button ref={menu} aria-expanded={panel===(mode==='model'?'rooms':'floors')} onClick={()=>setPanel(p=>p?null:mode==='model'?'rooms':'floors')}><Menu/><span>{mode==='model'?'Ambientes':'Andares'}</span></button>
    <button onClick={()=>openGallery('interiors')}>Interiores</button><button onClick={()=>openGallery('leisure')}>Lazer</button><button onClick={()=>openGallery('plans',mode==='model'?4:0)}>Plantas</button>
-   {mode==='model'?<button disabled={!ready||failed} onClick={()=>setInside(v=>!v)}><DoorOpen/><span>{inside?'Vista completa':'Caminhar'}</span></button>:<button onClick={enterModel}><DoorOpen/><span>Visitar Tipo 5</span></button>}
+   {mode==='model'?<button disabled={!ready||failed} onClick={()=>setInside(v=>!v)}><DoorOpen/><span>{inside?'Vista completa':'Caminhar'}</span></button>:<button onPointerEnter={()=>{void loadModel();}} onFocus={()=>{void loadModel();}} onClick={enterModel}><DoorOpen/><span>Visitar Tipo 5</span></button>}
    <button onClick={restart} aria-label="Reiniciar apresentação"><RotateCcw/></button><button onClick={()=>{setClean(true);setPanel(null);}} aria-label="Ocultar controles"><EyeOff/></button><button onClick={()=>setPanel(p=>p==='info'?null:'info')} aria-label="Ajuda e informações"><Info/></button>
   </nav>
   <div className="sp-context">

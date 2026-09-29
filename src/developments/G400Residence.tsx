@@ -14,11 +14,12 @@ export default function G400Residence({unit,start3d=false,initialHour=14,onClose
   const [view,setView]=useState<View>(pilot&&start3d?'model':'plan');
   const [levelIndex,setLevelIndex]=useState(0),[roomId,setRoomId]=useState(layout.levels[0].rooms[0].id);
   const [inside,setInside]=useState(false),[hour,setHour]=useState(initialHour),[reset,setReset]=useState(0);
+  const [modelStarted,setModelStarted]=useState(pilot&&start3d);
   const [ready,setReady]=useState(false),[failed,setFailed]=useState(false),[enlarged,setEnlarged]=useState(false),[imageFailed,setImageFailed]=useState(false);
   const level=layout.levels[levelIndex],room=level.rooms.find(r=>r.id===roomId)||level.rooms[0],roomIndex=level.rooms.indexOf(room);
   const image=G400_ASSETS+`planta-${plan.id}.webp`;
   const contact=whatsappUrl(`Olá! Estou explorando a unidade ${unit} do G400, ${plan.title}, ${plan.area} m² e ${plan.suites} suítes. Gostaria de confirmar a disponibilidade e conhecer os detalhes.`);
-  function changeView(next:View){setView(next);setEnlarged(false);if(next==='model'){setReady(false);setFailed(false);}}
+  function changeView(next:View){setView(next);setEnlarged(false);if(next==='model')setModelStarted(true);}
   function changeLevel(index:number){setLevelIndex(index);setRoomId(layout.levels[index].rooms[0].id);setEnlarged(false);}
   function selectRoom(id:string){setRoomId(id);if(view==='model')setInside(true);if(view==='original')changeView('plan');}
   function moveRoom(direction:number){selectRoom(level.rooms[(roomIndex+direction+level.rooms.length)%level.rooms.length].id);}
@@ -42,8 +43,8 @@ export default function G400Residence({unit,start3d=false,initialHour=14,onClose
             <p className="residence-plan-hint">Selecione os pontos para conhecer cada ambiente.</p>
           </>}
           {view==='original'&&<><img src={image} alt={`${plan.title} · ${plan.area} m² privativos · ${plan.suites} suítes`} onError={()=>setImageFailed(true)}/>{imageFailed&&<p className="residence-load">Não foi possível carregar a prancha.</p>}</>}
+          {modelStarted&&!failed&&<div className="residence-cached-model" aria-hidden={view!=='model'} inert={view!=='model'} style={{visibility:view==='model'?'visible':'hidden'}}><Suspense fallback={<div className="residence-load" role="status">Preparando seu próximo espaço…</div>}><ApartmentModel active={view==='model'} room={room.id} inside={inside} hour={hour} reset={reset} onEnter={()=>setInside(true)} onSelect={setRoomId} onReady={()=>setReady(true)} onFail={()=>setFailed(true)}/></Suspense></div>}
           {view==='model'&&<>
-            {!failed&&<Suspense fallback={<div className="residence-load" role="status">Preparando seu próximo espaço…</div>}><ApartmentModel room={room.id} inside={inside} hour={hour} reset={reset} onEnter={()=>setInside(true)} onSelect={setRoomId} onReady={()=>setReady(true)} onFail={()=>setFailed(true)}/></Suspense>}
             {!ready&&!failed&&<div className="residence-load" role="status">Preparando a visita 3D…</div>}
             {failed&&<div className="residence-load"><h3>Continue pela planta.</h3><p>A visita 3D não está disponível neste navegador.</p><button onClick={()=>changeView('plan')}>Explorar a planta <ArrowRight size={16}/></button></div>}
             {ready&&!failed&&<>

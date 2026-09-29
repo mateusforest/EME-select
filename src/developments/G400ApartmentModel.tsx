@@ -8,14 +8,12 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import {RectAreaLightUniformsLib} from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import {InteriorOcclusion} from './InteriorOcclusion';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
-import { G400_ASSETS } from './g400';
 import { buildTipo5, planPoint } from './buildTipo5';
 import { buildTipo5BuildingSection } from './tipo5BuildingSection';
 import { g400Residences, tipo5Stations } from './g400Residences';
 import { TIPO5_SCALE, canWalk, clearWalk, nearestWalk, roomAt, tipo5Outline, tipo5Walls, walkRoute, type PlanPoint } from './tipo5Navigation';
 
-interface Props { room:string; inside:boolean; hour:number; reset:number; finish?:string; onEnter:()=>void; onSelect:(id:string)=>void; onReady:()=>void; onFail:()=>void }
+interface Props { active?:boolean; room:string; inside:boolean; hour:number; reset:number; finish?:string; onEnter:()=>void; onSelect:(id:string)=>void; onReady:()=>void; onFail:()=>void }
 const toPlan=(point:T.Vector3):PlanPoint=>[point.x/TIPO5_SCALE+1200,point.z/TIPO5_SCALE+530];
 const eyeHeight=1.6;
 const angleDelta=(from:number,to:number)=>Math.atan2(Math.sin(to-from),Math.cos(to-from));
@@ -34,7 +32,7 @@ export default function G400ApartmentModel(props:Props){
       renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
       renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setClearColor('#d9ddd5');
       renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=.95;
-      renderer.localClippingEnabled=true;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;
+      renderer.localClippingEnabled=true;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;renderer.shadowMap.autoUpdate=false;
       const canvas=renderer.domElement;canvas.tabIndex=0;canvas.setAttribute('role','img');
       canvas.setAttribute('aria-label','Apartamento navegável. Clique no piso ou nos móveis para caminhar. Arraste para olhar. W A S D ou setas para se mover.');mount.prepend(canvas);
       const scene=new T.Scene(),camera=new T.PerspectiveCamera(42,1,.045,450);
@@ -46,8 +44,6 @@ export default function G400ApartmentModel(props:Props){
       const fill=new T.DirectionalLight('#d5e9ff',.45);fill.position.set(-8,4,-12);scene.add(fill);
       const pmrem=new T.PMREMGenerator(renderer),environment=new RoomEnvironment(),env=pmrem.fromScene(environment,.04);
       scene.environment=env.texture;scene.environmentIntensity=.4;environment.dispose();pmrem.dispose();
-      let studio:T.WebGLRenderTarget|undefined;
-      const environmentReady=new Promise<void>(resolve=>{new HDRLoader().load(G400_ASSETS+'materials/studio-small-03.hdr',texture=>{if(!disposed){const generator=new T.PMREMGenerator(renderer!);studio=generator.fromEquirectangular(texture);scene.environment=studio.texture;generator.dispose();}texture.dispose();resolve();},undefined,()=>resolve());});
       RectAreaLightUniformsLib.init();
       const windowLights=[[990,5.1],[1260,2.3],[1605,2.45]].map(([x,width])=>{const light=new T.RectAreaLight('#e4ebed',1,width,2.1);light.position.copy(planPoint(x,320,1.45));light.lookAt(planPoint(x,500,1.2));scene.add(light);return light;});
       const livingLight=new T.SpotLight('#ffe2b5',4,10,Math.PI*.39,.65,2);livingLight.position.copy(planPoint(990,435,2.59));livingLight.target.position.copy(planPoint(990,435,0));livingLight.castShadow=true;livingLight.shadow.mapSize.set(1024,1024);livingLight.shadow.bias=-.0003;livingLight.shadow.normalBias=.018;livingLight.shadow.radius=3;scene.add(livingLight,livingLight.target);
@@ -58,7 +54,7 @@ export default function G400ApartmentModel(props:Props){
       orbit.enableDamping=true;orbit.dampingFactor=.1;orbit.enablePan=false;orbit.minDistance=6;orbit.maxDistance=44;orbit.maxPolarAngle=Math.PI/2-.15;
       const destinationMarker=new T.Mesh(new T.RingGeometry(.16,.205,40),new T.MeshBasicMaterial({color:'#e6ddc1',transparent:true,opacity:.9,depthWrite:false}));destinationMarker.rotation.x=-Math.PI/2;destinationMarker.renderOrder=4;destinationMarker.visible=false;scene.add(destinationMarker);
       const rooms=g400Residences['tipo-5'].levels[0].rooms,reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-      let revealStart=Infinity,reveal=0;
+      let reveal=1,prepared=false;
       let previousInside:boolean|undefined,previousRoom='',previousReset=-1,notifiedRoom='',yaw=0,pitch=-.12,lastTime=performance.now();
       let pendingEntry:PlanPoint|null=null,autoLook=true,held=new Set<string>(),drag:{x:number;y:number;startX:number;startY:number;id:number}|null=null;
       let flight:{from:T.Vector3;to:T.Vector3;targetFrom:T.Vector3;targetTo:T.Vector3;start:number;inside:boolean}|null=null;
@@ -134,17 +130,14 @@ export default function G400ApartmentModel(props:Props){
       listen(document,'visibilitychange',()=>{if(document.hidden){held.clear();drag=null;lastTime=performance.now();}});
       listen(canvas,'webglcontextlost',((e:Event)=>{e.preventDefault();stop();renderer?.setAnimationLoop(null);latest.current.onFail();}) as EventListener);
       renderer.setAnimationLoop(()=>{
-        const now=performance.now(),dt=Math.min(.05,(now-lastTime)/1000);lastTime=now;if(document.hidden)return;
-        if(flight){const t=Math.min(1,(now-flight.start)/1100),ease=t*t*(3-2*t);camera.position.lerpVectors(flight.from,flight.to,ease);const target=new T.Vector3().lerpVectors(flight.targetFrom,flight.targetTo,ease);if(flight.inside)aim(target);else{orbit.target.copy(target);orbit.update();}if(t===1){flight=null;model.ceiling.visible=latest.current.inside;renderer!.shadowMap.needsUpdate=true;}}
+        const now=performance.now(),dt=Math.min(.05,(now-lastTime)/1000);lastTime=now;if(document.hidden||latest.current.active===false||!prepared)return;
+        if(flight){const t=Math.min(1,(now-flight.start)/650),ease=t*t*(3-2*t);camera.position.lerpVectors(flight.from,flight.to,ease);const target=new T.Vector3().lerpVectors(flight.targetFrom,flight.targetTo,ease);if(flight.inside)aim(target);else{orbit.target.copy(target);orbit.update();}if(t===1){flight=null;model.ceiling.visible=latest.current.inside;renderer!.shadowMap.needsUpdate=true;}}
         else if(latest.current.inside){
           if(walk){const left=walk.index===walk.points.length-1?camera.position.distanceTo(walk.points.at(-1)!):Infinity;let remaining=Math.min(1.65,Math.max(.5,left*2))*dt;while(walk&&remaining>0){const destination=walk.points[walk.index],delta=destination.clone().sub(camera.position),distance=delta.length();if(distance<=remaining){camera.position.copy(destination);remaining-=distance;walk.index++;if(walk.index>=walk.points.length){const target=walk.look?.clone(),lookPitch=walk.pitch;stop();if(autoLook&&target)settle(target,lookPitch);notifyRoom();}}else{camera.position.addScaledVector(delta,remaining/distance);remaining=0;if(autoLook){const desired=Math.atan2(delta.x,delta.z);yaw+=angleDelta(yaw,desired)*Math.min(1,dt*2.5);pitch+=(-.1-pitch)*Math.min(1,dt*3);}look();}}}
           if(arrival){const k=1-Math.exp(-5*dt);yaw+=angleDelta(yaw,arrival.yaw)*k;pitch+=(arrival.pitch-pitch)*k;if(Math.abs(angleDelta(yaw,arrival.yaw))<.003&&Math.abs(pitch-arrival.pitch)<.003)arrival=null;}
           camera.position.y=eyeHeight;
           if(held.size){if(held.has('turn-left'))yaw+=dt*1.1;if(held.has('turn-right'))yaw-=dt*1.1;const forward=Number(held.has('forward'))-Number(held.has('back')),side=Number(held.has('right'))-Number(held.has('left'));const speed=1.5*dt/(forward&&side?Math.SQRT2:1);move(forward*speed,side*speed);}
           look();
-        }else if(reveal<1){
-          reveal=reduce?1:Math.max(0,Math.min(1,(now-revealStart)/1900));const eased=reveal*reveal*(3-2*reveal);section.update(eased,false);
-          camera.position.lerpVectors(new T.Vector3(35,27,43).multiplyScalar(Math.max(1,1.5/camera.aspect)),home(),eased);orbit.target.lerpVectors(new T.Vector3(-3,3,4),planPoint(1200,540,.4),eased);orbit.update();
         }else orbit.update();
         if(latest.current.inside){reveal=1;section.update(1,true);}
         occlusion.enabled=latest.current.inside&&!flight&&model.ceiling.visible;mount.dataset.shading=occlusion.enabled?'interior-contact':'section';mount.dataset.section=reveal<1?'opening':'third-floor';mount.dataset.panorama='disabled';composer.render();
@@ -152,8 +145,19 @@ export default function G400ApartmentModel(props:Props){
         if(marker.current){marker.current.setAttribute('cx',String(p[0]));marker.current.setAttribute('cy',String(p[1]));}
         if(heading.current)heading.current.setAttribute('d',`M${p[0]},${p[1]}l${Math.sin(yaw)*42},${Math.cos(yaw)*42}`);
       });
-      disposeScene=()=>{model.dispose();const geometries=new Set<T.BufferGeometry>(),materials=new Set<T.Material>(),textures=new Set<T.Texture>();scene.traverse(o=>{if(o instanceof T.Mesh){geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){materials.add(m);for(const value of Object.values(m))if(value instanceof T.Texture)textures.add(value);}}});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());env.dispose();studio?.dispose();sun.shadow.dispose();livingLight.shadow.dispose();occlusion.dispose();renderPass.dispose();output.dispose();composer.dispose();};
-      void Promise.all([model.ready,environmentReady]).then(()=>{if(!disposed){revealStart=performance.now();latest.current.onReady();}});
+      disposeScene=()=>{model.dispose();const geometries=new Set<T.BufferGeometry>(),materials=new Set<T.Material>(),textures=new Set<T.Texture>();scene.traverse(o=>{if(o instanceof T.Mesh){geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){materials.add(m);for(const value of Object.values(m))if(value instanceof T.Texture)textures.add(value);}}});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());env.dispose();sun.shadow.dispose();livingLight.shadow.dispose();occlusion.dispose();renderPass.dispose();output.dispose();composer.dispose();};
+      // Compile both views before revealing the canvas. Keep clipping plane counts stable.
+      void (async()=>{
+        await model.ready;if(disposed)return;
+        const savedInside=latest.current.inside;
+        model.setCutaway(false);model.ceiling.visible=true;section.update(1,true);
+        await renderer!.compileAsync(scene,camera);if(disposed)return;
+        occlusion.enabled=true;composer.render();
+        model.setCutaway(!savedInside);model.ceiling.visible=savedInside;section.update(1,savedInside);
+        occlusion.enabled=savedInside;renderer!.shadowMap.needsUpdate=true;
+        await renderer!.compileAsync(scene,camera);if(disposed)return;
+        composer.render();prepared=true;lastTime=performance.now();mount.dataset.prepared='true';latest.current.onReady();
+      })().catch(error=>{if(!disposed){console.warn('G400 preparation failed',error);latest.current.onFail();}});
     }catch(error){console.warn('G400 apartment viewer unavailable',error);latest.current.onFail();}
     return()=>{disposed=true;update.current=null;command.current=null;mapClick.current=null;renderer?.setAnimationLoop(null);observer?.disconnect();removers.forEach(remove=>remove());controls?.dispose();disposeScene?.();renderer?.dispose();renderer?.domElement.remove();};
   },[]);

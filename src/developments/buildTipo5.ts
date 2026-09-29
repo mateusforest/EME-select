@@ -86,7 +86,7 @@ export function buildTipo5(){
     if(entrance){const door=block(x,z,width-4,3,2.28,oak,1.14,walls);door.name='Porta de entrada · corredor comum';block(x+width*.32,z-2.5,2,3,.23,bronze,1.04,walls);}
   }
   // Furniture is a restrained interpretation of the furnished plan, not a specification.
-  const seam=mat('#bcb3a3',.95),rug=mat('#b9b1a2',1);rug.bumpMap=fabricMap;rug.bumpScale=.009;
+  const seam=mat('#cfc7b9',.95),rug=mat('#d5ccbc',1);rug.bumpMap=fabricMap;rug.bumpScale=.009;
   block(970,440,255,220,.018,rug,.018,root,.02);
   function sofaPart(x:number,z:number,w:number,d:number,h:number,y:number,piped=false){
     const mesh=upholstered(w*TIPO5_SCALE,h,d*TIPO5_SCALE,linen);mesh.position.copy(planPoint(x,z,y));root.add(mesh);
@@ -102,7 +102,7 @@ export function buildTipo5(){
   block(1125,440,15,150,.35,oak,.3);block(1136,430,4,78,.71,black,1.12);
   // Marble and oak media wall, inspired by the supplied G400 interiors.
   block(1146,440,5,175,2.52,stone,1.27,walls);
-  for(const z of [340,350,360,520,530,540])block(1141,z,6,4,2.52,oak,1.27,walls);
+  for(const z of [334,340,346,352,358,364,516,522,528,534,540,546])block(1141,z,6,4,2.52,oak,1.27,walls);
   for(const [i,[x,z,angle]] of [[922,344,.15],[989,344,-.1],[877,401,1.3],[878,457,1.6]].entries()){
     const geometry=new T.SphereGeometry(1,24,16),vertices=geometry.attributes.position;
     for(let j=0;j<vertices.count;j++){
@@ -144,7 +144,10 @@ export function buildTipo5(){
   block(829,645,24,53,2.1,cream,1.05);for(let z=623;z<677;z+=7)block(842,z,1,4,1.9,oak,1.08);
   // Rectangular dining table and eight upholstered chairs.
   block(1050,693,62,112,.09,stone,.8,root,.035);
-  for(const z of [655,730])block(1050,z,30,10,.74,dark,.37);
+  for(const z of [655,730]){
+    block(1050,z,30,10,.74,oak,.37,root,.025);
+    for(let x=1036;x<=1064;x+=3)block(x,z-5.3,1.2,1,.70,oak,.37);
+  }
   const chairFabric=linen.clone();chairFabric.side=T.DoubleSide;const chairWood=oak.clone();chairWood.side=T.DoubleSide;finishFollowers.push([chairFabric,linen],[chairWood,oak]);
   function chair(x:number,z:number,angle:number){const group=diningChair(chairWood,chairFabric);group.position.copy(planPoint(x,z));group.rotation.y=angle;root.add(group);}
   for(const z of [657,696,731]){chair(1009,z,Math.PI/2);chair(1093,z,-Math.PI/2);}chair(1050,626,Math.PI);chair(1050,768,0);
@@ -170,6 +173,9 @@ export function buildTipo5(){
     for(const dx of [-70,70]){part(dx,-43,27,29,.39,oak,.215);const lampBase=new T.Mesh(new T.CylinderGeometry(.065,.075,.025,24),bronze);lampBase.position.set(dx*TIPO5_SCALE,.423,-43*TIPO5_SCALE);group.add(lampBase);const globe=new T.Mesh(new T.SphereGeometry(.082,24,16),lamp);globe.position.set(dx*TIPO5_SCALE,.52,-43*TIPO5_SCALE);group.add(globe);}
   }
   bed(1228,409,Math.PI/2);bed(1628,409,-Math.PI/2);
+  // Vertical oak panels behind the two opposed headboards; no change to the plan.
+  for(const x of [1166,1688])for(let z=340;z<495;z+=5)block(x,z,2.2,2.4,2.48,oak,1.26,walls);
+
   block(1235,549,104,30,2.35,cream,1.175);block(1568,591,251,32,2.35,cream,1.175);
   for(const x of [1198,1233,1268])block(x,532,1,1,1.55,bronze,1.25);
   for(let x=1453;x<1690;x+=37)block(x,574,1,1,1.55,bronze,1.25);
@@ -206,9 +212,18 @@ export function buildTipo5(){
   for(let x=855;x<1130;x+=22){block(x,296,20,22,.24,dark,.16);for(let i=0;i<10;i++)plantLeaf(x+Math.sin(i*2.4)*7,296+Math.cos(i*2.4)*7,.27,.23+(i%3)*.025,.16,i*2.4,.5);}
   const pot=new T.Mesh(new T.CylinderGeometry(.17,.12,.3,20),cream);pot.position.copy(planPoint(1100,335,.15));root.add(pot);
   for(let i=0;i<9;i++)plantLeaf(1100+Math.sin(i)*3,335+Math.cos(i)*3,.23,.48+(i%3)*.11,.24,i*2.4,.25+(i%3)*.2);
+  // A pair of framed botanical reliefs echoes the supplied living-room artwork.
+  for(const [index,z] of [402,466].entries()){
+    block(816,z,1.8,48,1.13,oak,1.72,walls);
+    block(817.1,z,1,45,1.07,ceramic,1.72,walls);
+    const artGreen=mat(index?'#536957':'#344e40',.95);
+    const blade=new T.Mesh(new T.SphereGeometry(1,24,16),artGreen);
+    blade.scale.set(.015,.44,.25);blade.position.copy(planPoint(818,z,1.73));blade.rotation.x=index?.25:-.3;walls.add(blade);
+
+  }
   // Full-height pleated sheers at the glazing, visible only inside the apartment.
-  const curtainMat=new T.MeshPhysicalMaterial({color:'#f1ece0',roughness:1,transparent:true,opacity:.65,side:T.DoubleSide,depthWrite:false});
-  for(const [start,end,z] of [[854,874,324],[1120,1141,324],[1199,1213,324],[1316,1328,324],[1539,1553,324],[1660,1672,324]]){
+  const curtainMat=new T.MeshPhysicalMaterial({color:'#f1ece0',roughness:1,transparent:true,opacity:.42,side:T.DoubleSide,depthWrite:false});
+  for(const [start,end,z] of [[854,916,324],[1080,1141,324],[1199,1230,324],[1297,1328,324],[1539,1570,324],[1641,1672,324]]){
     const geo=new T.PlaneGeometry((end-start)*TIPO5_SCALE,2.4,24,1),pos=geo.getAttribute('position');for(let i=0;i<pos.count;i++)pos.setZ(i,Math.sin((i%25)/24*Math.PI*10)*.035);geo.computeVertexNormals();const curtain=new T.Mesh(geo,curtainMat);curtain.position.copy(planPoint((start+end)/2,z,1.38));ceiling.add(curtain);
   }
   // A warm cove, recessed spots and sculptural rings above the dining table.
@@ -222,9 +237,9 @@ export function buildTipo5(){
   }
   const lights=[[990,450],[1080,690],[1250,450],[1620,450],[860,700],[1377,440],[1470,440],[1260,746]].map(([x,z])=>{const light=new T.PointLight('#ffdbab',0,7,2);light.position.copy(planPoint(x,z,2.4));root.add(light);return light;});
   root.traverse(o=>{if(o instanceof T.Mesh&&!o.userData.navigation)o.userData.navigation='furniture';});
-  const applyFinish=(finish='original')=>{plaster.color.set(finish==='olive'?'#d9ddd0':'#e9e5dc');linen.color.set(finish==='linen'?'#ede2cf':'#d7d1c2');sage.color.set(finish==='linen'?'#ae9070':finish==='olive'?'#51613c':'#355244');oak.color.set(finish==='olive'?'#a8a08d':finish==='linen'?'#e1c7a4':'#cdc4b4');finishFollowers.forEach(([target,source])=>target.color.copy(source.color));};
+  const applyFinish=(finish='original')=>{plaster.color.set(finish==='olive'?'#d9ddd0':'#e9e5dc');linen.color.set(finish==='linen'?'#ede2cf':'#eee9df');sage.color.set(finish==='linen'?'#ae9070':finish==='olive'?'#51613c':'#355244');oak.color.set(finish==='olive'?'#a8a08d':finish==='linen'?'#e1c7a4':'#cdc4b4');finishFollowers.forEach(([target,source])=>target.color.copy(source.color));};
   const sectionPlane=new T.Plane(new T.Vector3(0,-1,0),.95);
-  const setCutaway=(cut:boolean)=>root.traverse(o=>{if(o instanceof T.Mesh){for(const material of Array.isArray(o.material)?o.material:[o.material]){material.clippingPlanes=cut?[sectionPlane]:null;material.clipShadows=true;}}});
+  const setCutaway=(cut:boolean)=>{sectionPlane.constant=cut?.95:100;root.traverse(o=>{if(o instanceof T.Mesh){for(const material of Array.isArray(o.material)?o.material:[o.material]){material.clippingPlanes=[sectionPlane];material.clipShadows=true;}}});};
   const setDaylight=(hour:number)=>{const evening=Math.max(0,Math.min(1,(hour-16)/5));frost.color.set('#edf2ef').lerp(new T.Color('#647b84'),evening);frost.emissiveIntensity=.23*(1-evening)+.025;};
   return {root,walls,ceiling,lamp,lights,applyFinish,setCutaway,setDaylight,ready:Promise.all(loads),dispose:()=>{disposed=true;extraTextures.forEach(t=>t.dispose());}};
 }

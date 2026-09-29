@@ -96,3 +96,5 @@
 @media(max-width:370px){.residence-viewport{--viewer-height:320px}}
 .g400-residence .residence-model-hint{left:50%;right:auto;bottom:13px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);padding:8px 15px;line-height:1.4;color:#284535;text-shadow:none}
 @media(max-width:760px){.g400-residence .residence-model-hint{width:calc(100% - 20px);font-size:9px;padding:6px 9px}.g400-residence--visit .residence-viewport{height:450px}}
+
+.residence-cached-model{position:absolute;inset:0}

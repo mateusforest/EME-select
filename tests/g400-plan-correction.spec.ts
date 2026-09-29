@@ -15,8 +15,8 @@ test('corrected plan protects closed boundaries, kitchen and bathrooms',()=>{
 test('selecting the pilot reveals the third floor within the building',async({page},info)=>{
  test.setTimeout(90000);await page.goto('/apresentar/g400');
  await page.getByRole('button',{name:'Visitar Tipo 5',exact:true}).click();const model=page.getByTestId('g400-apartment-model');
- await expect(model).toHaveAttribute('data-section','opening',{timeout:45000});const start=await model.getAttribute('data-camera');
- await expect(model).toHaveAttribute('data-section','third-floor',{timeout:45000});await expect(model).not.toHaveAttribute('data-camera',start!);
+ await expect(model).toHaveAttribute('data-prepared','true',{timeout:45000});
+ await expect(model).toHaveAttribute('data-section','third-floor');
  await expect(model).toHaveAttribute('data-view','overview');await page.screenshot({path:info.outputPath('third-floor-context.png')});
  // Pick a visible living-room floor point, ignoring the wall faces removed by the cut.
  const bounds=(await model.locator('canvas').boundingBox())!,camera=new PerspectiveCamera(42,bounds.width/bounds.height,.045,450);
