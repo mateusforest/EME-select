@@ -39,14 +39,14 @@ export function buildTipo5(){
       loads.push(new Promise<void>(resolve=>{new T.TextureLoader().load(`${G400_ASSETS}materials/${asset}-${suffix}.jpg`,map=>{if(disposed){map.dispose();resolve();return;}map.wrapS=map.wrapT=T.RepeatWrapping;map.repeat.set(...repeat);map.offset.set(...offset);map.anisotropy=4;if(channel==='map')map.colorSpace=T.SRGBColorSpace;extraTextures.push(map);material[channel]=map;material.needsUpdate=true;resolve();},undefined,()=>resolve());}));
     }
   };
-  oak.color.set('#cdc4b4');pbr(oak,'oak_wood_planks',[1,1]);oak.normalScale.set(.18,.18);oak.roughness=.7;
+  oak.color.set('#cdc4b4');pbr(oak,'oak_wood_planks',[2,1.4]);oak.normalScale.set(.18,.18);oak.roughness=.7;
   // Sample one uninterrupted slab, keeping grout lines off counters and tables.
-  pbr(stone,'marble_01',[.17,.15],true,[.51,.60]);stone.color.set('#ffffff');stone.normalScale.set(.08,.08);stone.roughness=.38;
+  pbr(stone,'marble_01',[.17,.15],false,[.51,.60]);stone.color.set('#f4f1e9');stone.normalScale.set(.025,.025);stone.roughness=.32;
   pbr(linen,'fabric_pattern_07',[3,3],false);linen.normalScale.set(.25,.25);pbr(sage,'fabric_pattern_07',[3,3],false);sage.normalScale.set(.25,.25);
-  const glass=new T.MeshPhysicalMaterial({color:'#b7d1cf',transparent:true,opacity:.17,roughness:.1,metalness:.1,depthWrite:false,side:T.DoubleSide});
+  const glass=new T.MeshPhysicalMaterial({color:'#d5e5e5',transparent:true,opacity:.04,roughness:.24,metalness:0,specularIntensity:.18,envMapIntensity:.25,depthWrite:false,side:T.DoubleSide});
   const lamp=new T.MeshStandardMaterial({color:'#fff1cf',emissive:'#ffd697',emissiveIntensity:0,roughness:.3});
   function block(x:number,z:number,w:number,d:number,h:number,m:T.Material,y=h/2,group=root,round=0){
-    const g=round?new RoundedBoxGeometry(w*.014,h,d*.014,2,Math.min(round,h/3,w*.004,d*.004)):new T.BoxGeometry(w*.014,h,d*.014);
+    const g=round?new RoundedBoxGeometry(w*.014,h,d*.014,3,Math.min(round,h/3,w*.004,d*.004)):new T.BoxGeometry(w*.014,h,d*.014);
     const mesh=new T.Mesh(g,m);mesh.position.copy(planPoint(x,z,y));mesh.castShadow=true;mesh.receiveShadow=true;mesh.userData.navigation=group===root?'furniture':'wall';group.add(mesh);return mesh;
   }
   const outline=tipo5Outline;
@@ -64,7 +64,8 @@ export function buildTipo5(){
     const width=Math.hypot(x2-x1,z2-z1),angle=-Math.atan2(z2-z1,x2-x1);
     for(const [h,y,m] of [[.25,.125,plaster],[.17,2.615,plaster],[2.28,1.39,glass]] as const){const b=block((x1+x2)/2,(z1+z2)/2,width,5,h,m,y,walls);b.rotation.y=angle;if(m===glass)b.castShadow=false;}
     const count=Math.ceil(width/40);
-    for(let i=0;i<=count;i++)block(x1+(x2-x1)*i/count,z1+(z2-z1)*i/count,2,3,2.38,bronze,1.38,walls);
+    for(let i=0;i<=count;i++)block(x1+(x2-x1)*i/count,z1+(z2-z1)*i/count,2,3,2.38,black,1.38,walls);
+    for(const y of [.29,2.51]){const rail=block((x1+x2)/2,(z1+z2)/2,width,4,.045,black,y,walls);rail.rotation.y=angle;}
   }
   tipo5Windows.forEach(w=>windowWall(...w));tipo5Walls.forEach(w=>wall(...w));
   // Door jambs and lintels share the collision plan's openings.
@@ -78,13 +79,20 @@ export function buildTipo5(){
   block(940,329,180,13,.52,linen,.5,root,.06);block(830,420,14,163,.52,linen,.5,root,.06);
   for(let i=0;i<3;i++)block(880+i*53,350,46,37,.12,linen,.52,root,.05);
   for(let i=0;i<2;i++)block(850,398+i*52,37,45,.12,linen,.52,root,.05);
-  block(990,350,27,20,.25,sage,.67,root,.06);block(850,465,22,28,.24,sage,.65,root,.05);
   block(980,460,76,48,.14,oak,.35,root,.06);block(980,460,48,26,.29,dark,.15);
   block(1125,440,15,150,.35,oak,.3);block(1136,430,4,78,.71,black,1.12);
   // Marble and oak media wall, inspired by the supplied G400 interiors.
   block(1146,440,5,175,2.52,stone,1.27,walls);
   for(const z of [340,350,360,520,530,540])block(1141,z,6,4,2.52,oak,1.27,walls);
-  for(const [x,z,angle] of [[885,346,.15],[946,346,-.1],[849,402,1.3],[850,468,1.6]]){const cushion=block(x,z,29,13,.37,sage,.7,root,.065);cushion.rotation.y=angle;cushion.rotation.x=-.14;}
+  for(const [i,[x,z,angle]] of [[885,346,.15],[946,346,-.1],[849,402,1.3],[850,468,1.6]].entries()){
+    const geometry=new T.SphereGeometry(1,24,16),vertices=geometry.attributes.position;
+    for(let j=0;j<vertices.count;j++){
+      const soft=(v:number)=>Math.sign(v)*Math.pow(Math.abs(v),.58);
+      vertices.setXYZ(j,soft(vertices.getX(j))*.23,soft(vertices.getY(j))*.205,soft(vertices.getZ(j))*.085);
+    }
+    geometry.computeVertexNormals();const cushion=new T.Mesh(geometry,i%3===1?linen:sage);
+    cushion.position.copy(planPoint(x,z,.74));cushion.rotation.set(-.2,angle,.06*(i%2?1:-1));cushion.castShadow=true;cushion.receiveShadow=true;root.add(cushion);
+  }
   for(const z of [366,409,451])block(835,z,1,1,.22,linen,.7);
   const coffeeTop=new T.Mesh(new T.CylinderGeometry(.43,.43,.035,48),stone);coffeeTop.position.copy(planPoint(1000,466,.48));coffeeTop.castShadow=true;root.add(coffeeTop);
   const coffeeBase=new T.Mesh(new T.CylinderGeometry(.27,.33,.43,40),bronze);coffeeBase.position.copy(planPoint(1000,466,.24));root.add(coffeeBase);
@@ -93,11 +101,21 @@ export function buildTipo5(){
   block(829,746,28,66,.83,oak,.415);block(829,746,32,70,.045,stone,.86);
   block(945,665,42,65,2.12,cream,1.06);block(907,675,37,47,.83,oak,.415);block(907,675,40,50,.045,stone,.86);
   block(826,745,23,34,.022,black,.9);for(const z of [735,755])for(const x of [820,832]){const burner=new T.Mesh(new T.TorusGeometry(.055,.006,6,18),bronze);burner.rotation.x=Math.PI/2;burner.position.copy(planPoint(x,z,.92));root.add(burner);}
-  block(860,780,28,16,.03,black,.89);block(860,780,24,12,.025,ceramic,.91);
+  const steel=new T.MeshStandardMaterial({color:'#a7ada9',metalness:.8,roughness:.3});
+  block(860,780,28,19,.018,steel,.89);block(860,780,24,15,.019,black,.901);
+  for(const dx of [-13,13])block(860+dx,780,1.3,19,.022,steel,.91);
+  for(const dz of [-8,8])block(860,780+dz,26,1.2,.022,steel,.91);
   block(883,774,3,3,.27,bronze,1.03);
   for(let i=0;i<3;i++)block(837+i*35,797,1,2,.73,bronze,.4);
   block(884,794,125,3,.65,stone,1.2,walls);
   for(const x of [838,882,925]){block(x,790,40,20,.72,oak,1.96,walls);block(x,778,36,1,.025,lamp,1.6,walls);}
+  // Appliance fronts and hardware remain within the existing furniture footprints.
+  block(945,631.9,39,1.1,2.03,steel,1.065);
+  block(945,631,39,.5,.014,black,.79);block(928,630.6,1.2,1.5,.38,black,1.53);
+  block(828,711.8,22,1,.42,black,.46);block(828,711,18,.5,.27,glass,.43);
+  block(828,710.5,19,.8,.018,steel,.66);
+  for(const x of [840,881,922]){block(x,764.8,37,1,.67,cream,.44);block(x,763.8,19,.6,.014,bronze,.73);}
+  for(const x of [838,882,925]){block(x,779.6,38,1,.67,cream,1.96);block(x,778.9,18,.8,.014,bronze,1.67);}
   block(945,643,34,2,.025,bronze,1.13);block(945,643,34,2,.025,bronze,1.65);
   const tap=new T.Mesh(new T.TorusGeometry(.105,.016,10,24,Math.PI),bronze);tap.position.copy(planPoint(883,774,1.08));root.add(tap);
   // Rectangular dining table and six upholstered chairs.
@@ -111,6 +129,15 @@ export function buildTipo5(){
   }
   for(const z of [651,687,723]){chair(1020,z,Math.PI/2);chair(1120,z,-Math.PI/2);}
   for(const z of [652,718])for(const x of [1055,1085]){const plate=new T.Mesh(new T.CylinderGeometry(.135,.12,.018,32),ceramic);plate.position.copy(planPoint(x,z,.86));root.add(plate);}
+  // Styling follows the warm stone, linen and green palette of the G400 references.
+  for(const [x,z,h,colour] of ([[972,458,.035,'#e7e2d6'],[976,460,.026,'#566557']] as const))block(x,z,24,17,h,mat(colour),.44+h);
+  function vase(x:number,z:number,y:number){
+    const body=new T.Mesh(new T.LatheGeometry([new T.Vector2(.075,0),new T.Vector2(.13,.06),new T.Vector2(.1,.21),new T.Vector2(.05,.27)],24),ceramic);body.position.copy(planPoint(x,z,y));body.castShadow=true;root.add(body);
+    for(let i=0;i<4;i++){const stem=new T.Mesh(new T.CylinderGeometry(.003,.004,.34,5),dark);stem.position.copy(planPoint(x+i*1.6,z,y+.36));stem.rotation.z=(i-1.5)*.13;root.add(stem);const leaf=new T.Mesh(new T.SphereGeometry(.08,8,6),sage);leaf.scale.set(.55,1.8,.16);leaf.position.copy(planPoint(x+i*2,z,y+.48));leaf.rotation.z=i*.4;root.add(leaf);}
+  }
+  vase(1070,685,.86);vase(999,464,.5);
+  for(const [x,z] of [[882,740],[905,737]]){const jar=new T.Mesh(new T.CylinderGeometry(.052,.05,.13,20),ceramic);jar.position.copy(planPoint(x,z,.96));root.add(jar);}
+  block(903,786,23,2,.32,oak,1.06,root,.012);
   // Beds, fitted wardrobes and bedside tables in both suites.
   function bed(x:number,z:number,rotation:number){
     const first=root.children.length;
@@ -135,9 +162,15 @@ export function buildTipo5(){
   block(750,641,38,29,.87,cream,.435);block(750,641,41,32,.04,stone,.895);
   block(762,759,38,36,.84,ceramic,.42);block(762,740,23,2,.25,black,.48,root,.04);
   // Planters and a small interior plant.
-  for(let x=855;x<1130;x+=22){block(x,296,20,22,.24,dark,.16);const foliage=new T.Mesh(new T.IcosahedronGeometry(.2,1),sage);foliage.position.copy(planPoint(x,296,.43));foliage.scale.y=.7;root.add(foliage);}
+  const leafMat=new T.MeshStandardMaterial({color:'#3d6240',roughness:.95,side:T.DoubleSide});
+  function plantLeaf(x:number,z:number,y:number,length:number,width:number,turn:number,lean:number){
+    const geometry=new T.PlaneGeometry(1,1,4,12),vertices=geometry.attributes.position;
+    for(let i=0;i<vertices.count;i++){const u=vertices.getX(i),v=vertices.getY(i)+.5;vertices.setXYZ(i,u*width*Math.sin(v*Math.PI),v*length,.12*Math.sin(v*Math.PI)-u*u*.12);}
+    geometry.computeVertexNormals();const leaf=new T.Mesh(geometry,leafMat);leaf.position.copy(planPoint(x,z,y));leaf.rotation.set(lean,turn,.12*Math.sin(turn));leaf.castShadow=true;leaf.receiveShadow=true;root.add(leaf);
+  }
+  for(let x=855;x<1130;x+=22){block(x,296,20,22,.24,dark,.16);for(let i=0;i<10;i++)plantLeaf(x+Math.sin(i*2.4)*7,296+Math.cos(i*2.4)*7,.27,.23+(i%3)*.025,.16,i*2.4,.5);}
   const pot=new T.Mesh(new T.CylinderGeometry(.17,.12,.3,20),cream);pot.position.copy(planPoint(1100,335,.15));root.add(pot);
-  for(let i=0;i<7;i++){const leaf=new T.Mesh(new T.SphereGeometry(.15,10,8),sage);leaf.scale.set(.5,2,1);leaf.position.copy(planPoint(1100+Math.sin(i)*8,335+Math.cos(i)*8,.5+i*.025));leaf.rotation.z=Math.sin(i)*.5;root.add(leaf);}
+  for(let i=0;i<9;i++)plantLeaf(1100+Math.sin(i)*3,335+Math.cos(i)*3,.23,.48+(i%3)*.11,.24,i*2.4,.25+(i%3)*.2);
   // Full-height pleated sheers at the glazing, visible only inside the apartment.
   const curtainMat=new T.MeshPhysicalMaterial({color:'#f1ece0',roughness:1,transparent:true,opacity:.65,side:T.DoubleSide,depthWrite:false});
   for(const [start,end,z] of [[823,852,324],[1109,1142,324],[1171,1200,323],[1310,1337,323],[1526,1552,333],[1660,1688,333]]){

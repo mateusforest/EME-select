@@ -1,0 +1,15 @@
+# G400 · piloto 305 / Tipo 5
+
+## Vista ilustrativa — 29/09/2026
+
+O panorama é uma ilustração original gerada por IA, inspirada nos elementos urbanos visíveis nas referências fornecidas pelo cliente: avenida com canteiro, palmeiras, araucárias, comércio baixo e edifício de pedra com arcos. Não representa levantamento, orientação solar ou vista garantida da unidade. Altura e orientação são aproximadas. As capturas do Google não são distribuídas como textura.
+
+Arquivo: `public/assets/developments/g400/surroundings/vacaria-illustrative-day.png`.
+
+Produção: ferramenta nativa de geração de imagens do Codex. A imagem cobre um fundo curvo a 70 m, visível apenas na caminhada do piloto. A mudança de hora aplica uma gradação de cor ilustrativa. Geometria local simplificada é o fallback se a imagem não carregar. O entorno não participa da colisão, seleção nem exportação GLB do apartamento. Outros tipos de apartamento não são alterados.
+
+Interiores: esquadrias, vidro mais transparente, pedra clara, tecido e almofadas, frentes de armários, eletrodomésticos, metais e iluminação revisados. A decoração continua sendo uma interpretação conceitual da planta.
+
+## Prompt final
+
+Create one original photorealistic architectural-visualization environment map, a seamless 360-degree equirectangular panorama with exact 2:1 aspect ratio, high resolution. This is a background texture for windows of a third-floor apartment in a small southern Brazilian city inspired by central Vacaria, Rio Grande do Sul. The camera is fixed 13 metres above ground, looking over a real-scale urban neighborhood. Horizon stays at the vertical midpoint; upper half is soft blue sky with natural thin white clouds, lower half contains buildings, treetops and streets seen from above. The CENTER of the panorama faces across a broad avenue with two carriageways and a narrow grassy central median planted with tall palms. Across it are a peach-colored two-storey corner building with ground-floor shops and dark shop windows, muted grey and off-white four-storey apartment buildings, irregular terracotta and grey rooftops. Mature native araucaria trees with spreading flat green crowns rise among the roofs, not tropical jungle. At the right-hand quarter a narrower side street and a long grey stone civic building with tall arched windows. Other directions continue a dense, believable low-rise Brazilian neighborhood and distant tree-covered gentle hills. Daylight, bright but soft, physically plausible neutral colors, detailed plaster, roofing, foliage, asphalt and sidewalks. A few small parked cars; no close objects. Everything rendered from the elevated third-floor eye point, never from street level. Professional photographic realism, richly detailed but restrained. No apartment interior, no balcony, no window frames, no railings, no foreground floor, no own building, no people close up, no labels, no lettering, no logos, no map pins, no Google interface or watermark. The left and right edges must join seamlessly. A conceptual neighborhood illustration, not an exact geographic reconstruction.

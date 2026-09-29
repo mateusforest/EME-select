@@ -10,6 +10,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import { G400_ASSETS } from './g400';
 import { buildTipo5, planPoint } from './buildTipo5';
+import { buildTipo5Surroundings } from './tipo5Surroundings';
 import { g400Residences, tipo5Stations } from './g400Residences';
 import { canWalk, clearWalk, nearestWalk, roomAt, tipo5Outline, tipo5Walls, walkRoute, type PlanPoint } from './tipo5Navigation';
 
@@ -35,8 +36,9 @@ export default function G400ApartmentModel(props:Props){
       renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;
       const canvas=renderer.domElement;canvas.tabIndex=0;canvas.setAttribute('role','img');
       canvas.setAttribute('aria-label','Apartamento navegável. Clique no piso ou nos móveis para caminhar. Arraste para olhar. W A S D ou setas para se mover.');mount.prepend(canvas);
-      const scene=new T.Scene(),camera=new T.PerspectiveCamera(42,1,.045,100);
+      const scene=new T.Scene(),camera=new T.PerspectiveCamera(42,1,.045,450);
       const model=buildTipo5();scene.add(model.root);
+      const surroundings=buildTipo5Surroundings();surroundings.root.visible=false;scene.add(surroundings.root);
       const ground=new T.Mesh(new T.PlaneGeometry(200,200),new T.MeshStandardMaterial({color:'#d6d9d1',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.23;ground.receiveShadow=true;scene.add(ground);
       const hemisphere=new T.HemisphereLight('#edf4ff','#c1af8d',1);scene.add(hemisphere);
       const sun=new T.DirectionalLight('#fff0d4',3);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-12;sun.shadow.camera.right=12;sun.shadow.camera.top=12;sun.shadow.camera.bottom=-12;sun.shadow.normalBias=.025;sun.shadow.bias=-.00012;sun.shadow.radius=3;scene.add(sun);
@@ -90,10 +92,12 @@ export default function G400ApartmentModel(props:Props){
       function sync(){
         model.applyFinish(latest.current.finish);
         const p=latest.current,station=tipo5Stations[p.room]||tipo5Stations.living,evening=Math.max(0,Math.min(1,(p.hour-16)/4));
+        surroundings.root.visible=p.inside;surroundings.update(p.hour);ground.visible=!p.inside;
+        mount.dataset.exterior=p.inside?'illustrative-third-floor':'hidden';
         sun.position.set(-8+((p.hour-8)/12)*16,12*(1-evening)+2,-9);
-        sun.color.set(p.hour<16?'#fff1d8':'#ffbc7d');sun.intensity=3.4*(1-evening)+.12;
-        hemisphere.intensity=.78*(1-evening)+.34;fill.intensity=.4*(1-evening)+.1;scene.environmentIntensity=.42*(1-evening)+.18;
-        model.lamp.emissiveIntensity=.65+evening*2;model.lights.forEach(l=>l.intensity=4+evening*16);
+        sun.color.set(p.hour<16?'#fff1d8':'#ffbc7d');sun.intensity=(p.inside?1.8:3.4)*(1-evening)+.12;
+        hemisphere.intensity=.62*(1-evening)+.23;fill.intensity=.32*(1-evening)+.08;scene.environmentIntensity=.42*(1-evening)+.18;
+        model.lamp.emissiveIntensity=.65+evening*2;model.lights.forEach(l=>l.intensity=2.5+evening*10);
         renderer!.setClearColor(new T.Color('#d9ddd5').lerp(new T.Color('#30454e'),evening));renderer!.shadowMap.needsUpdate=true;
         orbit.enabled=!p.inside;camera.fov=p.inside?66:42;camera.updateProjectionMatrix();
         const internal=notifiedRoom===p.room;notifiedRoom='';
@@ -133,13 +137,13 @@ export default function G400ApartmentModel(props:Props){
           if(held.size){if(held.has('turn-left'))yaw+=dt*1.1;if(held.has('turn-right'))yaw-=dt*1.1;const forward=Number(held.has('forward'))-Number(held.has('back')),side=Number(held.has('right'))-Number(held.has('left'));const speed=1.5*dt/(forward&&side?Math.SQRT2:1);move(forward*speed,side*speed);}
           look();
         }else orbit.update();
-        composer.render();
+        mount.dataset.panorama=surroundings.root.userData.panorama||'loading';composer.render();
         const p=toPlan(camera.position);mount.dataset.camera=camera.position.toArray().map(n=>n.toFixed(3)).join(',');mount.dataset.position=p.map(n=>n.toFixed(2)).join(',');mount.dataset.heading=yaw.toFixed(3);mount.dataset.pitch=pitch.toFixed(4);mount.dataset.walking=String(Boolean(walk));mount.dataset.navigable=String(!latest.current.inside||Boolean(flight)||canWalk(p));
         if(marker.current){marker.current.setAttribute('cx',String(p[0]));marker.current.setAttribute('cy',String(p[1]));}
         if(heading.current)heading.current.setAttribute('d',`M${p[0]},${p[1]}l${Math.sin(yaw)*42},${Math.cos(yaw)*42}`);
       });
-      disposeScene=()=>{model.dispose();const geometries=new Set<T.BufferGeometry>(),materials=new Set<T.Material>(),textures=new Set<T.Texture>();scene.traverse(o=>{if(o instanceof T.Mesh){geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){materials.add(m);for(const value of Object.values(m))if(value instanceof T.Texture)textures.add(value);}}});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());env.dispose();studio?.dispose();sun.shadow.dispose();ao.dispose();renderPass.dispose();output.dispose();composer.dispose();};
-      void Promise.all([model.ready,environmentReady]).then(()=>{if(!disposed)latest.current.onReady();});
+      disposeScene=()=>{surroundings.dispose();model.dispose();const geometries=new Set<T.BufferGeometry>(),materials=new Set<T.Material>(),textures=new Set<T.Texture>();scene.traverse(o=>{if(o instanceof T.Mesh){geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){materials.add(m);for(const value of Object.values(m))if(value instanceof T.Texture)textures.add(value);}}});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());env.dispose();studio?.dispose();sun.shadow.dispose();ao.dispose();renderPass.dispose();output.dispose();composer.dispose();};
+      void Promise.all([model.ready,environmentReady,surroundings.ready]).then(()=>{if(!disposed)latest.current.onReady();});
     }catch(error){console.warn('G400 apartment viewer unavailable',error);latest.current.onFail();}
     return()=>{disposed=true;update.current=null;command.current=null;mapClick.current=null;renderer?.setAnimationLoop(null);observer?.disconnect();removers.forEach(remove=>remove());controls?.dispose();disposeScene?.();renderer?.dispose();renderer?.domElement.remove();};
   },[]);
