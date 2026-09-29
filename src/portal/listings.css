@@ -24,3 +24,12 @@
 .pl-publication-final{border-top:1px solid #dce2d5;padding-top:24px;margin-top:24px}
 .pl-publication-note{margin-top:24px;color:#65745b;font-size:12px;line-height:1.7}
 @media(max-width:1100px){.pl-publication-checks{grid-template-columns:minmax(0,1fr)}}
+.pl-yala{margin:20px 0;background:var(--ps-surface,#f8f8f0)}
+.pl-yala h3{margin:8px 0;font-size:1.4rem;color:#173f34}
+.pl-yala p{max-width:78ch;line-height:1.65}
+.pl-yala-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:18px 0}
+.pl-yala .pl-confirm{display:flex;gap:10px;align-items:center}
+.pl-yala .pl-confirm input{width:18px;height:18px;flex:none}
+.pl-yala-report{margin-top:20px;padding:18px;border:1px solid #d9e2d4;border-radius:14px;background:#edf2e8}
+.pl-yala-report li{margin:8px 0;line-height:1.5}
+@media(max-width:600px){.pl-yala-actions{align-items:stretch;flex-direction:column}.pl-yala-actions .ps-button{justify-content:center}}

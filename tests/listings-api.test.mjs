@@ -24,7 +24,7 @@ test('real listings: private photos, curation and explicit publication',async t=
   assert.equal((await req(admin,'/listings/'+item.id,{...body,photos:[{id:'not-owned',caption:'No access'}]},'PATCH')).status,400);
   const saved=await req(admin,'/listings/'+item.id,body,'PATCH');assert.equal(saved.status,200);item=saved.body;assert.equal(item.photos[0].caption,'Jardim');assert.equal((await req(admin,'/listings/'+item.id,body,'PATCH')).status,409);
  });
- await t.test('small photos remain private drafts and cannot bypass publication with forged dimensions',async()=>{
+ await t.test('small photos are publishable without enlargement and dimensions cannot be forged',async()=>{
   const low=await sharp({create:{width:870,height:652,channels:3,background:'#678576'}}).webp().toBuffer();
   const lowContent='data:image/webp;base64,'+low.toString('base64');
   const spoofedUpload=await req(admin,'/listings/'+item.id+'/photos',{version:item.version,content:lowContent,caption:'Sala pequena de referência',room:'Área social',width:4000,height:3000});
@@ -39,13 +39,13 @@ test('real listings: private photos, curation and explicit publication',async t=
   assert.equal(item.photos.at(-1).width,870);assert.equal(item.photos.at(-1).height,652);
   const bytes=await req(admin,item.photos.at(-1).url.replace('/api',''));const decoded=await sharp(bytes.body).metadata();
   assert.equal(decoded.width,870);assert.equal(decoded.height,652);
-  await approve();assert.equal(item.stage,'Entrada aprovada');assert.ok(item.blockers.some(message=>message.includes('870 × 652')));
+  await approve();assert.equal(item.stage,'Entrada aprovada');assert.equal(item.blockers.length,0);
   const spoofedPatch=await req(admin,'/listings/'+item.id,{version:item.version,draft,photos:item.photos.map(({id,caption,room})=>({id,caption,room,...(id===lowId?{width:4000,height:3000}:{})}))},'PATCH');
   assert.equal(spoofedPatch.status,400);
   const blocked=await req(admin,'/listings/'+item.id+'/publish',{version:item.version,confirmed:true});
-  assert.equal(blocked.status,409);assert.match(blocked.body.error,/1280/);
-  assert.deepEqual((await req(anonymous,'/public/properties')).body.properties,[]);
-  assert.equal((await req(anonymous,item.photos.at(-1).url.replace('/api',''))).status,404);
+  assert.equal(blocked.status,200);item=blocked.body;
+  assert.equal((await req(anonymous,'/public/properties')).body.properties.length,1);
+  assert.equal((await req(anonymous,item.photos.at(-1).url.replace('/api',''))).status,200);
   const removed=await req(admin,'/listings/'+item.id,{version:item.version,draft,photos:item.photos.filter(photo=>photo.id!==lowId).map(({id,caption,room})=>({id,caption,room}))},'PATCH');
   assert.equal(removed.status,200);item=removed.body;
  });
@@ -81,6 +81,20 @@ test('real listings: private photos, curation and explicit publication',async t=
   assert.equal((await req(admin,'/listings/'+item.id+'/publish',{version:item.version,confirmed:false})).status,400);
   const result=await req(admin,'/listings/'+item.id+'/publish',{version:item.version,confirmed:true});assert.equal(result.status,200);
   item=result.body;await req(admin,'/listings/'+item.id+'/unpublish',{version:item.version});item=previous;
+ });
+ await t.test('simplified final OK publishes without fabricated curation, and still enforces role, version and confirmation',async()=>{
+  const previous=item;item=(await req(admin,'/listings',{draft:{...draft,reasons:''}})).body;
+  const bytes=await sharp({create:{width:870,height:652,channels:3,background:'#567'}}).webp().toBuffer();
+  item=(await req(admin,'/listings/'+item.id+'/photos',{version:item.version,content:'data:image/webp;base64,'+bytes.toString('base64')})).body;
+  const endpoint='/listings/'+item.id+'/publish',body={version:item.version,reviewMode:'simplified',confirmed:true};
+  assert.equal((await req(admin,endpoint,{...body,confirmed:false})).status,400);
+  assert.equal((await req(admin,endpoint,{...body,version:item.version-1})).status,409);
+  assert.equal((await req(broker,endpoint,body)).status,404);
+  const published=await req(admin,endpoint,body);assert.equal(published.status,200);item=published.body;
+  assert.equal(item.published,true);assert.equal(item.stage,'Entrada aprovada');
+  const dossier=(await req(admin,'/evaluations/'+item.id)).body;assert.ok(dossier.curation.criteria.every(c=>c.score===null));assert.ok(dossier.curation.checks.every(c=>c.state!=='Conferido'));
+  assert.equal((await req(anonymous,item.photos[0].url.replace('/api',''))).status,200);
+  await req(admin,'/listings/'+item.id+'/unpublish',{version:item.version});item=previous;
  });
  await t.test('withdrawal revokes public media and approval reopening never resurrects snapshot',async()=>{
   await approve();item=(await req(admin,'/listings/'+item.id+'/publish',{version:item.version,confirmed:true})).body;

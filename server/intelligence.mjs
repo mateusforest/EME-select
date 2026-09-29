@@ -1,3 +1,4 @@
+import {requestListingPreparation} from './listing-ai.mjs';
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { resolveAISettings, AI_TIMEOUT_MS } from './ai-config.mjs';
 import { readCuration } from './curation-policy.mjs';
@@ -91,9 +92,10 @@ export function createIntelligence({ store, encryptionKey, env = process.env, fe
       await store.abandon(req, user, body.id); send(200, await snapshot(user)); return true;
     }
     if (path !== '/api/intelligence/analyses') aiFail(404, 'Operação não encontrada.');
-    fields(body, ['requestId', 'caseId', 'caseVersion', 'task', 'context','editorial']);
+    fields(body, ['requestId', 'caseId', 'caseVersion', 'task', 'context','editorial','prepareListing']);
     if (!uuid(body.requestId) || !uuid(body.caseId) || !Number.isInteger(body.caseVersion) || !tasks.includes(body.task) || typeof body.context !== 'string' || body.context.length > 6000) aiFail(400, 'Selecione o imóvel, a tarefa e confira o contexto.');
     if(body.editorial!==undefined&&(typeof body.editorial!=='boolean'||body.task!=='atendimento'))aiFail(400,'Modo editorial inválido.');
+    if(body.prepareListing!==undefined&&(typeof body.prepareListing!=='boolean'||body.task!=='atendimento'||body.editorial))aiFail(400,'Preparação de anúncio inválida.');
     const row = await store.caseFor(body.caseId, user), fingerprint = aiHash(body);
     const existing = await store.find(body.requestId, user);
     if (existing) { if (existing.fingerprint !== fingerprint || existing.actorId !== user.id) aiFail(409, 'Esta solicitação já foi usada.'); if (existing.status === 'processing') aiFail(409, 'A análise já foi iniciada. Atualize o histórico em instantes.'); send(200, await snapshot(user)); return true; }
@@ -105,7 +107,7 @@ export function createIntelligence({ store, encryptionKey, env = process.env, fe
     const started = await store.begin(req, user, { id: body.requestId, caseId: row.id, caseVersion: row.version, task: body.task, fingerprint, provider: body.task === 'checklist' ? 'regras' : 'OpenAI', model: body.task === 'checklist' ? 'Select V2' : settings.model });
     if (!started) aiFail(409, 'A análise já está sendo processada. Atualize o histórico.');
     let analysis;
-    try { const context = aiProjection(row); analysis = body.task === 'checklist' ? { result: checklistResult(context), usage: { inputTokens: 0, outputTokens: 0 }, providerId: '' } : await requestAnalysis({ apiKey, model: settings.model, task: body.task, context, instruction: body.context.trim(), editorial:body.editorial===true, fetcher }); }
+    try { const context = aiProjection(row); analysis = body.task === 'checklist' ? { result: checklistResult(context), usage: { inputTokens: 0, outputTokens: 0 }, providerId: '' } : body.prepareListing===true ? await requestListingPreparation({apiKey,model:settings.model,property:context.property,photos:await store.photoInputs(row.id,user),fetcher}) : await requestAnalysis({ apiKey, model: settings.model, task: body.task, context, instruction: body.context.trim(), editorial:body.editorial===true, fetcher }); }
     catch (error) { await store.finish(req, user, body.requestId, { status: 'failed', error: error.status ? error.message : 'Não foi possível concluir a análise.' }); throw error; }
     await store.finish(req, user, body.requestId, { status: 'completed', ...analysis });
     send(200, await snapshot(user)); return true;

@@ -21,14 +21,14 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
   const photos=id=>db.prepare('SELECT id,width,height,caption,position,room,enhancement FROM listing_photos WHERE listing_id=? ORDER BY position,id').all(id).map(p=>({...p,url:'/api/photos/'+p.id}));
   function row(id,user){caseFor(id,user);const r=db.prepare('SELECT * FROM listings WHERE id=?').get(id);if(!r)fail(404,'Imóvel não encontrado.');return r;}
   const validate=validateDraft;
-  function blockers(r){const d=JSON.parse(r.data), p=photos(r.id), reasons=[];
+  function blockers(r,simplified=false){const d=JSON.parse(r.data), p=photos(r.id), reasons=[];
     if(!d.price||!d.area)reasons.push('Informe preço e área maiores que zero.');
     if(!d.neighborhood.trim())reasons.push('Informe bairro ou região pública.');
     if(d.description.trim().length<80)reasons.push('Descreva o imóvel com pelo menos 80 caracteres.');
-    if(!d.reasons.trim())reasons.push('Registre os diferenciais selecionados pela EME.');
+    if(!simplified&&!d.reasons.trim())reasons.push('Registre os diferenciais selecionados pela EME.');
     reasons.push(...photoPublicationIssues(p));
     const e=db.prepare('SELECT stage FROM evaluations WHERE id=?').get(r.id);
-    if(e.stage!=='Entrada aprovada')reasons.push('Conclua a curadoria e a aprovação de entrada.');
+    if(!simplified&&e.stage!=='Entrada aprovada')reasons.push('Conclua a curadoria e a aprovação de entrada.');
     return reasons;
   }
   function publicData(r){const d=JSON.parse(r.data),images=photos(r.id).map(({url,caption,room,width,height})=>({url,caption,room,width,height}));return {
@@ -99,11 +99,11 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
       transaction(()=>{checkVersion(row(id,freshUser),body);if(['Entrada aprovada','Não selecionado'].includes(caseFor(id,freshUser).stage))requireAdmin(freshUser);if(!source&&photos(id).length>=20)fail(400,'Limite de 20 fotografias por imóvel.');if(source){db.prepare('UPDATE listing_photos SET id=?,data=?,width=?,height=?,original_data=?,enhancement=? WHERE id=?').run(randomUUID(),output.data,output.info.width,output.info.height,source.original_data||source.data,body.method==='lanczos3-2x'?'Ampliação convencional 2×':'ESRGAN Slim 2×',source.id);}else db.prepare('INSERT INTO listing_photos (id,listing_id,data,width,height,caption,position,room) VALUES (?,?,?,?,?,?,?,?)').run(randomUUID(),id,output.data,output.info.width,output.info.height,caption,photos(id).length,room);changed(id,freshUser,'Fotografia adicionada');});send(res,201,detail(row(id,freshUser),freshUser));return true;
     }
     if(['publish','unpublish'].includes(match[2])&&req.method==='POST'){
-      fields(body,['version','confirmed']);requireAdmin(user);
+      fields(body,['version','confirmed','reviewMode']);requireAdmin(user);if(body.reviewMode!==undefined&&body.reviewMode!=='simplified')fail(400,'Revisão inválida.');
       if(match[2]==='publish'){
         if(body.confirmed!==true)fail(400,'Confirme a autorização para divulgar as informações e fotografias.');
-        const issues=blockers(r);if(issues.length)fail(409,issues.join(' '));
-        transaction(()=>{checkVersion(row(id,user),body);db.prepare('UPDATE listings SET published=?,published_version=version,version=version+1 WHERE id=?').run(JSON.stringify(publicData(r)),id);audit(user.id,'Anúncio publicado','Administrador confirmou autorização e revisão do anúncio. Publicação no servidor conectado.',id);});
+        const issues=blockers(r,body.reviewMode==='simplified');if(issues.length)fail(409,issues.join(' '));
+        transaction(()=>{checkVersion(row(id,user),body);if(body.reviewMode==='simplified'){db.prepare("UPDATE evaluations SET stage='Entrada aprovada',version=version+1,updated_at=? WHERE id=?").run(stamp(),id);audit(user.id,'Revisão final simplificada','Administrador aprovou a apresentação e autorizou a publicação. Notas e verificações documentais não foram preenchidas automaticamente.',id);}db.prepare('UPDATE listings SET published=?,published_version=version,version=version+1 WHERE id=?').run(JSON.stringify(publicData(r)),id);audit(user.id,'Anúncio publicado','Administrador confirmou autorização e revisão do anúncio. Publicação no servidor conectado.',id);});
       }else transaction(()=>{db.prepare('UPDATE listings SET published=NULL,published_version=NULL,version=version+1 WHERE id=?').run(id);audit(user.id,'Anúncio retirado','Informações e fotografias deixaram de estar disponíveis no catálogo público.',id);});
       send(res,200,detail(row(id,user),user));return true;
     }

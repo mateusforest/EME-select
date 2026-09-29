@@ -25,6 +25,7 @@ export function attachIntelligence({ db, dbPath, transaction, stamp, caseFor, co
     saveSettings: (_req, user, value) => transaction(() => { admin(user); if (settings().version !== value.version) aiFail(409, 'A configuração mudou. Atualize a tela.'); db.prepare("UPDATE ai_settings SET version=version+1,model=?,enabled=?,secret=? WHERE id='company'").run(value.model, +value.enabled, value.secret); event(user, 'Configuração da IA atualizada'); }),
     properties: user => db.prepare('SELECT id,title,version FROM evaluations WHERE ?=1 OR assignee_id=? ORDER BY updated_at DESC').all(live(user).role === 'admin' ? 1 : 0, user.id),
     caseFor: context,
+    photoInputs:(id,user)=>{context(id,user);return db.prepare('SELECT id,data FROM listing_photos WHERE listing_id=? ORDER BY position,id').all(id).map(p=>({id:p.id,bytes:Buffer.from(p.data)}));},
     find: (id, user) => { const row = db.prepare('SELECT * FROM ai_runs WHERE id=?').get(id); if (!row) return null; context(row.case_id, user); return hydrate(row); },
     runs: user => db.prepare('SELECT a.* FROM ai_runs a JOIN evaluations e ON e.id=a.case_id WHERE ?=1 OR e.assignee_id=? ORDER BY a.created_at DESC LIMIT 100').all(live(user).role === 'admin' ? 1 : 0, user.id).map(safeRun),
     rate: user => consume('ai:' + user.id, 12),

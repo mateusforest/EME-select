@@ -14,6 +14,7 @@ export function attachCloudIntelligence({ client, hashOf, caseFor, env = process
     saveSettings: (req, _user, value) => write(req, 'settings', value),
     properties,
     caseFor,
+    photoInputs:async(id,user)=>{const row=await caseFor(id,user);return Promise.all((row.data.photos||[]).map(async p=>{const response=await client.request('/storage/v1/object/authenticated/eme-property-photos/'+p.id+'.webp',{raw:true});return {id:p.id,bytes:Buffer.from(await response.arrayBuffer())};}));},
     find: async (id, user) => { const row = (await rest('eme_ai_runs?id=eq.' + id))[0]; if (!row) return null; await caseFor(row.case_id, user); return hydrate(row); },
     runs: async user => { const scope = user.role === 'admin' ? '' : '&eme_cases.assignee_id=eq.' + user.id; const rows = await rest('eme_ai_runs?select=*,eme_cases!inner(assignee_id)&order=created_at.desc&limit=100' + scope); return rows.map(row => { const { fingerprint, ...safe } = hydrate(row); return safe; }); },
     rate: user => rpc('eme_limit', { p_key: 'ai:' + user.id, p_max: 12 }),
