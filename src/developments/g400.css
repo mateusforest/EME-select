@@ -25,6 +25,9 @@
 .g400-unit-list strong small{font-size:11px;font-weight:400}
 .g400-unit-list>button>span>span{display:block;font-size:10px;color:#617362;margin-top:6px}
 .g400-unit-list i{font-style:normal;margin:0 5px}
+.g400-visit-badge{display:inline-block;font-size:8px;margin-left:8px;border-radius:4px;padding:3px 5px;background:#dee7d7;color:#244734}
+.g400-visit-entry{margin-bottom:12px;text-align:left;gap:10px}
+.g400-visit-entry small{display:block;font-size:9px;font-weight:400;opacity:.8;margin-top:6px}
 .g400-project-note{font-size:9px;line-height:1.7;color:#62725f;margin:13px 0 16px}
 .g400-page .development-bottom{left:4.5%;right:3%}
 .g400-enlarge-plan{margin:0 0 16px;font-size:12px;min-height:40px}

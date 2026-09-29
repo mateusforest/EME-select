@@ -1,0 +1,81 @@
+.dialog.g400-residence{width:min(1440px,calc(100% - 40px));max-height:calc(100svh - 32px);border-radius:22px;background:#f5f3ec;color:#173c32;overflow:auto;box-shadow:0 30px 100px #0d292e55}
+.g400-residence .dialog-top{padding:18px 28px 15px;background:#f5f3ec;z-index:6}
+.g400-residence .dialog-top h2{font-size:23px}
+.g400-residence .dialog-content{padding:0 28px 16px}
+.residence-topline{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:17px 0;font-size:11px}
+.residence-topline button{display:flex;align-items:center;gap:8px;min-height:32px}
+.residence-topline>span{display:flex;align-items:center;gap:10px;color:#6a7769}
+.residence-topline i{width:3px;height:3px;background:#85917c;border-radius:50%}
+.residence-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:28px;align-items:start}
+.residence-visual{min-width:0;border:1px solid #fff;border-radius:17px;overflow:hidden;background:#e9e9e0;box-shadow:inset 2px 2px 8px #536b4a13,7px 7px 19px #74826820,-5px -5px 14px #fff}
+.residence-viewbar{display:flex;align-items:center;gap:5px;padding:10px;background:#eeeee5;border-bottom:1px solid #c8cebe80}
+.residence-viewbar>button,.residence-levels button{display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 13px;border:1px solid transparent;border-radius:10px;min-height:42px;font-size:11px;color:#586e61}
+.residence-viewbar>button[aria-pressed=true]{background:#f7f6ef;border-color:#fff;color:#173c32;box-shadow:3px 3px 9px #7e8b752b,-2px -2px 7px #fff}
+.residence-viewbar>button:last-child{margin-left:auto}
+.residence-viewbar small{font-size:8px;padding:3px 5px;background:#dfe8d5;border-radius:5px;text-transform:uppercase;letter-spacing:.08em}
+.residence-levels{display:flex;padding:9px 12px 0;gap:6px;flex-wrap:wrap}
+.residence-levels button{padding:8px 12px;background:#f5f3eb;border:1px solid #c4cebc;min-height:36px}
+.residence-levels button[aria-pressed=true]{background:#1b4438;color:#fff;border-color:#1b4438}
+.residence-viewport{--viewer-height:clamp(350px,48svh,540px);height:var(--viewer-height);position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(ellipse at center,#f3f1e7,#dfdfd5)}
+.residence-viewport--plan{padding:24px 24px 42px}
+.residence-plan-canvas{position:relative;flex-shrink:0;max-width:100%;height:auto;}
+.residence-plan-canvas svg{position:absolute;inset:0;display:block;width:100%;height:100%;overflow:hidden;border-radius:5px;filter:brightness(1.18)}
+.residence-room-pin{position:absolute;transform:translate(-50%,-50%);width:42px;height:42px;display:grid;place-items:center;border:1px solid #fff9;border-radius:50%;background:#f8f6eaf0;color:#174033;box-shadow:2px 3px 10px #213e4440,inset 1px 1px 2px #fff;z-index:2}
+.residence-room-pin span{font-size:11px;font-weight:600}
+.residence-room-pin[aria-pressed=true]{background:#204b3f;color:#fff;outline:5px solid #eff4e969;box-shadow:0 4px 15px #123d3860}
+.residence-plan-hint{position:absolute;bottom:12px;left:10px;right:10px;text-align:center;font-size:10px;color:#486052;margin:0;pointer-events:none}
+.residence-viewport--original{padding:10px;background:#a5a5a5}
+.residence-viewport--original>img{display:block;max-width:100%;max-height:100%;object-fit:contain}
+.residence-viewport--original.is-enlarged{display:block;overflow:auto;overscroll-behavior:contain}
+.residence-viewport--original.is-enlarged>img{width:1920px;max-width:none;max-height:none}
+.residence-sourcebar,.residence-room-bar{display:flex;align-items:center;gap:12px;padding:16px 20px;background:#f2f1e8;border-top:1px solid #fff9;min-height:76px}
+.residence-sourcebar{justify-content:space-between;font-size:11px}
+.residence-sourcebar button{display:flex;align-items:center;gap:7px;min-height:40px}
+.residence-room-number{font:34px/1 Georgia,serif;color:#74866d;min-width:44px}
+.residence-room-bar strong{display:block;font:22px/1.2 Georgia,serif;font-weight:400}
+.residence-room-bar small{display:block;font-size:10px;color:#627463;margin-top:5px}
+.residence-room-arrows{margin-left:auto;display:flex;gap:8px}
+.residence-room-arrows button{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#f4f3ec;border:1px solid #fff;box-shadow:3px 3px 8px #667b572b,-2px -2px 5px #fff}
+.residence-detail{padding:14px 0 0;min-width:0}
+.residence-eyebrow{text-transform:uppercase;font-size:9px;letter-spacing:.16em;color:#697962;margin:0 0 17px}
+.residence-detail h3{white-space:pre-line;font:39px/1.08 var(--serif,Georgia,serif);letter-spacing:-.035em;margin:0 0 24px}
+.residence-facts{display:flex;gap:23px;padding-bottom:21px;border-bottom:1px solid #cdd2c4}
+.residence-facts strong{font:23px/1.2 var(--serif,Georgia,serif);display:block;white-space:nowrap}
+.residence-facts strong small{font:11px/1.2 sans-serif}
+.residence-facts span{font-size:10px;display:block;color:#6f7b6c;margin-top:5px}
+.residence-detail-heading{padding:17px 0 12px}
+.residence-detail-heading>span{font-size:12px;font-weight:500;display:block}
+.residence-detail-heading>small{font-size:9px;color:#788472;display:block;margin-top:6px}
+.residence-rooms{display:flex;flex-direction:column;gap:4px}
+.residence-rooms button{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid transparent;border-radius:9px;min-height:38px;text-align:left;font-size:12px}
+.residence-rooms button>span{color:#7e8b76;font-size:9px;min-width:15px}
+.residence-rooms button>svg{margin-left:auto}
+.residence-rooms button[aria-pressed=true]{background:#e6ebdf;border-color:#ccd6c2;box-shadow:inset 2px 2px 5px #85977024,inset -2px -2px 5px #ffffffe0}
+.residence-room-description{font-size:11px;line-height:1.65;color:#687663;margin:15px 0}
+.residence-primary{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;border-radius:12px;background:linear-gradient(140deg,#2b5647,#183c32);color:#fff;padding:14px 12px;font-size:12px;box-shadow:4px 5px 12px #203c392b,inset 1px 1px 2px #c5e2c657;border:1px solid #456757}
+.residence-primary>svg:last-child{margin-left:auto}
+.residence-contact{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;padding:15px 4px;border-bottom:1px solid #cfd5c7;margin-top:5px}
+.residence-note{font-size:10px;line-height:1.6;color:#6b7966;margin:16px 0 0;max-width:1000px}
+.g400-apartment-model{position:absolute;inset:0;touch-action:none}
+.g400-apartment-model canvas{display:block;width:100%;height:100%;cursor:grab}
+.g400-apartment-model canvas:active{cursor:grabbing}
+.residence-load{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:20px;background:#ebece3;z-index:3;font-size:13px}
+.residence-load h3{font:30px Georgia,serif;margin:0}.residence-load p{margin:0}
+.residence-load button{display:flex;gap:10px;align-items:center;padding:12px;border:1px solid #aec1a4;border-radius:9px}
+.residence-model-tools{display:flex;position:absolute;left:16px;top:14px;gap:6px;flex-wrap:wrap;z-index:2}
+.residence-model-tools button{display:flex;align-items:center;gap:7px;border:1px solid #fffd;border-radius:9px;background:#f7f6ebec;font-size:10px;padding:10px 12px;box-shadow:2px 3px 9px #2a473922;min-height:38px}
+.residence-model-tools button[aria-pressed=true]{background:#204b3ff0;color:#fff;border-color:#62816b}
+.residence-model-hint{position:absolute;bottom:14px;left:14px;right:14px;text-align:center;pointer-events:none;font-size:10px;color:#183e33;text-shadow:0 1px 6px #fff;}
+.residence-light{display:flex;align-items:center;gap:12px;padding:15px 20px;background:#e9ece1;border-top:1px solid #fff9}
+.residence-light label{font-size:11px;white-space:nowrap}.residence-light label small{display:block;font-size:8px;color:#6e7d64;margin-top:3px}
+.residence-light input{flex:1;min-width:40px;accent-color:#234b3b;height:28px;cursor:pointer}
+.residence-light output{font-size:12px;font-variant-numeric:tabular-nums;min-width:37px}
+.g400-residence :is(button,a):focus-visible{outline:2px solid #36795c;outline-offset:3px}
+@media(min-width:1500px){.residence-layout{grid-template-columns:minmax(0,1fr) 310px;gap:36px}.residence-detail h3{font-size:46px}.residence-viewport{height:540px}}
+@media(max-width:1050px){.residence-layout{grid-template-columns:minmax(0,1fr) 240px;gap:20px}.residence-detail h3{font-size:33px}.residence-facts{gap:14px}.residence-viewbar>button{padding:9px}.residence-viewbar>button:last-child span{display:none}}
+@media(max-width:760px){.dialog.g400-residence{width:calc(100% - 16px);max-height:calc(100svh - 16px);border-radius:16px}.g400-residence .dialog-top{padding:13px 17px}.g400-residence .dialog-top h2{font-size:22px}.g400-residence .dialog-content{padding:0 14px 16px}.residence-topline{font-size:10px;padding:10px 0}.residence-topline>span{display:none}.residence-layout{display:flex;flex-direction:column;gap:14px}.residence-visual{width:100%}.residence-viewport{height:380px}.residence-viewport--plan{padding:15px 8px 38px}.residence-detail{width:100%;padding:14px 5px 0}.residence-detail h3{font-size:33px;white-space:normal;margin-bottom:14px}.residence-eyebrow{margin-bottom:10px}.residence-facts{gap:30px;padding-bottom:15px}.residence-rooms{display:grid;grid-template-columns:1fr 1fr;gap:5px}.residence-room-pin{width:36px;height:36px}.residence-room-pin span{font-size:10px}.residence-room-bar{padding:13px 14px;gap:7px}.residence-room-number{font-size:28px;min-width:34px}.residence-room-bar strong{font-size:20px}.residence-viewbar{padding:8px 5px;gap:2px}.residence-viewbar>button{font-size:10px;gap:5px;padding:9px 7px}.residence-light{padding:13px 12px;gap:8px}.residence-light>svg:last-child{display:none}.residence-model-tools{left:8px;top:10px;right:8px;gap:5px}.residence-model-tools button{padding:9px 8px;font-size:9px}.residence-model-hint{font-size:9px}.residence-levels{gap:4px;padding:8px}.residence-levels button{font-size:10px;padding:8px}.residence-sourcebar{padding:10px;font-size:10px}}
+@media(max-width:370px){.residence-viewport{height:320px}.residence-viewbar small{display:none}.residence-rooms{grid-template-columns:1fr}.residence-facts{gap:20px}.residence-model-tools button{gap:4px}.residence-model-tools svg{width:12px}}
+@media(prefers-reduced-motion:no-preference){.residence-room-pin,.residence-rooms button{transition:background .2s,box-shadow .2s}.residence-primary:hover{box-shadow:5px 8px 17px #203c394a}}
+@media(min-width:1500px){.residence-viewport{--viewer-height:540px}}
+@media(max-width:760px){.residence-viewport{--viewer-height:380px}}
+@media(max-width:370px){.residence-viewport{--viewer-height:320px}}

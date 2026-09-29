@@ -10,6 +10,7 @@ import G400Gallery from './G400Gallery';
 import './development.css';
 import './g400.css';
 const G400Model=lazy(()=>import('./G400Model'));
+const G400Residence=lazy(()=>import('./G400Residence'));
 type GallerySelection={id:G400GalleryId;index:number;unit?:string};
 
 export default function G400Page(){
@@ -18,6 +19,7 @@ export default function G400Page(){
   const [lighting,setLighting]=useState<Lighting>('day');
   const [mode,setMode]=useState<'image'|'model'>('image');
   const [gallery,setGallery]=useState<GallerySelection|null>(null);
+  const [residence,setResidence]=useState<{unit:string;start3d?:boolean}|null>(null);
   const [zoom,setZoom]=useState(1),[toolsOpen,setToolsOpen]=useState(true);
   const [ready,setReady]=useState(false),[failed,setFailed]=useState(false),[notice,setNotice]=useState('');
   const pageRef=useRef<HTMLElement>(null),controls=useRef<ModelControls|null>(null);
@@ -52,8 +54,9 @@ export default function G400Page(){
       <div className="development-panel-heading"><h2>Escolha seu andar</h2><button aria-label="Compartilhar empreendimento" onClick={share}><Share2 size={15}/></button></div>
       <div className="development-floors g400-floors" role="group" aria-label="Andares">{[1,2,3,4,5,6,7].map(level=><button key={level} aria-label={`${level}º andar${level===7?' e coberturas':''}`} aria-pressed={floor===level} onClick={()=>selectFloor(level)}><span>{level}<small>º</small></span>{level===7&&<span className="g400-floor-roof">Coberturas</span>}</button>)}</div>
       <div className="development-floor-detail" aria-live="polite"><h3>{floor===7?'7º andar · Coberturas':`${floor}º andar · Apartamentos`}</h3><span>Disponibilidade a confirmar</span></div>
-      <div className="g400-unit-list" aria-label="Unidades no projeto">{selectedUnits.map(({unit,plan,planIndex})=><button key={unit} onClick={()=>openGallery('plans',planIndex,unit)} aria-label={`Ver planta da unidade ${unit}`}><span><strong>{unit} <small>· {plan.title}</small></strong><span>{plan.area} m² <i>·</i> {plan.suites} suítes</span></span><ArrowUpRight size={15}/></button>)}</div>
+      <div className="g400-unit-list" aria-label="Unidades no projeto">{selectedUnits.map(({unit,plan})=><button key={unit} onClick={()=>setResidence({unit})} aria-label={`Explorar unidade ${unit}`}><span><strong>{unit} <small>· {plan.title}</small></strong><span>{plan.area} m² <i>·</i> {plan.suites} suítes{plan.id==='tipo-5'&&<small className="g400-visit-badge">Visita 3D</small>}</span></span><ArrowUpRight size={15}/></button>)}</div>
       <p className="g400-project-note">Numeração e áreas conforme as plantas comerciais. Consulte as condições atuais.</p>
+      <button className="development-primary g400-visit-entry" onClick={()=>{const pilotUnit=floor<=5?`${floor}05`:'305';selectFloor(Number(pilotUnit[0]));setResidence({unit:pilotUnit,start3d:true});}}><span>Visitar um apartamento<small>Tipo 5 · experiência 3D piloto</small></span><Box size={18}/></button>
       <button className="development-primary" onClick={()=>openGallery('interiors')}>Conhecer os interiores <ArrowUpRight size={17}/></button>
       <button className="development-plan-link" onClick={()=>openGallery('plans')}>Todas as plantas <ArrowRight size={13}/></button>
       <button className="development-plan-link" onClick={()=>openGallery('infrastructure')}>Lazer e infraestrutura <ArrowRight size={13}/></button>
@@ -68,5 +71,6 @@ export default function G400Page(){
     <p className="development-footnote">Cenário e marcações de pavimentos conceituais. Galerias: perspectivas e plantas da Yclodema.</p>
     {notice&&<div className="development-notice" role="status">{notice}</div>}
     {gallery&&<G400Gallery key={`${gallery.id}-${gallery.index}-${gallery.unit||''}`} id={gallery.id} initialIndex={gallery.index} unit={gallery.unit} onClose={()=>setGallery(null)}/>}
+    {residence&&<Suspense fallback={<div className="development-notice" role="status">Abrindo o apartamento…</div>}><G400Residence key={residence.unit} unit={residence.unit} start3d={residence.start3d} initialHour={lighting==='night'?20:lighting==='sunset'?18:14} onClose={()=>setResidence(null)}/></Suspense>}
   </main>;
 }
