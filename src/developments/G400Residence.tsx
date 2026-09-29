@@ -20,8 +20,9 @@ export default function G400Residence({unit,start3d=false,initialHour=14,onClose
   const contact=whatsappUrl(`Olá! Estou explorando a unidade ${unit} do G400, ${plan.title}, ${plan.area} m² e ${plan.suites} suítes. Gostaria de confirmar a disponibilidade e conhecer os detalhes.`);
   function changeView(next:View){setView(next);setEnlarged(false);if(next==='model'){setReady(false);setFailed(false);}}
   function changeLevel(index:number){setLevelIndex(index);setRoomId(layout.levels[index].rooms[0].id);setEnlarged(false);}
-  function moveRoom(direction:number){setRoomId(level.rooms[(roomIndex+direction+level.rooms.length)%level.rooms.length].id);}
-  return <Dialog title={`G400 · Unidade ${unit}`} onClose={onClose} wide className="g400-residence">
+  function selectRoom(id:string){setRoomId(id);if(view==='model')setInside(true);if(view==='original')changeView('plan');}
+  function moveRoom(direction:number){selectRoom(level.rooms[(roomIndex+direction+level.rooms.length)%level.rooms.length].id);}
+  return <Dialog title={`G400 · Unidade ${unit}`} onClose={onClose} wide className={`g400-residence${view==='model'?' g400-residence--visit':''}`}>
     <div className="residence-topline"><button onClick={onClose}><ArrowLeft size={14}/> Voltar ao {unit[0]}º andar</button><span>Yclodema <i/> Geraldo Andreola</span></div>
     <div className="residence-layout">
       <section className="residence-visual" aria-label={`Exploração da unidade ${unit}`}>
@@ -42,12 +43,12 @@ export default function G400Residence({unit,start3d=false,initialHour=14,onClose
           </>}
           {view==='original'&&<><img src={image} alt={`${plan.title} · ${plan.area} m² privativos · ${plan.suites} suítes`} onError={()=>setImageFailed(true)}/>{imageFailed&&<p className="residence-load">Não foi possível carregar a prancha.</p>}</>}
           {view==='model'&&<>
-            {!failed&&<Suspense fallback={<div className="residence-load" role="status">Preparando seu próximo espaço…</div>}><ApartmentModel room={room.id} inside={inside} hour={hour} reset={reset} onSelect={setRoomId} onReady={()=>setReady(true)} onFail={()=>setFailed(true)}/></Suspense>}
+            {!failed&&<Suspense fallback={<div className="residence-load" role="status">Preparando seu próximo espaço…</div>}><ApartmentModel room={room.id} inside={inside} hour={hour} reset={reset} onEnter={()=>setInside(true)} onSelect={setRoomId} onReady={()=>setReady(true)} onFail={()=>setFailed(true)}/></Suspense>}
             {!ready&&!failed&&<div className="residence-load" role="status">Preparando a visita 3D…</div>}
             {failed&&<div className="residence-load"><h3>Continue pela planta.</h3><p>A visita 3D não está disponível neste navegador.</p><button onClick={()=>changeView('plan')}>Explorar a planta <ArrowRight size={16}/></button></div>}
             {ready&&!failed&&<>
               <div className="residence-model-tools" role="group" aria-label="Controles da visita"><button aria-pressed={!inside} onClick={()=>setInside(false)}><Layers size={15}/> Visão aberta</button><button aria-pressed={inside} onClick={()=>setInside(true)}><DoorOpen size={15}/> Dentro do ambiente</button><button aria-label="Restaurar câmera do apartamento" onClick={()=>setReset(v=>v+1)}><RotateCcw size={15}/></button></div>
-              <span className="residence-model-hint">{inside?'Arraste para olhar ao redor · use os ambientes para se deslocar':'Arraste para girar · role para aproximar'}</span>
+              <span className="residence-model-hint">{inside?'Toque no piso ou nos móveis para caminhar · arraste para olhar':'Arraste para girar · toque em um ambiente para entrar'}</span>
             </>}
           </>}
         </div>
@@ -59,12 +60,13 @@ export default function G400Residence({unit,start3d=false,initialHour=14,onClose
         <h3>{plan.title==='Tipo 5'?'Seu espaço.\nSeu ritmo.':plan.title.startsWith('Tipo')?'Um lugar para\nchamar de seu.':'Mais espaço\npara viver.'}</h3>
         <div className="residence-facts"><div><strong>{plan.area}<small> m²</small></strong><span>área privativa</span></div><div><strong>{plan.suites}</strong><span>suítes</span></div><div><strong>{layout.levels.length}</strong><span>{layout.levels.length===1?'nível':'níveis'}</span></div></div>
         <div className="residence-detail-heading"><span>{plan.title} · Unidade {unit}</span><small>Disponibilidade a confirmar</small></div>
-        <nav className="residence-rooms" aria-label="Ambientes da unidade">{level.rooms.map((r,i)=><button key={r.id} aria-pressed={room.id===r.id} onClick={()=>{setRoomId(r.id);if(view==='original')changeView('plan');}}><span>{String(i+1).padStart(2,'0')}</span>{r.name}<ArrowUpRight size={13}/></button>)}</nav>
+        <nav className="residence-rooms" aria-label="Ambientes da unidade">{level.rooms.map((r,i)=><button key={r.id} aria-pressed={room.id===r.id} onClick={()=>selectRoom(r.id)}><span>{String(i+1).padStart(2,'0')}</span>{r.name}<ArrowUpRight size={13}/></button>)}</nav>
+        {view==='model'&&inside&&<p className="residence-keyboard-help">No computador, caminhe com W A S D ou com as setas. No celular, use os controles sobre a imagem.</p>}
         <p className="residence-room-description">{room.description}</p>
         {pilot&&view!=='model'&&<button className="residence-primary" onClick={()=>changeView('model')}><Box size={17}/> Entrar na visita 3D <ArrowRight size={17}/></button>}
         <a className="residence-contact" href={contact} target="_blank" rel="noreferrer">Conversar sobre esta unidade <ArrowUpRight size={15}/></a>
       </aside>
     </div>
-    <p className="residence-note">{view==='model'?'Reconstrução conceitual a partir da planta. Medidas, alturas e mobiliário estimados; entorno neutro, sem representar a vista real da unidade. Luz ilustrativa.':'Plantas comerciais ilustrativas da Yclodema. Consulte o projeto e o memorial para medidas, acabamentos e equipamentos.'}</p>
+    <p className="residence-note">{view==='model'?'Visita conceitual do Tipo 5, baseada na planta e na identidade dos interiores G400. Medidas, alturas, mobiliário e luz ilustrativos. O entorno não representa a vista real da unidade.':'Plantas comerciais ilustrativas da Yclodema. Consulte o projeto e o memorial para medidas, acabamentos e equipamentos.'}</p>
   </Dialog>;
 }

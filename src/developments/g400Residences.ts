@@ -34,11 +34,11 @@ export const g400Residences:Record<string,ResidenceLayout>={
 
 // Pilot camera stations follow the Tipo 5 plan. One scene serves only its listed units.
 export const tipo5Stations:Record<string,{eye:[number,number];look:[number,number]} >={
-  living:{eye:[1100,555],look:[920,370]},
-  jantar:{eye:[1130,760],look:[1000,620]},
-  cozinha:{eye:[1000,715],look:[840,680]},
-  'suite-1':{eye:[1310,540],look:[1210,395]},
-  'suite-2':{eye:[1570,570],look:[1630,390]},
-  lavabo:{eye:[1340,760],look:[1270,730]},
-  servico:{eye:[800,700],look:[765,640]},
+  living:{eye:[1060,520],look:[940,355]},
+  jantar:{eye:[1180,650],look:[1060,700]},
+  cozinha:{eye:[940,730],look:[840,780]},
+  'suite-1':{eye:[1310,510],look:[1200,410]},
+  'suite-2':{eye:[1570,555],look:[1630,410]},
+  lavabo:{eye:[1280,735],look:[1320,790]},
+  servico:{eye:[765,705],look:[765,640]},
 };

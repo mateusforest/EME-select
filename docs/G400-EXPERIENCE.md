@@ -54,7 +54,9 @@ The 3D marker now has vertical green faces over the full 3.2-unit storey height,
 
 Additional checks exercise lateral-to-front-to-lateral order in both directions, cancellation, retained floor and lighting, pointer selection at both ends of all three views, and reduced-motion mobile navigation. Visual evidence: ignored `tmp/g400-views/`.
 
-## Apartment pilot — 2026-09-29
+## Initial apartment pilot — 2026-09-29 (superseded by the refinement below)
+
+This section records the initial release. The current behavior is described under Continuous visit refinement.
 
 Selecting a unit now opens a dedicated residence dialog with the correct commercial area, suite count, unit-specific inquiry, room selection and unmodified original sheet. All eight documented residential types and all 31 explicitly listed unit identifiers are covered. Duplex 703 exposes two internal levels; triplex 704/705 expose three. These are internal levels, not new building-floor numbers. The main galleries remain available independently.
 
@@ -67,3 +69,17 @@ This is a browser-based, conceptual pilot, not a measured architectural digital 
 The shortcut opens the selected floor's Tipo 5 if one exists, or documented unit 305 otherwise, updating the floor selection consistently. Closing the dialog restores focus and returns to the matching floor. Context loss offers the plan immediately; reopening 3D creates a fresh renderer. Scene materials, geometry, textures, event handlers, controls and resize observation are cleaned up on unmount.
 
 Validation: `npm run build`; `node node_modules/@playwright/test/cli.js test tests/g400-residence.spec.ts tests/g400.spec.ts`. New coverage includes all types and levels, pointer/keyboard room selection, pixel-to-hotspot alignment at 1440/390/320px, unit-specific contact context, retained floor/focus, 3D camera/light state, context-loss recovery and mobile dialog width. Screenshots inspected in ignored `tmp/g400-residence/` and `test-results/`.
+
+## Continuous visit refinement — 2026-09-29
+
+The original rendered facade is now the only exterior experience. Dragging moves through the three supplied perspectives; scrolling or the zoom buttons brings the building closer. Floor selection isolates and approaches the documented slab contour, with original plan previews beside the unit list. This is navigation among registered images, not a reconstructed photographic 360-degree scene. The older exterior massing model is no longer exposed or loaded.
+
+Selecting a Tipo 5 unit opens its furnished cutaway directly. Entering the apartment uses a continuous camera transition. Clicking the floor, furniture or the minimap chooses a reachable destination; a route follows the shared plan, walls, doors and furniture footprints. WASD, arrow keys and holdable mobile controls allow manual movement and looking. A position/heading minimap and stop action make the movement legible. New destinations replace previous walks; blur, lost pointer capture and hidden pages release controls.
+
+`tipo5Navigation.ts` defines the common source-coordinate geometry and collision rules used by the model. A grid search finds a route; swept collision checks constrain both smoothed routes and manual movement. Suite access follows the corridor openings on the original sheet. All 49 ordered room-to-room routes are checked for reachability and clearance.
+
+The interior palette follows the supplied G400 renderings: oak, pale stone, cream textiles, green accents, bronze details, curtains and warm indirect lighting. Those reference images show penthouse interiors; they establish a visual language, not photographic evidence of the Tipo 5 furniture or finishes. Local CC0 material maps and studio reflections are documented in `public/assets/developments/g400/materials/SOURCES.md`. HDR lighting is not used as a window view. Desktop ambient occlusion adds contact depth; small screens use the lighter renderer. Original plans, availability qualifications and conceptual-model labeling remain intact.
+
+The visitor can walk continuously within Tipo 5 (105/205/305/405/505). Other layouts retain their correct interactive source plans. Exact measured geometry, actual window views, photorealistic interior reconstruction and a continuous exterior-to-interior 3D camera path remain outside this implementation. Async texture/environment loads, render targets, shadows, materials, handlers and movement state are cleaned up on unmount; WebGL context loss returns access to the source plan.
+
+Validation: `npm run build`; `node node_modules/@playwright/test/cli.js test tests/g400.spec.ts tests/g400-residence.spec.ts tests/g400-walking.spec.ts`. Coverage includes facade drag/zoom/floor focus, retained galleries and discovery links, all unit sheets/levels, path reachability, changing/stopping walks, actual canvas clicks, look controls, collision-safe keyboard movement, mobile held controls, reduced motion, context loss and overflow. Visual review captures are in ignored `tmp/g400-walk/`.

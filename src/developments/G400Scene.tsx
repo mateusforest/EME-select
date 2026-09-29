@@ -2,12 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, Plus } from 'lucide-react';
 import type { Lighting } from './moradas';
 import { G400_ASSETS, type G400GalleryId } from './g400';
-import { g400Views, type G400View } from './g400Projection';
+import { g400FloorCenter, g400Views, type G400View } from './g400Projection';
 import G400Overlay from './G400Overlay';
 const order:G400View[]=['left','front','right'];
 const imageFile=(view:G400View)=>view==='left'?'hero.webp':`scene-${view}.svg`;
-interface Props {view:G400View;floor:number|null;lighting:Lighting;zoom:number;onSelect:(floor:number)=>void;onGallery:(id:G400GalleryId,index?:number)=>void;onViewChange:(view:G400View)=>void}
-export default function G400Scene({view,floor,lighting,zoom,onSelect,onGallery,onViewChange}:Props){
+interface Props {view:G400View;floor:number|null;lighting:Lighting;zoom:number;onSelect:(floor:number)=>void;onGallery:(id:G400GalleryId,index?:number)=>void;onViewChange:(view:G400View)=>void;onRequestView:(view:G400View)=>void;onZoom:(direction:number)=>void}
+export default function G400Scene({view,floor,lighting,zoom,onSelect,onGallery,onViewChange,onRequestView,onZoom}:Props){
+ const host=useRef<HTMLDivElement>(null),gesture=useRef<{x:number;y:number;dragged:boolean}|null>(null),suppressClick=useRef(false);
+ const zoomCallback=useRef(onZoom);zoomCallback.current=onZoom;
+ useEffect(()=>{const node=host.current!;const wheel=(e:WheelEvent)=>{if(e.target instanceof Element&&e.target.closest('button'))return;e.preventDefault();zoomCallback.current(e.deltaY<0?1:-1);};node.addEventListener('wheel',wheel,{passive:false});return()=>node.removeEventListener('wheel',wheel);},[]);
  const [current,setCurrent]=useState<G400View>('left'),[moving,setMoving]=useState(false),[failed,setFailed]=useState(false),[attempt,setAttempt]=useState(0);
  const currentRef=useRef<G400View>('left'),layers=useRef<Partial<Record<G400View,HTMLDivElement>>>({});
  const callback=useRef(onViewChange);callback.current=onViewChange;
@@ -44,10 +47,15 @@ export default function G400Scene({view,floor,lighting,zoom,onSelect,onGallery,o
    }
    void change();return()=>{cancelled=true;if(timer)clearTimeout(timer);animations.forEach(animation=>animation.cancel());};
  },[view,attempt]);
- return <div className="g400-scene" data-testid="g400-scene" data-view={current} data-moving={moving} aria-busy={moving}>
+ return <div ref={host} className="g400-scene" data-testid="g400-scene" data-view={current} data-moving={moving} data-floor-focused={floor||''} data-zoom={zoom.toFixed(2)} aria-busy={moving}
+ onPointerDown={e=>{if(e.button!==0||e.target instanceof Element&&e.target.closest('button'))return;gesture.current={x:e.clientX,y:e.clientY,dragged:false};suppressClick.current=false;}}
+ onPointerMove={e=>{const g=gesture.current;if(!g)return;if(Math.hypot(e.clientX-g.x,e.clientY-g.y)>12){g.dragged=true;suppressClick.current=true;}}}
+ onPointerUp={e=>{const g=gesture.current;gesture.current=null;if(!g||!g.dragged)return;const dx=e.clientX-g.x,dy=e.clientY-g.y;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.2){const next=order[Math.max(0,Math.min(2,order.indexOf(current)+(dx<0?1:-1)))];onRequestView(next);}}}
+ onPointerCancel={()=>{gesture.current=null;suppressClick.current=true;}}
+ onClickCapture={e=>{if(suppressClick.current){e.preventDefault();e.stopPropagation();suppressClick.current=false;}}}>
  {order.map(id=><div key={id} ref={node=>{if(node)layers.current[id]=node;}} className="g400-view-layer" data-active={id===current} data-view={id} aria-hidden={id!==current} inert={id!==current||moving}>
- <div className="development-image-world" style={{transform:`scale(${zoom})`}}>
- <img src={G400_ASSETS+imageFile(id)} alt={`G400 · ${g400Views[id].label} · perspectiva do empreendimento`} fetchPriority={id==='left'?'high':'low'}/>
+ <div className="development-image-world" style={{transform:`scale(${Math.min(2.1,zoom*(floor?1.12:1))})`,transformOrigin:floor?`${g400FloorCenter(id,floor).x}% ${g400FloorCenter(id,floor).y}%`:undefined}}>
+ <img draggable={false} src={G400_ASSETS+imageFile(id)} alt={`G400 · ${g400Views[id].label} · perspectiva do empreendimento`} fetchPriority={id==='left'?'high':'low'}/>
  <G400Overlay key={`${id}-${moving}`} view={id} floor={id===current?floor:null} lighting={lighting} onSelect={onSelect} interactive={id===current&&!moving}/>
  <div className="development-hotspots">
  <button className="development-hotspot g400-hotspot-roof" onClick={()=>onGallery('leisure',4)}><span>Rooftop <ArrowUpRight size={12}/></span><i><Plus size={16}/></i></button>

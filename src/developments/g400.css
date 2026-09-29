@@ -61,6 +61,19 @@
 .g400-scene{perspective:1800px}
 .g400-view-layer{opacity:0;pointer-events:none;transform-origin:55% 50%;will-change:transform,opacity}
 .g400-view-layer[data-active=true]{opacity:1;pointer-events:auto}
+.g400-scene{touch-action:pan-y;cursor:grab;user-select:none}
+.g400-scene:active{cursor:grabbing}
+.g400-floor-isolation{fill:#142d31;opacity:.32;pointer-events:none}
+.g400-floor-texture{pointer-events:none;filter:brightness(1.08)}
+.development-stage--night .g400-floor-texture{filter:brightness(.65) saturate(.75)}
+.development-stage--sunset .g400-floor-texture{filter:sepia(.2) brightness(.9)}
+.g400-unit-preview{width:64px;height:46px;flex-shrink:0;overflow:hidden;border-radius:6px;background:#aaa;filter:brightness(1.12)}
+.g400-unit-list>button>span{flex:1;min-width:0}
+.g400-page .development-panel{border-radius:18px;background:#f7f5edee;backdrop-filter:blur(18px)}
+.g400-floor-selected .development-hotspots{opacity:0;pointer-events:none}
+.g400-floor-selected .development-hotspot{visibility:hidden}
+@media(prefers-reduced-motion:no-preference){.g400-floor-reveal{animation:g400-reveal .8s ease both}.g400-unit-list{animation:g400-units .5s ease both}@keyframes g400-reveal{from{opacity:0}to{opacity:1}}@keyframes g400-units{from{opacity:.2;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}}
+@media(prefers-reduced-motion:reduce){.g400-page .development-image-world{transition:none}}
 .g400-scene[data-moving=true] .development-hotspots{opacity:0;pointer-events:none}
 .g400-window-lights{mix-blend-mode:normal}
 .g400-scene-overlay .development-floor-band{pointer-events:none;fill:#9fb88b38;stroke:#e8f0d8;stroke-width:1.4}

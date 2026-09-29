@@ -14,6 +14,7 @@ test('each documented unit type exposes its own levels and rooms; returning pres
     await page.getByRole('button',{name:unit[0]==='7'?'7º andar e coberturas':`${unit[0]}º andar`,exact:true}).click();
     const entry=page.getByRole('button',{name:`Explorar unidade ${unit}`,exact:true});await entry.click();
     const dialog=page.getByRole('dialog');
+    await dialog.getByRole('button',{name:'Planta interativa',exact:true}).click();
     await expect(dialog.getByRole('heading',{name:`G400 · Unidade ${unit}`})).toBeVisible();
     for(const level of g400Residences[plan.id].levels){
       if(g400Residences[plan.id].levels.length>1)await dialog.getByRole('group',{name:'Níveis da unidade'}).getByRole('button',{name:level.name,exact:true}).click();
@@ -36,6 +37,7 @@ test('plan hotspots track source pixels at desktop and mobile widths, including 
       await page.getByRole('button',{name:unit[0]==='7'?'7º andar e coberturas':'3º andar',exact:true}).click();
       await page.getByRole('button',{name:`Explorar unidade ${unit}`,exact:true}).click();
       const dialog=page.getByRole('dialog');
+      await dialog.getByRole('button',{name:'Planta interativa',exact:true}).click();
       const plan=g400Plans.find(p=>p.units.includes(unit))!;
       for(const level of g400Residences[plan.id].levels){
         if(unit==='704')await dialog.getByRole('button',{name:level.name,exact:true}).click();
@@ -55,7 +57,7 @@ test('plan hotspots track source pixels at desktop and mobile widths, including 
 test('pilot opens from its unit, responds to room, camera and light controls, and recovers from context loss',async({page})=>{
   test.setTimeout(90000);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(route);await page.getByRole('button',{name:'Explorar unidade 305',exact:true}).click();
-  const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Entrar na visita 3D',exact:true}).click();
+  const dialog=page.getByRole('dialog');
   const model=page.getByTestId('g400-apartment-model');await expect(model).toHaveAttribute('data-view','overview',{timeout:45000});
   const canvas=model.locator('canvas'),camera=await model.getAttribute('data-camera');
   await canvas.focus();await page.keyboard.press('ArrowLeft');await expect(model).not.toHaveAttribute('data-camera',camera!);

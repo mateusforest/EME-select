@@ -54,6 +54,11 @@ const polygonPath=(points:readonly Point[])=>'M'+points.map(p=>p.join(',')).join
 export function g400Regions(view:G400View){return Array.from({length:7},(_,i)=>({
  floor:i+1,path:volumes[view].map(edges=>polygonPath([...edges[i+1],...[...edges[i]].reverse()])).join(' '),
 }));}
+export function g400FloorCenter(view:G400View,floor:number){
+ const p=g400Views[view],points=volumes[view].flatMap(edges=>[...edges[floor-1],...edges[floor]]);
+ const xs=points.map(v=>p.x+v[0]*p.width/p.sourceWidth),ys=points.map(v=>p.y+v[1]*p.height/p.sourceHeight);
+ return {x:(Math.min(...xs)+Math.max(...xs))/2/1672*100,y:(Math.min(...ys)+Math.max(...ys))/2/941*100};
+}
 // Only glass is emissive. Inset panes preserve the actual frames and vegetation.
 const column=(x:number,w:number,rows:readonly number[],h:number,slope=0):Quad[]=>rows.map(y=>[[x,y],[x+w,y+w*slope],[x+w,y+w*slope+h],[x,y+h]]);
 const glazing:Record<G400View,Quad[]>={
