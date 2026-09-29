@@ -62,7 +62,7 @@ test('pilot opens from its unit, responds to room, camera and light controls, an
   const canvas=model.locator('canvas'),camera=await model.getAttribute('data-camera');
   await canvas.focus();await page.keyboard.press('ArrowLeft');await expect(model).not.toHaveAttribute('data-camera',camera!);
   await dialog.getByRole('button',{name:'Dentro do ambiente',exact:true}).click();await expect(model).toHaveAttribute('data-view','inside');
-  await dialog.getByRole('navigation',{name:'Ambientes da unidade'}).getByRole('button',{name:'Suíte 2'}).click();await expect(model).toHaveAttribute('data-room','suite-2');
+  await dialog.getByRole('navigation',{name:'Ambientes da unidade'}).getByRole('button',{name:/^05 Suíte 2$/}).click();await expect(model).toHaveAttribute('data-room','suite-2');
   await expect(dialog.locator('.residence-room-bar strong')).toHaveText('Suíte 2');
   await dialog.getByLabel('Luz do ambiente').fill('20');await expect(model).toHaveAttribute('data-hour','20');
   await dialog.screenshot({path:'test-results/g400-residence-night.png'});

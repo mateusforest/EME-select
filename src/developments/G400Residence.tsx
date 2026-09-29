@@ -67,6 +67,6 @@ export default function G400Residence({unit,start3d=false,initialHour=14,onClose
         <a className="residence-contact" href={contact} target="_blank" rel="noreferrer">Conversar sobre esta unidade <ArrowUpRight size={15}/></a>
       </aside>
     </div>
-    <p className="residence-note">{view==='model'?'Visita conceitual do Tipo 5, baseada na planta e na identidade dos interiores G400. Medidas, alturas, mobiliário e luz ilustrativos. Entorno inspirado na vizinhança, com altura e orientação aproximadas do 3º andar; não é uma reprodução da vista da unidade.':'Plantas comerciais ilustrativas da Yclodema. Consulte o projeto e o memorial para medidas, acabamentos e equipamentos.'}</p>
+    <p className="residence-note">{view==='model'?'Visita conceitual do Tipo 5, baseada na planta e na identidade dos interiores G400. Medidas, alturas, mobiliário e luz ilustrativos. Janelas foscas e inserção ilustrativa no terceiro andar.':'Plantas comerciais ilustrativas da Yclodema. Consulte o projeto e o memorial para medidas, acabamentos e equipamentos.'}</p>
   </Dialog>;
 }

@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {canWalk,clearWalk,nearestWalk,walkRoute,type PlanPoint} from '../src/developments/tipo5Navigation';
+import {TIPO5_SCALE,canWalk,clearWalk,nearestWalk,walkRoute,type PlanPoint} from '../src/developments/tipo5Navigation';
 import {tipo5Stations} from '../src/developments/g400Residences';
 const route='/#/empreendimentos/g400';
 test('every room has a continuous route through free space and suite doors',()=>{
@@ -23,13 +23,14 @@ test('walking follows a continuous route, can be interrupted, and floor/furnitur
   await expect.poll(async()=>Number((await model.getAttribute('data-camera'))!.split(',')[1])).toBe(1.6);
   const before=await model.getAttribute('data-camera');await nav.getByRole('button',{name:'Cozinha'}).click();
   await expect(model).toHaveAttribute('data-walking','true');await expect(model).not.toHaveAttribute('data-camera',before!);
-  const samples:PlanPoint[]=[];for(let i=0;i<8;i++){samples.push((await model.getAttribute('data-position'))!.split(',').map(Number) as PlanPoint);await page.waitForTimeout(100);}
-  expect(samples.every(canWalk)).toBe(true);expect(new Set(samples.map(p=>p.join(','))).size).toBeGreaterThan(4);
-  for(let i=1;i<samples.length;i++)expect(Math.hypot(samples[i][0]-samples[i-1][0],samples[i][1]-samples[i-1][1])*.014).toBeLessThan(.65);
+  // Sample in the browser so slow automation round trips cannot look like a camera jump.
+  const samples:PlanPoint[]=await model.evaluate(element=>new Promise<[number,number][]>(resolve=>{const samples:[number,number][]=[],start=performance.now();function sample(){samples.push(element.getAttribute('data-position')!.split(',').map(Number) as [number,number]);if(performance.now()-start<1000)requestAnimationFrame(sample);else resolve(samples);}requestAnimationFrame(sample);}));
+  expect(samples.every(canWalk)).toBe(true);expect(new Set(samples.map(p=>p.join(','))).size).toBeGreaterThan(2);
+  for(let i=1;i<samples.length;i++)expect(Math.hypot(samples[i][0]-samples[i-1][0],samples[i][1]-samples[i-1][1])*TIPO5_SCALE).toBeLessThan(.1);
   await dialog.getByRole('button',{name:'Parar caminhada'}).click();await expect(model).toHaveAttribute('data-walking','false');
   const stopped=await model.getAttribute('data-camera');await page.waitForTimeout(200);await expect(model).toHaveAttribute('data-camera',stopped!);
   // A new destination during a walk replaces the old route without a teleport.
-  await nav.getByRole('button',{name:'Suíte 2'}).click();await expect(model).toHaveAttribute('data-walking','true');
+  await nav.getByRole('button',{name:/^05 Suíte 2$/}).click();await expect(model).toHaveAttribute('data-walking','true');
   await nav.getByRole('button',{name:'Living',exact:false}).click();await expect(model).toHaveAttribute('data-walking','false',{timeout:20000});
   await dialog.getByRole('button',{name:'Restaurar câmera do apartamento'}).click();await page.waitForTimeout(1200);
   const canvas=model.locator('canvas'),b=(await canvas.boundingBox())!;
@@ -62,7 +63,7 @@ test('touch controls move only while held, and reduced motion skips camera trave
   test.setTimeout(60000);await page.emulateMedia({reducedMotion:'reduce'});await page.setViewportSize({width:390,height:844});await page.goto(route);
   await page.getByRole('button',{name:'Visitar um apartamento'}).click();const model=page.getByTestId('g400-apartment-model');
   await page.getByRole('button',{name:'Dentro do ambiente',exact:true}).click();await expect(model).toHaveAttribute('data-view','inside');
-  await page.getByRole('navigation',{name:'Ambientes da unidade'}).getByRole('button',{name:'Suíte 2'}).click();await expect(model).toHaveAttribute('data-walking','false');
+  await page.getByRole('navigation',{name:'Ambientes da unidade'}).getByRole('button',{name:/^05 Suíte 2$/}).click();await expect(model).toHaveAttribute('data-walking','false');
   const before=await model.getAttribute('data-position'),button=page.getByRole('button',{name:'Caminhar para a frente'});await button.scrollIntoViewIfNeeded();const b=(await button.boundingBox())!;
   await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();await page.waitForTimeout(500);await page.mouse.up();
   await expect(model).not.toHaveAttribute('data-position',before!);const after=await model.getAttribute('data-position');await page.waitForTimeout(250);await expect(model).toHaveAttribute('data-position',after!);

@@ -1,5 +1,7 @@
 # G400 · piloto 305 / Tipo 5
 
+**Registro histórico:** o panorama foi retirado da experiência imersiva na revisão seguinte, a pedido do cliente. O piloto agora usa janelas foscas e prioriza a distribuição da planta. Ver `g400-tipo5-plan-revision.md`.
+
 ## Vista ilustrativa — 29/09/2026
 
 O panorama é uma ilustração original gerada por IA, inspirada nos elementos urbanos visíveis nas referências fornecidas pelo cliente: avenida com canteiro, palmeiras, araucárias, comércio baixo e edifício de pedra com arcos. Não representa levantamento, orientação solar ou vista garantida da unidade. Altura e orientação são aproximadas. As capturas do Google não são distribuídas como textura.

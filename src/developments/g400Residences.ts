@@ -15,7 +15,7 @@ export const g400Residences:Record<string,ResidenceLayout>={
   'tipo-2':{height:960,levels:[{name:'Apartamento',crop:[650,70,1110,830],rooms:[living(860,690),dining(1060,485),kitchen(1000,305),suite(1,1140,690),suite(2,1410,715),suite(3,1580,660),service(980,165)]}]},
   'tipo-3':{height:960,levels:[{name:'Apartamento',crop:[650,70,1120,830],rooms:[living(1590,675),dining(1415,490),kitchen(1450,290),suite(1,850,650),suite(2,1010,715),suite(3,1290,715),service(1430,155)]}]},
   'tipo-4':{height:1067,levels:[{name:'Apartamento',crop:[835,110,935,860],rooms:[living(1490,650),dining(1110,550),kitchen(1150,850),suite(1,1330,280),suite(2,1590,280),bath(910,575)]}]},
-  'tipo-5':{height:1067,levels:[{name:'Apartamento',crop:[680,240,1060,590],rooms:[living(985,450),dining(1060,705),kitchen(870,705),suite(1,1250,440),suite(2,1590,440),bath(1310,750),service(765,650)]}]},
+  'tipo-5':{height:1067,levels:[{name:'Apartamento',crop:[680,240,1060,590],rooms:[living(985,450),dining(1060,705),kitchen(870,705),suite(1,1250,440),suite(2,1590,440),bath(1260,745),service(765,650),room('banho-1','Banho da suíte 1',1385,440,'Banheiro privativo com acesso pela suíte 1.'),room('banho-2','Banho da suíte 2',1475,440,'Banheiro privativo com acesso pela suíte 2.')]}]},
   duplex:{height:2133,levels:[
     {name:'1º pavimento',crop:[500,1120,1240,940],rooms:[living(1530,1770),dining(1380,1575),kitchen(1400,1375),suite(1,830,1750),suite(2,1010,1840),suite(3,1300,1840),service(1410,1240)]},
     {name:'Cobertura',crop:[770,115,970,900],rooms:[roof(1110,710),room('hospedes','Quarto de hóspedes',1400,250,'Quarto de hóspedes no nível da cobertura.'),kitchen(1310,800)]},
@@ -33,12 +33,14 @@ export const g400Residences:Record<string,ResidenceLayout>={
 };
 
 // Pilot camera stations follow the Tipo 5 plan. One scene serves only its listed units.
-export const tipo5Stations:Record<string,{eye:[number,number];look:[number,number]} >={
+export const tipo5Stations:Record<string,{eye:[number,number];look:[number,number];pitch?:number} >={
   living:{eye:[1060,520],look:[940,355]},
   jantar:{eye:[1180,650],look:[1060,700]},
-  cozinha:{eye:[940,730],look:[840,780]},
+  cozinha:{eye:[853,702],look:[908,783],pitch:-.25},
   'suite-1':{eye:[1310,510],look:[1200,410]},
   'suite-2':{eye:[1570,555],look:[1630,410]},
-  lavabo:{eye:[1280,735],look:[1320,790]},
-  servico:{eye:[765,705],look:[765,640]},
+  lavabo:{eye:[1233,723],look:[1270,783],pitch:-.43},
+  servico:{eye:[765,703],look:[750,640],pitch:-.34},
+  'banho-1':{eye:[1375,468],look:[1410,387],pitch:-.25},
+  'banho-2':{eye:[1466,470],look:[1500,387],pitch:-.25},
 };

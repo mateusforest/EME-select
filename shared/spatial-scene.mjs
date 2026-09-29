@@ -3,7 +3,7 @@ export const sceneAssets = [
  ['living','Living integrado','carousel-apartament-01.webp'],['suite','Suíte','carousel-apartament-02.webp'],['duplex','Living com pé-direito duplo','carousel-apartament-03.webp'],['gourmet','Jantar e cozinha','carousel-apartament-04.webp'],
  ['playground','Playground','carousel-social-structure-01.webp'],['piscina','Piscina','carousel-social-structure-02.webp'],['fogo','Praça do fogo','carousel-social-structure-03.webp'],['academia','Academia','carousel-social-structure-04.webp'],['festas','Salão de festas','carousel-social-structure-05.webp']
 ].map(([id,label,file])=>({id,label,file}));
-export const sceneRooms=[['living','Living'],['jantar','Jantar'],['cozinha','Cozinha'],['suite-1','Suíte 1'],['suite-2','Suíte 2'],['lavabo','Lavabo'],['servico','Serviço']].map(([id,label])=>({id,label}));
+export const sceneRooms=[['living','Living'],['jantar','Jantar'],['cozinha','Cozinha'],['suite-1','Suíte 1'],['suite-2','Suíte 2'],['lavabo','Lavabo'],['servico','Serviço'],['banho-1','Banho da suíte 1'],['banho-2','Banho da suíte 2']].map(([id,label])=>({id,label}));
 export const sceneFinishes=[{id:'original',label:'G400 · original'},{id:'linen',label:'Linho e madeira'},{id:'olive',label:'Verde e pedra'}];
 export function defaultScene(){return {version:1,mode:'presentation',assets:['fachada-1','living','suite','piscina'],finish:'original',hour:14,room:'living'};}
 export function validateScene(input){

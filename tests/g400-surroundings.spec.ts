@@ -11,13 +11,13 @@ test('the refined third-floor pilot is offered only for unit 305',async({page})=
  await expect(page.getByRole('dialog').getByRole('button',{name:/Visita 3D/})).toHaveCount(0);
 });
 
-test('pilot has a third-floor exterior through its windows and preserves walking and cutaway modes',async({page},info)=>{
+test('pilot has frosted windows and preserves walking and cutaway modes',async({page},info)=>{
  test.setTimeout(120000);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'&&/THREE|WebGL|shader/i.test(m.text()))errors.push(m.text());});
  await page.goto('/apresentar/g400');await page.getByRole('button',{name:'Visitar Tipo 5',exact:true}).click();
  await page.getByRole('button',{name:'Caminhar',exact:true}).click();
  const model=page.getByTestId('g400-apartment-model'),canvas=model.locator('canvas');
- await expect(model).toHaveAttribute('data-exterior','illustrative-third-floor');
- await expect(model).toHaveAttribute('data-panorama','ready',{timeout:30000});
+ await expect(model).toHaveAttribute('data-exterior','screened');
+ await expect(model).toHaveAttribute('data-panorama','disabled',{timeout:30000});
  await expect.poll(async()=>Number((await model.getAttribute('data-camera'))!.split(',')[1])).toBe(1.6);
  await page.waitForTimeout(500);
  async function face(yaw:number,pitch=-.13){
@@ -34,18 +34,18 @@ test('pilot has a third-floor exterior through its windows and preserves walking
  await expect(model).toHaveAttribute('data-walking','true');await expect(model).toHaveAttribute('data-walking','false',{timeout:45000});await page.waitForTimeout(600);
  expect(Number(await model.getAttribute('data-pitch'))).toBeGreaterThan(-.3);await expect(model).toHaveAttribute('data-navigable','true');
  await page.screenshot({path:info.outputPath('kitchen-refined.png')});
- await page.getByRole('button',{name:'Vista completa',exact:true}).click();await expect(model).toHaveAttribute('data-exterior','hidden');
+ await page.getByRole('button',{name:'Vista completa',exact:true}).click();await expect(model).toHaveAttribute('data-exterior','screened');
  await page.screenshot({path:info.outputPath('cutaway-refined.png')});
  expect(errors).toEqual([]);
 });
 
-test('pilot keeps walking available when the illustrated panorama cannot load',async({page})=>{
+test('pilot no longer depends on the illustrated panorama',async({page})=>{
  test.setTimeout(60000);
  await page.route('**/surroundings/vacaria-illustrative-day.png',route=>route.abort());
  await page.goto('/apresentar/g400');await page.getByRole('button',{name:'Visitar Tipo 5',exact:true}).click();
  await page.getByRole('button',{name:'Caminhar',exact:true}).click();
  const model=page.getByTestId('g400-apartment-model');
- await expect(model).toHaveAttribute('data-panorama','fallback');
+ await expect(model).toHaveAttribute('data-panorama','disabled');
  await expect.poll(async()=>Number((await model.getAttribute('data-camera'))!.split(',')[1])).toBe(1.6);
  await expect(model).toHaveAttribute('data-navigable','true');
 });
