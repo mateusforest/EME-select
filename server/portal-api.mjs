@@ -13,6 +13,7 @@ import { attachFinance } from './finance.mjs';
 import { attachIntelligence } from './intelligence-local.mjs';
 import { attachWhatsApp } from './whatsapp-local.mjs';
 import { attachOperations } from './operations.mjs';
+import {attachLocalSpatial} from './spatial-studio.mjs';
 const scrypt = promisify(scryptCallback);
 const COOKIE = 'eme_portal_session';
 const MAX_AGE = 8 * 60 * 60 * 1000;
@@ -141,6 +142,7 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
   const listings = attachListings({db,fail,text,fields,caseFor,transaction,audit,stamp,requireAdmin,send,session});
   const finance = attachFinance({db,transaction,stamp,fail,send});
   const intelligence = attachIntelligence({db,dbPath,transaction,stamp,caseFor,consume,send});
+  const spatial=attachLocalSpatial({db,transaction,stamp,ai:intelligence});
   const operations = attachOperations({db,transaction,stamp,send});
   const whatsapp = attachWhatsApp({db,transaction,consume,send});
   let hashing = 0;
@@ -245,6 +247,7 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
       if (user.must_change) fail(403,'Altere a senha inicial antes de continuar.');
       if (finance.handle(path,req,res,user,requestBody)) return true;
       if (await intelligence.handle(path,req,res,user,requestBody)) return true;
+      if (await spatial.handle(path,req,res,user,requestBody,(status,value)=>send(res,status,value))) return true;
       if (await operations.handle(path,req,res,user,requestBody)) return true;
       if (await whatsapp.handle(path,req,res,user,requestBody)) return true;
       if (await people.handle(path,req,res,user,requestBody,(status,value)=>send(res,status,value))) return true;

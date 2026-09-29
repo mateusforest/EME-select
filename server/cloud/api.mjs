@@ -10,6 +10,7 @@ import {attachCloudFinance} from './finance.mjs';
 import {attachCloudIntelligence} from './intelligence.mjs';
 import {attachCloudWhatsApp} from './whatsapp.mjs';
 import {attachCloudOperations} from './operations.mjs';
+import {attachCloudSpatial} from '../spatial-studio.mjs';
 import {fail,fields,text,types,closed,admin,checkVersion,draft,curation,reviseCuration,decision,changed,listingBlockers,publicProperty,listing,evaluation,newCase} from './domain.mjs';
 const digest=v=>createHash('sha256').update(v).digest('hex');
 const cookieName='eme_cloud_session';
@@ -38,6 +39,7 @@ export function createCloudApi({env=process.env,client=createClient(env)}={}){
  });
  const finance=attachCloudFinance({client,hashOf});
  const intelligence=attachCloudIntelligence({client,hashOf,caseFor,env});
+ const spatial=attachCloudSpatial({client,hashOf,ai:intelligence});
  const operations=attachCloudOperations({client,hashOf});
  const whatsapp=attachCloudWhatsApp({client,env});
  function setCookie(res,token,expired=false){res.setHeader('Set-Cookie',`${cookieName}=${token}; Path=/api; HttpOnly; SameSite=Strict; Secure; Max-Age=${expired?0:28800}`);}
@@ -94,6 +96,7 @@ export function createCloudApi({env=process.env,client=createClient(env)}={}){
    if(await developments.handle(path,req,res,user,body,send))return;
    if(await finance.handle(path,req,res,user,body,send))return;
    if(await intelligence.handle(path,req,res,user,body,send))return;
+   if(await spatial.handle(path,req,res,user,body,send))return;
    if(await operations.handle(path,req,res,user,body,send))return;
    if(await whatsapp.handle(path,req,res,user,body,send))return;
    if(path==='/api/assignees'&&req.method==='GET'){const people=(await members()).filter(p=>p.active&&(user.role==='admin'||p.id===user.id)).map(({id,name,role})=>({id,name,role}));return send(200,{members:people});}

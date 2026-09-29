@@ -1,6 +1,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { resolveAISettings, AI_TIMEOUT_MS } from './ai-config.mjs';
 import { readCuration } from './curation-policy.mjs';
+import {requestSpatialPlan} from './spatial-ai.mjs';
 
 export const aiFail = (status, message) => { throw Object.assign(new Error(message), { status }); };
 const fields = (value, allowed) => { if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !allowed.includes(key))) aiFail(400, 'Confira os campos enviados.'); };
@@ -109,5 +110,13 @@ export function createIntelligence({ store, encryptionKey, env = process.env, fe
     await store.finish(req, user, body.requestId, { status: 'completed', ...analysis });
     send(200, await snapshot(user)); return true;
   }
-  return { handle };
+  return { handle, studioStatus:status, async studioPlan(user,project){
+    if(user.role!=='admin')aiFail(403,'Acesso reservado ao administrador.');
+    const settings=resolveAISettings(await store.settings(),env);
+    if(!settings.enabled)aiFail(503,'Ative a IA na Central de IA.');
+    const apiKey=settings.secret?openKey(settings.secret,encryptionKey):env.OPENAI_API_KEY;
+    if(!apiKey)aiFail(503,'Configure a conexão na Central de IA.');
+    await store.rate(user);
+    return requestSpatialPlan({apiKey,model:settings.model,project,fetcher});
+  } };
 }
