@@ -79,3 +79,12 @@ Na oficina, Abrir este cenário em apresentação gera `/apresentar/cenario#…`
 Referência visual fornecida: vídeo `WhatsApp Video 2026-09-28 at 19.44.41.mp4`. Direção aprovada: imagem dominante, passagem de edifício a unidade e navegação interna contínua com poucos controles. O objetivo de produção é a fidelidade ao empreendimento inteiro, não um modelo genérico. A interface de apresentação não transforma as perspectivas em geometria navegável. Para alcançar o nível da referência, produzir e validar fachadas, implantação, áreas comuns, garagens, tipologias, mobiliário, materiais, luz e vistas reais; geometria e medidas precisam de fontes verificadas. Não anunciar o atual piloto como equivalente fotorrealista ou como passeio completo pelo condomínio.
 
 Verificação: navegação, tela cheia e fallback, links inválidos, seleção de unidades, ampliação de plantas, caminhada Tipo 5, layout móvel e entrada touch em viewport 4K testados no navegador. Esses testes não substituem a validação de desempenho e calibração na TV física escolhida para o escritório.
+
+
+### Correções da caminhada e enquadramento — 29/09/2026
+
+A chegada ao destino mantém altura de 1,60 m e não aponta para o ponto clicado no piso. Para móveis e ambientes, a orientação final é horizontal e gradual; arrastar a visão cancela esse ajuste automático. O último trecho desacelera, preservando as colisões e a substituição do destino durante o percurso. O ícone do minimapa voltou ao tamanho previsto.
+
+Na apresentação, as três perspectivas usam as imagens originais inteiras e sem as máscaras laterais dos SVGs antigos. O contêiner segue a proporção original e centraliza a imagem, com o acervo desfocado como fundo quando a tela tem outra proporção. A fachada, os pontos de acesso, a iluminação e os pavimentos compartilham as coordenadas da imagem original; zoom explícito e foco no andar continuam disponíveis. A página comercial mantém seu enquadramento anterior.
+
+Regressão no navegador verifica chegada ao móvel e ao destino no mapa, altura e inclinação após a chegada, teclado/toque, tela cheia, proporção e limites das três imagens no desktop e celular e seleção/iluminação nas duas vistas reenquadradas.

@@ -55,24 +55,27 @@ export default function G400ApartmentModel(props:Props){
       let previousInside:boolean|undefined,previousRoom='',previousReset=-1,notifiedRoom='',yaw=0,pitch=-.12,lastTime=performance.now();
       let pendingEntry:PlanPoint|null=null,autoLook=true,held=new Set<string>(),drag:{x:number;y:number;startX:number;startY:number;id:number}|null=null;
       let flight:{from:T.Vector3;to:T.Vector3;targetFrom:T.Vector3;targetTo:T.Vector3;start:number;inside:boolean}|null=null;
-      let walk:{points:T.Vector3[];index:number;look:T.Vector3}|null=null;
+      let walk:{points:T.Vector3[];index:number;look:T.Vector3|null}|null=null;
+      let arrival:{yaw:number;pitch:number}|null=null;
       function look(){camera.lookAt(camera.position.clone().add(new T.Vector3(Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch))));}
       function aim(target:T.Vector3){const d=target.clone().sub(camera.position);yaw=Math.atan2(d.x,d.z);pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));look();}
       function home(){return new T.Vector3(8.5,10,11).multiplyScalar(Math.max(1,1.5/camera.aspect));}
-      function stop(){walk=null;held.clear();setWalking(false);mount.dataset.walking='false';destinationMarker.visible=false;if(routeLine.current)routeLine.current.setAttribute('d','');}
+      function stop(){walk=null;arrival=null;held.clear();setWalking(false);mount.dataset.walking='false';destinationMarker.visible=false;if(routeLine.current)routeLine.current.setAttribute('d','');}
       function finishFlight(){if(!flight)return;camera.position.copy(flight.to);if(flight.inside)aim(flight.targetTo);else{orbit.target.copy(flight.targetTo);orbit.update();}flight=null;model.ceiling.visible=latest.current.inside;renderer!.shadowMap.needsUpdate=true;}
       function notifyRoom(){const id=roomAt(toPlan(camera.position));if(id&&id!==latest.current.room){notifiedRoom=id;latest.current.onSelect(id);}}
       function navigate(goal:PlanPoint,lookAt?:T.Vector3){
         finishFlight();
         const path=walkRoute(toPlan(camera.position),goal);if(path.length<2){setMessage('Escolha um ponto livre ou um ambiente no mapa.');return;}
-        flight=null;held.clear();autoLook=true;setMessage('');
-        walk={points:path.map(p=>planPoint(...p,eyeHeight)),index:1,look:lookAt||planPoint(...goal,1.25)};
+        flight=null;arrival=null;held.clear();autoLook=true;setMessage('');
+        walk={points:path.map(p=>planPoint(...p,eyeHeight)),index:1,look:lookAt||null};
         destinationMarker.position.copy(planPoint(...path.at(-1)!,.03));destinationMarker.visible=true;
         if(routeLine.current)routeLine.current.setAttribute('d','M'+path.map(p=>p.join(',')).join('L'));
-        if(reduce){camera.position.copy(walk.points.at(-1)!);aim(walk.look);stop();notifyRoom();}
+        if(reduce){camera.position.copy(walk.points.at(-1)!);const target=walk.look;stop();if(target)settle(target);look();notifyRoom();}
         else {setWalking(true);mount.dataset.walking='true';}
         mount.dataset.destination=path.at(-1)!.map(n=>n.toFixed(1)).join(',');
       }
+      // A floor click is a destination, not a command to look down at our feet.
+      function settle(target:T.Vector3){const delta=target.clone().sub(camera.position);if(Math.hypot(delta.x,delta.z)<.25)return;arrival={yaw:Math.atan2(delta.x,delta.z),pitch:-.08};if(reduce){yaw=arrival.yaw;pitch=arrival.pitch;arrival=null;}}
       function move(distance:number,strafe=0){
         const p=toPlan(camera.position),dx=(Math.sin(yaw)*distance+Math.cos(yaw)*strafe)/.014,dz=(Math.cos(yaw)*distance-Math.sin(yaw)*strafe)/.014;
         const desired:PlanPoint=[p[0]+dx,p[1]+dz];
@@ -111,7 +114,7 @@ export default function G400ApartmentModel(props:Props){
       const ray=new T.Raycaster(),cursor=new T.Vector2();
       function pick(e:PointerEvent){const rect=canvas.getBoundingClientRect();cursor.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(cursor,camera);return ray.intersectObject(model.root,true).find(hit=>{let object:T.Object3D|null=hit.object;while(object){if(!object.visible)return false;object=object.parent;}return true;});}
       listen(canvas,'pointerdown',((e:PointerEvent)=>{if(e.button!==0)return;finishFlight();drag={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,id:e.pointerId};if(latest.current.inside)canvas.setPointerCapture(e.pointerId);canvas.focus({preventScroll:true});}) as EventListener);
-      listen(canvas,'pointermove',((e:PointerEvent)=>{if(!drag||e.pointerId!==drag.id||!latest.current.inside)return;if(Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>5)autoLook=false;yaw-=(e.clientX-drag.x)*.005;pitch=Math.max(-1.1,Math.min(1.1,pitch+(e.clientY-drag.y)*.004));drag.x=e.clientX;drag.y=e.clientY;look();}) as EventListener);
+      listen(canvas,'pointermove',((e:PointerEvent)=>{if(!drag||e.pointerId!==drag.id||!latest.current.inside)return;if(Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>5){autoLook=false;arrival=null;}yaw-=(e.clientX-drag.x)*.005;pitch=Math.max(-1.1,Math.min(1.1,pitch+(e.clientY-drag.y)*.004));drag.x=e.clientX;drag.y=e.clientY;look();}) as EventListener);
       listen(canvas,'pointerup',((e:PointerEvent)=>{if(!drag||e.pointerId!==drag.id)return;const clicked=Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<7;drag=null;if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);if(!clicked)return;const hit=pick(e);if(!hit)return;const goal=nearestWalk(toPlan(hit.point),100);if(!goal){setMessage('Toque em uma área livre para caminhar.');return;}if(latest.current.inside)navigate(goal,hit.point.y>.3?hit.point:undefined);else{pendingEntry=goal;const room=roomAt(goal)||rooms.reduce((best,r)=>Math.hypot(r.x-goal[0],r.y-goal[1])<Math.hypot(best.x-goal[0],best.y-goal[1])?r:best).id;latest.current.onSelect(room);latest.current.onEnter();}}) as EventListener);
       listen(canvas,'pointercancel',()=>{drag=null;held.clear();});
       const keys:Record<string,string>={w:'forward',s:'back',a:'left',d:'right',ArrowUp:'forward',ArrowDown:'back',ArrowLeft:'turn-left',ArrowRight:'turn-right'};
@@ -124,12 +127,14 @@ export default function G400ApartmentModel(props:Props){
         const now=performance.now(),dt=Math.min(.05,(now-lastTime)/1000);lastTime=now;if(document.hidden)return;
         if(flight){const t=Math.min(1,(now-flight.start)/1100),ease=t*t*(3-2*t);camera.position.lerpVectors(flight.from,flight.to,ease);const target=new T.Vector3().lerpVectors(flight.targetFrom,flight.targetTo,ease);if(flight.inside)aim(target);else{orbit.target.copy(target);orbit.update();}if(t===1){flight=null;model.ceiling.visible=latest.current.inside;renderer!.shadowMap.needsUpdate=true;}}
         else if(latest.current.inside){
-          if(walk){let remaining=1.65*dt;while(walk&&remaining>0){const destination=walk.points[walk.index],delta=destination.clone().sub(camera.position),distance=delta.length();if(distance<=remaining){camera.position.copy(destination);remaining-=distance;walk.index++;if(walk.index>=walk.points.length){const target=walk.look.clone();stop();if(autoLook)aim(target);notifyRoom();}}else{camera.position.addScaledVector(delta,remaining/distance);remaining=0;if(autoLook){const desired=Math.atan2(delta.x,delta.z);yaw+=angleDelta(yaw,desired)*Math.min(1,dt*2.5);pitch+=(-.1-pitch)*Math.min(1,dt*3);}look();}}}
+          if(walk){const left=walk.index===walk.points.length-1?camera.position.distanceTo(walk.points.at(-1)!):Infinity;let remaining=Math.min(1.65,Math.max(.5,left*2))*dt;while(walk&&remaining>0){const destination=walk.points[walk.index],delta=destination.clone().sub(camera.position),distance=delta.length();if(distance<=remaining){camera.position.copy(destination);remaining-=distance;walk.index++;if(walk.index>=walk.points.length){const target=walk.look?.clone();stop();if(autoLook&&target)settle(target);notifyRoom();}}else{camera.position.addScaledVector(delta,remaining/distance);remaining=0;if(autoLook){const desired=Math.atan2(delta.x,delta.z);yaw+=angleDelta(yaw,desired)*Math.min(1,dt*2.5);pitch+=(-.1-pitch)*Math.min(1,dt*3);}look();}}}
+          if(arrival){const k=1-Math.exp(-5*dt);yaw+=angleDelta(yaw,arrival.yaw)*k;pitch+=(arrival.pitch-pitch)*k;if(Math.abs(angleDelta(yaw,arrival.yaw))<.003&&Math.abs(pitch-arrival.pitch)<.003)arrival=null;}
+          camera.position.y=eyeHeight;
           if(held.size){if(held.has('turn-left'))yaw+=dt*1.1;if(held.has('turn-right'))yaw-=dt*1.1;const forward=Number(held.has('forward'))-Number(held.has('back')),side=Number(held.has('right'))-Number(held.has('left'));const speed=1.5*dt/(forward&&side?Math.SQRT2:1);move(forward*speed,side*speed);}
           look();
         }else orbit.update();
         composer.render();
-        const p=toPlan(camera.position);mount.dataset.camera=camera.position.toArray().map(n=>n.toFixed(3)).join(',');mount.dataset.position=p.map(n=>n.toFixed(2)).join(',');mount.dataset.heading=yaw.toFixed(3);mount.dataset.walking=String(Boolean(walk));mount.dataset.navigable=String(!latest.current.inside||Boolean(flight)||canWalk(p));
+        const p=toPlan(camera.position);mount.dataset.camera=camera.position.toArray().map(n=>n.toFixed(3)).join(',');mount.dataset.position=p.map(n=>n.toFixed(2)).join(',');mount.dataset.heading=yaw.toFixed(3);mount.dataset.pitch=pitch.toFixed(4);mount.dataset.walking=String(Boolean(walk));mount.dataset.navigable=String(!latest.current.inside||Boolean(flight)||canWalk(p));
         if(marker.current){marker.current.setAttribute('cx',String(p[0]));marker.current.setAttribute('cy',String(p[1]));}
         if(heading.current)heading.current.setAttribute('d',`M${p[0]},${p[1]}l${Math.sin(yaw)*42},${Math.cos(yaw)*42}`);
       });

@@ -36,7 +36,20 @@ test('walking follows a continuous route, can be interrupted, and floor/furnitur
   await page.mouse.click(b.x+b.width*.26,b.y+b.height*.63);
   await expect(model).toHaveAttribute('data-walking','true');await expect(model).toHaveAttribute('data-walking','false',{timeout:15000});
   await expect(model).toHaveAttribute('data-navigable','true');
+  // Arrival must preserve eye height and the horizon after clicking a low surface.
+  await page.waitForTimeout(700);
+  expect(Number(await model.getAttribute('data-pitch'))).toBeGreaterThan(-.3);
+  expect(Number((await model.getAttribute('data-camera'))!.split(',')[1])).toBe(1.6);
   const atSofa=(await model.getAttribute('data-position'))!.split(',').map(Number);expect(Math.hypot(atSofa[0]-tipo5Stations.living.eye[0],atSofa[1]-tipo5Stations.living.eye[1])).toBeGreaterThan(15);
+  // Clicking the minimap specifies a floor destination, never a downward look target.
+  const map=page.getByRole('img',{name:'Mapa da caminhada'}),mapBounds=(await map.boundingBox())!;
+  const goal=tipo5Stations.living.eye;
+  await page.mouse.click(mapBounds.x+(goal[0]-680)/1040*mapBounds.width,mapBounds.y+(goal[1]-265)/560*mapBounds.height);
+  await expect(model).toHaveAttribute('data-walking','true');
+  await expect(model).toHaveAttribute('data-walking','false',{timeout:15000});
+  await page.waitForTimeout(700);
+  expect(Number(await model.getAttribute('data-pitch'))).toBeGreaterThan(-.3);
+  expect(Number((await model.getAttribute('data-camera'))!.split(',')[1])).toBe(1.6);
   // Looking around must not change position; walking into furniture must stop at its boundary.
   const position=await model.getAttribute('data-position'),heading=await model.getAttribute('data-heading');
   await page.mouse.move(b.x+b.width*.5,b.y+b.height*.5);await page.mouse.down();await page.mouse.move(b.x+b.width*.68,b.y+b.height*.53,{steps:8});await page.mouse.up();

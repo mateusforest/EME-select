@@ -75,3 +75,50 @@ test('touch showroom fills a 4K display and can recover after fullscreen is deni
  await page.screenshot({path:info.outputPath('showroom-4k.png')});
  await context.close();
 });
+
+
+test('facades use complete original images with aligned floor overlays at desktop and mobile sizes',async({page},info)=>{
+ test.setTimeout(60000);await page.emulateMedia({reducedMotion:'reduce'});
+ await page.goto('/apresentar/g400');
+ for(const viewport of [{width:1920,height:1080},{width:390,height:844}]){
+  await page.setViewportSize(viewport);
+  for(const [view,label] of [['left','Lateral 1'],['front','Frente'],['right','Lateral 2']]){
+   await page.getByRole('button',{name:label,exact:true}).click();
+   await expect(page.getByTestId('g400-scene')).toHaveAttribute('data-view',view);
+   const layer=page.locator(`.g400-view-layer[data-view="${view}"]`),img=layer.locator('img[data-facade]');
+   await expect.poll(()=>img.evaluate((el:HTMLImageElement)=>el.complete&&el.naturalWidth>0)).toBe(true);
+   expect(await img.getAttribute('src')).not.toMatch(/scene-.*svg/);
+   const b=(await img.boundingBox())!;
+   expect(b.x).toBeGreaterThanOrEqual(-1);expect(b.y).toBeGreaterThanOrEqual(-1);
+   expect(b.x+b.width).toBeLessThanOrEqual(viewport.width+1);expect(b.y+b.height).toBeLessThanOrEqual(viewport.height+1);
+   const ratio=await img.evaluate((el:HTMLImageElement)=>el.naturalWidth/el.naturalHeight);
+   expect(b.width/b.height).toBeCloseTo(ratio,2);
+   const overlay=(await layer.locator('.g400-scene-overlay').boundingBox())!;
+   expect(overlay.x).toBeCloseTo(b.x,0);expect(overlay.y).toBeCloseTo(b.y,0);
+   expect(overlay.width).toBeCloseTo(b.width,0);expect(overlay.height).toBeCloseTo(b.height,0);
+   await page.screenshot({path:info.outputPath(`facade-${view}-${viewport.width}.png`)});
+  }
+ }
+});
+
+
+test('front and opposite facade retain floor selection and night lighting after reframing',async({page},info)=>{
+ await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/apresentar/g400');
+ for(const label of ['Frente','Lateral 2']){
+  await page.getByRole('button',{name:label,exact:true}).click();
+  await expect(page.getByTestId('g400-scene')).toHaveAttribute('data-moving','false');
+  const floorHit=page.getByRole('button',{name:'Explorar 4º andar no cenário',exact:true});
+  if(label==='Lateral 2'){
+   // This floor has three disjoint wings; its bounding-box center belongs to floor 3.
+   const point=await floorHit.evaluate((el:SVGGraphicsElement)=>{const p=new DOMPoint(667,880).matrixTransform(el.getScreenCTM()!);return{x:p.x,y:p.y};});
+   await page.mouse.click(point.x,point.y);
+  }else await floorHit.click();
+  await expect(page.getByRole('button',{name:/401 · Tipo 1/})).toBeVisible();
+  await page.locator('.sp-light select').selectOption({label:'Noite'});
+  const layer=page.locator('.g400-view-layer[data-active=true]');
+  await expect(layer.getByTestId('g400-floor-band')).toHaveAttribute('data-floor','4');
+  await expect(layer.getByTestId('g400-window-lights')).toHaveAttribute('data-lighting','night');
+  await page.getByRole('button',{name:'Fechar painel',exact:true}).click();
+  await page.screenshot({path:info.outputPath(`selection-${label}.png`)});
+ }
+});
