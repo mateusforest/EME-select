@@ -178,7 +178,7 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
     if (!playing && safeIndex === photos.length - 1) go(0, true);
     setPlaying(value => !value);
   }
-  if (!current) return <div className="pg-empty">Adicione fotografias para visualizar o percurso.</div>;
+  if (!current) return <div className="pg-empty">Fotografias em breve.</div>;
 
   const controls = <div className="pg-controls">
     <button type="button" aria-label="Foto anterior" onClick={() => go(safeIndex - 1)} disabled={photos.length < 2 || loading || incoming !== null}><ArrowLeft size={19}/></button>
