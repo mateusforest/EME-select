@@ -17,4 +17,9 @@ test('cloud final OK records approval atomically without completing documentary 
  const body={version:3,confirmed:true,reviewMode:'simplified'};
  assert.equal((await publish({...body,confirmed:false})).status,400);assert.equal((await publish({...body,version:2})).status,409);assert.equal((await publish(body,brokerToken)).status,403);assert.equal(writes,0);
  const response=await publish(body);assert.equal(response.status,200,JSON.stringify(response.body));assert.equal(response.body.published,true);assert.equal(row.data.stage,'Entrada aprovada');assert.equal(row.data.curation,undefined);assert.equal(row.data.published.privateAddress,undefined);assert.equal(row.data.published.images[0].width,870);assert.equal(writes,1);
+ row.data.draft={...row.data.draft,price:null,area:null,neighborhood:'',description:'',reasons:''};row.data.photos=[];row.data.published=null;row.data.stage='Em avaliação';
+ const minimal=await publish({...body,version:row.version});
+ assert.equal(minimal.status,200,JSON.stringify(minimal.body));assert.equal(minimal.body.published,true);assert.deepEqual(minimal.body.blockers,[]);
+ assert.equal(row.data.published.location,'Vacaria');assert.equal(row.data.published.image,'/assets/property-placeholder.svg');assert.deepEqual(row.data.published.images,[]);
+
 });

@@ -201,6 +201,7 @@ const areaNumber = (value: number): string => new Intl.NumberFormat('pt-BR', { m
 
 /** Area remains square metres for sorting and filters; agricultural land also shows hectares. */
 export function formatArea(property: Property): string {
+  if (property.isIllustrative === false && !property.area) return 'A informar';
   const squareMetres = `${areaNumber(property.area)} m²`;
   return property.type === 'Terra agrícola' && property.area >= 10000
     ? `${areaNumber(property.area / 10000)} ha (${squareMetres})`

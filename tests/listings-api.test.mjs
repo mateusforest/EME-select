@@ -102,4 +102,13 @@ test('real listings: private photos, curation and explicit publication',async t=
   await approve();assert.equal((await req(anonymous,'/public/properties')).body.properties.length,0);item=(await req(admin,'/listings/'+item.id+'/publish',{version:item.version,confirmed:true})).body;
   item=(await req(admin,'/listings/'+item.id+'/unpublish',{version:item.version})).body;assert.equal(item.published,false);assert.equal((await req(anonymous,item.photos[0].url.replace('/api',''))).status,404);
  });
+ await t.test('simplified publication accepts minimal listing without editorial requirements',async()=>{
+  const created=await req(admin,'/listings',{draft:{...draft,price:null,area:null,neighborhood:'',description:'',reasons:''}});
+  assert.equal(created.status,201);const minimal=created.body;assert.deepEqual(minimal.blockers,[]);
+  const published=await req(admin,'/listings/'+minimal.id+'/publish',{version:minimal.version,confirmed:true,reviewMode:'simplified'});
+  assert.equal(published.status,200);assert.equal(published.body.published,true);
+  const catalog=(await req(anonymous,'/public/properties')).body.properties;const entry=catalog.find(p=>p.id===minimal.id);
+  assert.equal(entry.image,'/assets/property-placeholder.svg');assert.equal(entry.location,draft.city);assert.deepEqual(entry.images,[]);
+ });
+
 });

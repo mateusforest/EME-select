@@ -22,6 +22,7 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
   function row(id,user){caseFor(id,user);const r=db.prepare('SELECT * FROM listings WHERE id=?').get(id);if(!r)fail(404,'Imóvel não encontrado.');return r;}
   const validate=validateDraft;
   function blockers(r,simplified=false){const d=JSON.parse(r.data), p=photos(r.id), reasons=[];
+    if(simplified)return !d.title?.trim()||!d.city?.trim()?['Informe título e cidade.']:[];
     if(!d.price||!d.area)reasons.push('Informe preço e área maiores que zero.');
     if(!d.neighborhood.trim())reasons.push('Informe bairro ou região pública.');
     if(d.description.trim().length<80)reasons.push('Descreva o imóvel com pelo menos 80 caracteres.');
@@ -32,9 +33,9 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
     return reasons;
   }
   function publicData(r){const d=JSON.parse(r.data),images=photos(r.id).map(({url,caption,room,width,height})=>({url,caption,room,width,height}));return {
-    id:r.id,title:d.title,environment:d.environment,locationProfile:d.locationProfile||undefined,condominium:d.condominium||undefined,location:d.neighborhood+' · '+d.city,type:d.type==='Casa em condomínio'?'Casa':d.type,operation:d.operation,price:d.price,area:d.area,bedrooms:d.bedrooms,suites:d.suites,parking:d.parking,bathrooms:d.bathrooms,totalArea:d.totalArea,yearBuilt:d.yearBuilt,
-    description:d.description,tags:d.features.split('\n').map(v=>v.trim()).filter(Boolean),reasons:d.reasons.split('\n').map(v=>v.trim()).filter(Boolean),costNotes:d.costNotes,condominiumFee:d.condominiumFee,propertyTax:d.propertyTax,image:images[0]?.url,images,isIllustrative:false,hasInterior:false};}
-  const detail=(r,user)=>({id:r.id,version:r.version,draft:JSON.parse(r.data),photos:photos(r.id),stage:caseFor(r.id,user).stage,published:!!r.published&&caseFor(r.id,user).stage==='Entrada aprovada',publishedVersion:r.published_version,blockers:blockers(r)});
+    id:r.id,title:d.title,environment:d.environment,locationProfile:d.locationProfile||undefined,condominium:d.condominium||undefined,location:[d.neighborhood,d.city].filter(Boolean).join(' · '),type:d.type==='Casa em condomínio'?'Casa':d.type,operation:d.operation,price:d.price,area:d.area,bedrooms:d.bedrooms,suites:d.suites,parking:d.parking,bathrooms:d.bathrooms,totalArea:d.totalArea,yearBuilt:d.yearBuilt,
+    description:d.description,tags:d.features.split('\n').map(v=>v.trim()).filter(Boolean),reasons:d.reasons.split('\n').map(v=>v.trim()).filter(Boolean),costNotes:d.costNotes,condominiumFee:d.condominiumFee,propertyTax:d.propertyTax,image:images[0]?.url||'/assets/property-placeholder.svg',images,isIllustrative:false,hasInterior:false};}
+  const detail=(r,user)=>({id:r.id,version:r.version,draft:JSON.parse(r.data),photos:photos(r.id),stage:caseFor(r.id,user).stage,published:!!r.published&&caseFor(r.id,user).stage==='Entrada aprovada',publishedVersion:r.published_version,blockers:blockers(r,true)});
   function checkVersion(r,body){if(!Number.isInteger(body.version))fail(400,'Versão obrigatória.');if(r.version!==body.version)fail(409,'Este imóvel foi alterado. Reabra o cadastro antes de continuar.');}
   function changed(id,user,message){
     db.prepare('UPDATE listings SET version=version+1,published=NULL,published_version=NULL WHERE id=?').run(id);
