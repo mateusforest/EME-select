@@ -1,0 +1,12 @@
+.sp-feature{margin:80px auto;max-width:1320px;background:#173c30;color:#f5f1e8;display:grid;grid-template-columns:1fr 1fr}
+.sp-feature>img{width:100%;height:560px;object-fit:cover}
+.sp-feature>div{align-self:center;padding:60px}
+.sp-feature .sp-kicker{font-size:10px;letter-spacing:2.3px;font-weight:600;display:block}
+.sp-feature h2{font-family:Georgia,serif;font-weight:400;letter-spacing:-1.8px;line-height:1.06;font-size:48px;margin:24px 0}
+.sp-feature p{line-height:1.7;font-size:15px;max-width:400px;color:#d0d7ca;margin-bottom:30px}
+.sp-feature .sp-button{display:inline-flex;align-items:center;gap:30px;justify-content:space-between;padding:18px 26px;background:#214b3c;color:#fff;border:1px solid #819b83;cursor:pointer;text-decoration:none;font-size:13px}
+.sp-feature .sp-button:hover{background:#32634f}
+.sp-feature .sp-button span{font-size:21px}
+.sp-nav-link{font-weight:600!important;color:#21513b!important}
+.sp-feature :focus-visible{outline:3px solid #b38c52;outline-offset:5px}
+@media(max-width:800px){.sp-feature{grid-template-columns:1fr;margin:45px 5%}.sp-feature>img{height:460px}.sp-feature>div{padding:35px}.sp-feature h2{font-size:38px}}

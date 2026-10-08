@@ -1,4 +1,5 @@
 import PeopleSection from './PeopleSection';
+import { SpatialFeature, SPATIAL_URL } from './developments/SpatialFeature';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import ScenePage from './spatial/SceneExperience';
 import ExploreEnvironments from './ExploreEnvironments';
@@ -68,6 +69,7 @@ function Header({ tour, favorites, onFavorites, onContact }: { tour: boolean; fa
       </div>
       <a href="#/curadoria" aria-current={hash === '#/curadoria' ? 'page' : undefined}>Nossa curadoria</a>
       <a href="/enviar-imovel">Para proprietários</a>
+      <a href={SPATIAL_URL} className="sp-nav-link">EME Spatial ↗</a>
     </nav>
     <div className="header-actions">
 
@@ -76,6 +78,7 @@ function Header({ tour, favorites, onFavorites, onContact }: { tour: boolean; fa
       <button className="icon-button mobile-menu-toggle" aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'} aria-expanded={menuOpen} aria-controls="mobile-menu" onClick={() => setMenuOpen(v => !v)}>{menuOpen ? <X size={23} /> : <Menu size={23} />}</button>
     </div>
     {menuOpen && <nav className="mobile-menu" id="mobile-menu" aria-label="Menu móvel">
+      <a href={SPATIAL_URL}>EME Spatial · Experiência interativa<ArrowUpRight size={17} /></a>
       <a href="#/colecao">A coleção completa<ArrowUpRight size={17} /></a>
       <a href={MORADAS_ROUTE}>Moradas da Serra · DeVille<ArrowUpRight size={17} /></a>
       <a href={G400_ROUTE}>G400 · Yclodema<ArrowUpRight size={17} /></a>
@@ -171,7 +174,7 @@ export default function App() {
       : parts[0] === 'curadoria' ? <CurationPage onContact={contact} onMotion={() => setModal({ kind: 'motion' })} />
       : parts[0] === 'proprietarios' ? <OwnerPage />
       : <main className="empty-page" id="conteudo"><span className="eyebrow">Um novo caminho</span><h1>Vamos encontrar<br />o seu lugar.</h1><p>Esta página não está disponível.</p><a className="primary-button" href="#/">Voltar aos ambientes <ArrowRight size={19} /></a></main>}
-    {isScene && environment.id === 'todos' && <><section className="development-feature" aria-labelledby="moradas-feature-title"><img src={`${ASSETS}hero.webp`} alt="Estudo visual do Moradas da Serra, da DeVille" loading="lazy" /><div><p className="eyebrow">DeVille · Vacaria, RS</p><h2 id="moradas-feature-title">Um empreendimento.<br />Novas perspectivas.</h2><p>Conheça o Moradas da Serra em uma experiência própria. Explore torres, andares, interiores e espaços de convivência.</p><a className="primary-button" href={MORADAS_ROUTE}>Explorar Moradas da Serra <ArrowUpRight size={18} /></a><small>Apresentação conceitual · disponibilidade a confirmar.</small></div></section><section className="development-feature" aria-labelledby="g400-feature-title"><img src={G400_ASSETS+'hero.webp'} alt="Cenário conceitual do G400 — Geraldo Andreola" loading="lazy"/><div><p className="eyebrow">Yclodema · Vacaria, RS</p><h2 id="g400-feature-title">A cidade.<br/>Seu novo horizonte.</h2><p>Explore o G400 na Avenida Moreira Paz: apartamentos de 2 e 3 suítes, coberturas duplex e triplex, espaços para encontrar e desacelerar.</p><a className="primary-button" href={G400_ROUTE}>Explorar G400 <ArrowUpRight size={18}/></a><small>Cenário conceitual · perspectivas e plantas da incorporadora.</small></div></section><ExploreEnvironments /><PeopleSection /></>}
+    {isScene && environment.id === 'todos' && <><SpatialFeature /><section className="development-feature" aria-labelledby="moradas-feature-title"><img src={`${ASSETS}hero.webp`} alt="Estudo visual do Moradas da Serra, da DeVille" loading="lazy" /><div><p className="eyebrow">DeVille · Vacaria, RS</p><h2 id="moradas-feature-title">Um empreendimento.<br />Novas perspectivas.</h2><p>Conheça o Moradas da Serra em uma experiência própria. Explore torres, andares, interiores e espaços de convivência.</p><a className="primary-button" href={MORADAS_ROUTE}>Explorar Moradas da Serra <ArrowUpRight size={18} /></a><small>Apresentação conceitual · disponibilidade a confirmar.</small></div></section><section className="development-feature" aria-labelledby="g400-feature-title"><img src={G400_ASSETS+'hero.webp'} alt="Cenário conceitual do G400 — Geraldo Andreola" loading="lazy"/><div><p className="eyebrow">Yclodema · Vacaria, RS</p><h2 id="g400-feature-title">A cidade.<br/>Seu novo horizonte.</h2><p>Explore o G400 na Avenida Moreira Paz: apartamentos de 2 e 3 suítes, coberturas duplex e triplex, espaços para encontrar e desacelerar.</p><a className="primary-button" href={G400_ROUTE}>Explorar G400 <ArrowUpRight size={18}/></a><small>Cenário conceitual · perspectivas e plantas da incorporadora.</small></div></section><ExploreEnvironments /><PeopleSection /></>}
     {!isTour && <Footer onPrivacy={() => setModal({ kind: 'privacy' })} />}
     {comparison.length > 0 && parts[0] !== 'comparar' && !modal && <aside className="comparison-tray" aria-label="Seleção para comparar"><div><strong>{comparison.length} de 3 imóveis</strong><small>{comparison.length < 2 ? 'Escolha mais um para comparar' : 'Uma escolha, diferentes perspectivas'}</small></div><button disabled={comparison.length < 2} onClick={() => { window.location.hash = comparisonHash(comparison, lastCatalog.current); }}>Comparar seleção <ArrowRight size={16} /></button><button className="icon-button" aria-label="Limpar comparação" onClick={() => setComparison([])}><X size={16} /></button></aside>}
     {modal && <Dialog title={modalTitle} onClose={close} wide={modal.kind === 'favorites' || modal.kind === 'motion'}>
