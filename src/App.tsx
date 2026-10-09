@@ -19,6 +19,7 @@ import { G400_ROUTE, G400_ASSETS } from './developments/g400';
 import './developments/development.css';
 
 const DevelopmentPage = lazy(() => import('./developments/DevelopmentPage'));
+const CasaVeredasPage = lazy(() => import('./developments/CasaVeredasPage'));
 const G400Page = lazy(() => import('./developments/G400Page'));
 
 type Modal = { kind: 'favorites' | 'motion' | 'privacy' } | { kind: 'booking' | 'documents' | 'plan' | 'location'; property?: Property };
@@ -63,6 +64,7 @@ function Header({ tour, favorites, onFavorites, onContact }: { tour: boolean; fa
           <div><span className="eyebrow">Por ambiente</span>{environments.map(e => <a key={e.id} href={e.id === 'todos' ? '#/' : `#/ambientes/${e.id}`}>{e.id === 'todos' ? 'Todos os ambientes' : e.name}<ArrowUpRight size={13} /></a>)}</div>
           <div><span className="eyebrow">Por tipo de imóvel</span>{[{ label: 'Casas', type: 'Casa' }, { label: 'Casas em condomínio', type: 'Casa', region: 'condominios' as const }, { label: 'Apartamentos', type: 'Apartamento' }, { label: 'Compactos', type: 'Compacto', operation: 'alugar' as const }, { label: 'Condomínios horizontais', type: 'Condomínio horizontal' }, { label: 'Condomínios verticais', type: 'Condomínio vertical' }, { label: 'Lojas', type: 'Loja' }, { label: 'Salas comerciais', type: 'Sala comercial' }, { label: 'Edifícios corporativos', type: 'Edifício corporativo' }, { label: 'Terrenos urbanos', type: 'Terreno urbano' }, { label: 'Lotes em condomínio', type: 'Lote em condomínio' }, { label: 'Terras agrícolas', type: 'Terra agrícola' }, { label: 'Galpões', type: 'Galpão' }, { label: 'Pavilhões', type: 'Pavilhão' }, { label: 'Centros de distribuição', type: 'Centro de distribuição', operation: 'alugar' as const }].map(item => <a key={`${item.region || 'todos'}:${item.type}`} href={catalogHash({ region: item.region, type: item.type, operation: item.operation || properties.find(property => property.type === item.type)?.operation || 'comprar' })}>{item.label}<ArrowUpRight size={13} /></a>)}</div>
           <a href={MORADAS_ROUTE}>Moradas da Serra · DeVille <ArrowUpRight size={17} /></a>
+          <a href="#/empreendimentos/casa-m-veredas">Casa M Veredas <ArrowUpRight size={17} /></a>
           <a href={G400_ROUTE}>G400 · Yclodema <ArrowUpRight size={17} /></a>
           <a href="#/colecao">Explorar a coleção completa <ArrowRight size={17} /></a>
         </div>}
@@ -81,7 +83,8 @@ function Header({ tour, favorites, onFavorites, onContact }: { tour: boolean; fa
       <a href={SPATIAL_URL}>EME Spatial · Experiência interativa<ArrowUpRight size={17} /></a>
       <a href="#/colecao">A coleção completa<ArrowUpRight size={17} /></a>
       <a href={MORADAS_ROUTE}>Moradas da Serra · DeVille<ArrowUpRight size={17} /></a>
-      <a href={G400_ROUTE}>G400 · Yclodema<ArrowUpRight size={17} /></a>
+      <a href="#/empreendimentos/casa-m-veredas">Casa M Veredas <ArrowUpRight size={17} /></a>
+          <a href={G400_ROUTE}>G400 · Yclodema<ArrowUpRight size={17} /></a>
       {environments.map(e => <a key={e.id} href={e.id === 'todos' ? '#/' : `#/ambientes/${e.id}`}>{e.name}<ArrowUpRight size={17} /></a>)}
       <a href="#/curadoria">Nossa curadoria<ArrowUpRight size={17} /></a><a href="/enviar-imovel">Para proprietários<ArrowUpRight size={17} /></a>
       <button onClick={() => { setMenuOpen(false); onContact(); }}>Fale com a EME<MessageCircle size={18} /></button>
@@ -128,8 +131,9 @@ export default function App() {
   const environment = environmentById(parts[0] === 'ambientes' ? parts[1] : 'todos');
   const isScene = parts[0] === '' || (parts[0] === 'ambientes' && environments.some(e => e.id === parts[1]));
   const isTour = parts[0] === 'visita' && Boolean(property?.hasInterior);
+  const isCasaVeredas = parts[0] === 'empreendimentos' && parts[1] === 'casa-m-veredas';
   const isG400 = parts[0] === 'empreendimentos' && parts[1] === 'g400';
-  const isDevelopment = parts[0] === 'empreendimentos' && ['moradas-da-serra', 'g400'].includes(parts[1]);
+  const isDevelopment = parts[0] === 'empreendimentos' && ['moradas-da-serra', 'g400', 'casa-m-veredas'].includes(parts[1]);
   const close = () => setModal(null);
   useEffect(() => { try { localStorage.setItem('eme-select:favorites', JSON.stringify(favorites)); } catch { /* A navegação permanece disponível quando o armazenamento está bloqueado. */ } }, [favorites]);
   useEffect(() => {
@@ -139,7 +143,7 @@ export default function App() {
     previousRoute.current = currentRoute;
     if (parts[0] === 'colecao') lastCatalog.current = catalogHash(parseCatalogHash(hash));
     if (parts[0] === 'comparar') { setComparison(comparisonIds(hash)); lastCatalog.current = comparisonReturn(hash); }
-    document.title = `${isDevelopment ? (isG400 ? 'G400 · Geraldo Andreola · Yclodema' : 'Moradas da Serra · DeVille') : property?.title || (isScene ? environment.name === 'Todos os ambientes' ? 'Seu próximo lugar' : environment.name : parts[0] === 'colecao' ? 'A coleção' : parts[0] === 'comparar' ? 'Comparar imóveis' : parts[0] === 'curadoria' ? 'Nossa curadoria' : parts[0] === 'proprietarios' ? 'Para proprietários' : 'Página não encontrada')} — EME Select`;
+    document.title = `${isDevelopment ? (isCasaVeredas ? 'Casa M Veredas' : isG400 ? 'G400 · Geraldo Andreola · Yclodema' : 'Moradas da Serra · DeVille') : property?.title || (isScene ? environment.name === 'Todos os ambientes' ? 'Seu próximo lugar' : environment.name : parts[0] === 'colecao' ? 'A coleção' : parts[0] === 'comparar' ? 'Comparar imóveis' : parts[0] === 'curadoria' ? 'Nossa curadoria' : parts[0] === 'proprietarios' ? 'Para proprietários' : 'Página não encontrada')} — EME Select`;
   }, [hash]);
   useEffect(() => { if (!toast) return; const timer = window.setTimeout(() => setToast(''), 4000); return () => window.clearTimeout(timer); }, [toast]);
   useEffect(() => { const handler = (event: MessageEvent) => { if (event.origin === window.location.origin && event.source === frameRef.current?.contentWindow && event.data?.type === 'eme-select:close-intro') setModal(null); }; window.addEventListener('message', handler); return () => window.removeEventListener('message', handler); }, []);
@@ -166,7 +170,7 @@ export default function App() {
   if (modal?.kind === 'plan' && landInquiry) modalTitle = 'Área e implantação';
   return <><a href="#conteudo" className="skip-link" onClick={event => { event.preventDefault(); const main = document.querySelector('main'); main?.setAttribute('tabindex', '-1'); main?.focus(); }}>Pular para o conteúdo</a><Header tour={isTour} favorites={favorites.length} onFavorites={() => setModal({ kind: 'favorites' })} onContact={contact} />
     {isScene ? <ScenePage key={environment.id} environment={environment} onMotion={() => setModal({ kind: 'motion' })} favorites={favorites} onFavorite={toggleFavorite} />
-      : isDevelopment ? <Suspense fallback={<main id="conteudo" className="empty-page" role="status">Preparando o empreendimento…</main>}>{isG400 ? <G400Page /> : <DevelopmentPage />}</Suspense>
+      : isDevelopment ? <Suspense fallback={<main id="conteudo" className="empty-page" role="status">Preparando o empreendimento…</main>}>{isCasaVeredas ? <CasaVeredasPage /> : isG400 ? <G400Page /> : <DevelopmentPage />}</Suspense>
       : parts[0] === 'colecao' ? <CatalogPage state={catalogState} favorites={favorites} comparison={comparison} onFavorite={toggleFavorite} onCompare={toggleComparison} onShare={() => shareRoute(catalogHash(catalogState), 'Link da busca copiado.')} />
       : parts[0] === 'comparar' ? <Comparison items={comparison.map(id => properties.find(p => p.id === id)!)} collectionHref={lastCatalog.current} onRemove={removeComparison} onBook={p => setModal({ kind: 'booking', property: p })} onShare={() => shareRoute(comparisonHash(comparison, lastCatalog.current), 'Link da comparação copiado.')} onClear={() => { setComparison([]); window.location.hash = comparisonHash([], lastCatalog.current); }} />
       : isTour && property ? <Tour property={property} favorite={favorites.includes(property.id)} onFavorite={() => toggleFavorite(property.id)} onBook={contact} onShare={() => share(property)} />
