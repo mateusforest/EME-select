@@ -1,0 +1,144 @@
+<div id="eme-select-completa" data-panel="closed" data-level="ambiente">
+  
+  <section class="em-stage" aria-label="Exploração imersiva EME Select">
+    <div class="em-camera" data-camera>
+      <img class="em-layer" data-layer="0" src="/assets/landing/serra.avif" alt="Cenário ilustrativo de uma casa contemporânea na serra.">
+      <img class="em-layer" data-layer="1" alt="" aria-hidden="true">
+    </div>
+    <div class="em-shade" aria-hidden="true"></div>
+    <header class="em-header">
+      <div class="em-logo" aria-label="EME Select">EME<span>Select</span></div>
+      <nav class="em-header-nav" aria-label="Navegação principal">
+        <a class="em-all-link" href="#/colecao">Todos os imóveis ↗</a>
+        <form class="em-search-form" data-search-form role="search" aria-label="Busca natural de imóveis">
+          <label class="em-live" for="em-natural-query">O que você procura?</label>
+          <input id="em-natural-query" data-search-input type="search" placeholder="O que você procura?" autocomplete="off" maxlength="500" required>
+          <button class="em-search-send cursor-interaction" type="submit" aria-label="Enviar busca"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></button>
+          <button class="em-search-mic cursor-interaction" type="button" data-search-mic aria-label="Buscar por voz" aria-expanded="false" aria-controls="em-voice"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mic" aria-hidden="true"><path d="M12 19v3"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><rect x="9" y="2" width="6" height="13" rx="3"></rect></svg></button>
+        </form>
+        <a class="em-owner-link" href="/enviar-imovel">Para proprietários ↗</a>
+      </nav>
+    </header>
+    <nav class="em-path" aria-label="Seu caminho" data-path hidden><span>Serra</span></nav>
+    <section class="em-voice" id="em-voice" role="dialog" aria-labelledby="em-voice-title" hidden>
+      <div class="em-search-top"><span>Busca por voz</span><button class="em-search-close cursor-interaction" type="button" data-voice-close aria-label="Fechar busca por voz"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
+      <h2 id="em-voice-title">Conte do seu jeito.</h2>
+      <p class="em-voice-hint">Fale sobre o lugar, a rotina e o que faz diferença para você. Revise o texto antes de buscar.</p>
+      <label for="em-transcript">Seu pedido</label>
+      <textarea id="em-transcript" data-transcript rows="3" maxlength="500"></textarea>
+      <div class="em-voice-bottom"><span data-voice-status role="status">A transcrição usa o serviço de voz do navegador. Você pode digitar seu pedido.</span><button class="em-solid-button cursor-interaction" type="button" data-transcript-send>Buscar com este texto <span aria-hidden="true">→</span></button></div>
+    </section>
+    <section class="em-search-results" data-search-results aria-labelledby="em-search-title" hidden>
+      <div class="em-search-top"><span>Sua busca</span><button class="em-search-close cursor-interaction" type="button" data-search-close aria-label="Voltar aos ambientes"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
+      <div class="em-search-heading"><div><h2 id="em-search-title">Imóveis para você.</h2><p class="em-search-caption" data-search-caption></p></div><button type="button" class="em-refine-button cursor-interaction" data-refine>Editar pedido <span aria-hidden="true">↗</span></button></div>
+      <div class="em-understood" data-understood hidden><span>Entendi que você procura</span><p data-search-criteria></p></div>
+      <p class="em-search-unverified" data-search-unverified hidden></p>
+      <div class="em-search-list" data-search-list></div>
+      <div class="em-search-empty" data-search-empty hidden><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle" aria-hidden="true"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path></svg><p data-search-question></p><button type="button" class="em-solid-button cursor-interaction" data-search-example>Buscar casas em Vacaria <span aria-hidden="true">→</span></button></div>
+      <div class="em-search-footer"><p>Anúncios publicados. Confirme disponibilidade e detalhes com a equipe.</p><a class="em-collection-link" href="#/colecao">Ver catálogo ↗</a></div>
+    </section>
+    <div class="em-left-track">
+    <div class="em-copy" data-copy>
+      <p class="em-eyebrow" data-eyebrow>Lugares para viver melhor</p>
+      <h1 data-heading>Encontre<br>seu lugar.</h1>
+      <p class="em-subtitle" data-subtitle>Um lugar que combina com você.</p>
+      <a class="em-destination-link" data-results-link href="#/colecao" hidden><span data-results-label>Ver imóveis na coleção</span><span aria-hidden="true">↗</span></a>
+    </div>
+    <aside class="em-type-rail" aria-label="Tipos de imóvel">
+      <p class="em-type-label">Explore as possibilidades</p>
+      <div class="em-type-buttons">
+        <button type="button" class="cursor-interaction" data-type="casas" aria-expanded="false" aria-controls="em-choices"><span>Casas</span><span aria-hidden="true">↗</span></button>
+        <button type="button" class="cursor-interaction" data-type="apartamentos" aria-expanded="false" aria-controls="em-choices"><span>Apartamentos</span><span aria-hidden="true">↗</span></button>
+        <button type="button" class="cursor-interaction" data-type="comercial" aria-expanded="false" aria-controls="em-choices"><span>Comercial</span><span aria-hidden="true">↗</span></button>
+        <button type="button" class="cursor-interaction" data-type="terrenos" aria-expanded="false" aria-controls="em-choices"><span>Terrenos</span><span aria-hidden="true">↗</span></button>
+      </div>
+    </aside>
+    <section class="em-panel" id="em-choices" role="dialog" aria-labelledby="em-panel-title" hidden>
+      <div class="em-panel-top"><span data-panel-context>Serra · explorar</span><button type="button" class="em-close cursor-interaction" data-close aria-label="Fechar escolhas">×</button></div>
+      <h2 id="em-panel-title">Casas</h2>
+      <p class="em-panel-hint" data-panel-hint>Como você imagina morar?</p>
+      <div class="em-options" data-options></div>
+      <p class="em-panel-foot">Escolha uma possibilidade para entrar no cenário.</p>
+    </section>
+    </div>
+    <div class="em-environments">
+      <p class="em-environment-label" id="em-env-label">Onde você se imagina?</p>
+      <div class="em-environment-buttons" role="group" aria-labelledby="em-env-label">
+        <button type="button" class="cursor-interaction" data-env="serra" aria-pressed="true">Serra</button>
+        <button type="button" class="cursor-interaction" data-env="litoral" aria-pressed="false">Litoral</button>
+        <button type="button" class="cursor-interaction" data-env="cidade" aria-pressed="false">Cidade</button>
+      </div>
+    </div>
+    <div class="em-stage-note"><span aria-hidden="true"></span><span>Cenários ilustrativos</span></div>
+    <div class="em-bottom-line"><span data-bottom-label>EME Select · Serra</span><span>Explore no seu ritmo</span></div>
+    <div class="em-live" aria-live="polite" data-live></div>
+  </section>
+<div class="ef-page">
+  <nav class="ef-chapters" aria-label="Explore a EME Select">
+    <span>Continue a descoberta <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down" aria-hidden="true"><path d="M12 5v14"></path><path d="m19 12-7 7-7-7"></path></svg></span>
+    <div><a class="cursor-interaction" href="#ef-colecao">A coleção</a><a class="cursor-interaction" href="#ef-empreendimentos">Empreendimentos</a><a class="cursor-interaction" href="#ef-eme">A EME</a><a class="cursor-interaction" href="#ef-contato">Vamos conversar</a></div>
+  </nav>
+
+  <main id="conteudo">
+    <section class="ef-section ef-collection" id="ef-colecao" aria-labelledby="ef-collection-title">
+      <div class="ef-section-head">
+        <div><p class="ef-kicker">A coleção EME Select</p><h2 id="ef-collection-title">Da inspiração ao endereço.</h2></div>
+        <a class="ef-text-link cursor-interaction" href="#/colecao">Todos os imóveis <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a>
+      </div>
+      <article class="ef-property">
+        <div class="ef-property-gallery">
+          <img class="ef-property-photo" src="/assets/property-placeholder.svg" alt="Fachada da casa no Loteamento Turquesa, fotografada à noite" width="760" height="570" loading="lazy" data-property-photo>
+          <span class="ef-photo-tag">À venda · Casa</span>
+          <div class="ef-gallery-controls"><span data-photo-count aria-live="polite">01 / 02</span><button class="cursor-interaction" type="button" data-photo-prev aria-label="Foto anterior do imóvel"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></button><button class="cursor-interaction" type="button" data-photo-next aria-label="Próxima foto do imóvel"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></button></div>
+        </div>
+        <div class="ef-property-copy">
+          <p class="ef-kicker">Jardim América · Vacaria, RS</p>
+          <h3>Casa no<br>Loteamento Turquesa.</h3>
+          <p>Ambientes integrados, suíte com closet e espaço ao ar livre para aproveitar a rotina.</p>
+          <dl class="ef-facts"><div><dt>Área construída</dt><dd>173,1 m²</dd></div><div><dt>Dormitórios</dt><dd>3 <small>· 1 suíte</small></dd></div><div><dt>Garagem</dt><dd>2 vagas</dd></div></dl>
+          <div class="ef-property-price"><span>Valor de venda</span><strong>R$ 1.690.000</strong></div>
+          <a class="ef-button cursor-interaction" href="#/imovel/87809ebd-12ed-4c69-967b-483ebe0209a8">Conhecer este imóvel <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a>
+          <small class="ef-small-note">Consulte disponibilidade e condições com a equipe.</small>
+        </div>
+      </article>
+    </section>
+
+    <section class="ef-section ef-developments" id="ef-empreendimentos" aria-labelledby="ef-developments-title">
+      <div class="ef-section-head"><div><p class="ef-kicker">Empreendimentos</p><h2 id="ef-developments-title">Novas perspectivas para viver.</h2></div><p>Conheça os projetos.<br>Imagine suas possibilidades.</p></div>
+      <div class="ef-project-grid">
+        <article class="ef-project">
+          <a class="ef-project-image cursor-interaction" href="#/empreendimentos/moradas-da-serra" aria-label="Explorar Moradas da Serra"><img src="/assets/developments/moradas-da-serra/hero.webp" alt="Perspectiva conceitual das torres do Moradas da Serra" width="720" height="480" loading="lazy"><span class="ef-image-arrow" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></span></a>
+          <p class="ef-kicker">DeVille · Vacaria, RS</p><h3>Moradas da Serra</h3><p>Torres, interiores e espaços de convivência em uma experiência para explorar no seu ritmo.</p>
+          <a class="ef-text-link cursor-interaction" href="#/empreendimentos/moradas-da-serra">Explorar o empreendimento <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a>
+        </article>
+        <article class="ef-project">
+          <a class="ef-project-image cursor-interaction" href="#/empreendimentos/g400" aria-label="Explorar G400"><img src="/assets/developments/g400/hero.webp" alt="Perspectiva conceitual do edifício G400, Geraldo Andreola" width="720" height="480" loading="lazy"><span class="ef-image-arrow" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></span></a>
+          <p class="ef-kicker">Yclodema · Vacaria, RS</p><h3>G400 · Geraldo Andreola</h3><p>Apartamentos e coberturas na Avenida Moreira Paz. Um novo ponto de vista sobre a cidade.</p>
+          <a class="ef-text-link cursor-interaction" href="#/empreendimentos/g400">Explorar o empreendimento <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a>
+        </article>
+      </div>
+      <p class="ef-small-note ef-project-note">Perspectivas conceituais. Características e disponibilidade a confirmar.</p>
+    </section>
+
+    <section class="ef-spatial" aria-labelledby="ef-spatial-title">
+      <div class="ef-spatial-visual"><img src="/assets/m/gallery/geral.webp" alt="Estudo conceitual da torre M no EME Spatial" width="550" height="700" loading="lazy"><span>Empreendimento conceito M</span></div>
+      <div class="ef-spatial-copy"><p class="ef-kicker">EME Spatial · Experiência digital</p><h2 id="ef-spatial-title">Entre antes<br>de chegar.</h2><p>Explore a arquitetura, aproxime os detalhes e conheça os espaços por outra perspectiva.</p><p>Uma ferramenta para visualizar possibilidades e compreender melhor cada ambiente.</p><a class="ef-text-link cursor-interaction" href="https://www.emespatial.com" target="_blank" rel="noopener noreferrer">Conhecer o EME Spatial <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a></div>
+    </section>
+
+    <section class="ef-section ef-about" id="ef-eme" aria-labelledby="ef-about-title">
+      <div class="ef-about-intro"><div><p class="ef-kicker">Nosso olhar</p><h2 id="ef-about-title">Um imóvel faz sentido<br>quando combina com você.</h2></div><p>Escutar o que importa, entender o contexto e cuidar dos detalhes. É assim que a EME aproxima pessoas de novas possibilidades.</p></div>
+      <div class="ef-principles"><article><span>01</span><h3>Escuta</h3><p>Sua rotina e seus planos dão direção à busca.</p></article><article><span>02</span><h3>Curadoria</h3><p>Um olhar para a arquitetura, a localização e o conjunto.</p></article><article><span>03</span><h3>Presença</h3><p>Pessoas para orientar e acompanhar cada escolha.</p></article></div>
+      <div class="ef-people"><div class="ef-people-label"><p class="ef-kicker">Quem faz a EME</p><p>Tecnologia e pessoas,<br>na mesma direção.</p></div></div>
+    </section>
+
+    <section class="ef-owners" aria-labelledby="ef-owners-title"><div><p class="ef-kicker">Para proprietários</p><h2 id="ef-owners-title">Seu imóvel.<br>Um olhar à altura.</h2></div><div><p>Apresente seu imóvel e converse com a equipe sobre as possibilidades de venda ou locação.</p><a class="ef-text-link cursor-interaction" href="/enviar-imovel">Apresentar meu imóvel <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a></div></section>
+
+    <section class="ef-contact" id="ef-contato" aria-labelledby="ef-contact-title"><p class="ef-kicker">Uma conversa faz a diferença</p><h2 id="ef-contact-title">Conte o que você<br>quer viver.</h2><p>A próxima escolha começa com o que importa para você.</p><a class="ef-button ef-button-light cursor-interaction" href="https://wa.me/5554991578029?text=Ol%C3%A1%21%20Gostaria%20de%20conversar%20sobre%20o%20im%C3%B3vel%20que%20procuro." target="_blank" rel="noopener noreferrer">Conversar com a EME <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a><span class="ef-contact-phone">WhatsApp · (54) 99157-8029</span></section>
+  </main>
+
+  <footer class="ef-footer"><div class="ef-footer-top"><a class="ef-footer-logo cursor-interaction" href="#eme-select-completa" aria-label="EME Select, voltar ao início">EME<span>Select</span></a><p>Imóveis selecionados.<br>Rio Grande do Sul.</p><nav aria-label="Navegação do rodapé"><a class="cursor-interaction" href="#ef-colecao">A coleção</a><a class="cursor-interaction" href="#ef-empreendimentos">Empreendimentos</a><a class="cursor-interaction" href="#ef-eme">A EME</a><a class="cursor-interaction" href="/portalselect">Portal da equipe ↗</a></nav></div><div class="ef-footer-bottom"><span>© 2026 EME Select</span><details><summary class="cursor-interaction">Privacidade</summary><p>Ao iniciar uma conversa pelo WhatsApp, você escolhe o que enviar e passa a utilizar um serviço externo. A busca por voz, quando acionada, utiliza o reconhecimento de fala do navegador, que pode processar áudio em seu serviço. Para informações sobre seus dados, entre em contato com a equipe da EME Select.</p></details><a class="cursor-interaction" href="#eme-select-completa">Voltar ao início ↑</a></div></footer>
+</div>
+
+  
+
+</div>

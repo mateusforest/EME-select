@@ -1,4 +1,5 @@
 import App from './App';
+import LandingPage from './landing/LandingPage';
 import {useEffect,useState} from 'react';
 import {registerPublishedProperties} from './data';
 import './styles.css';
@@ -10,6 +11,9 @@ import './environments.css';
 import './brand-header.css';
 import './soft-relief.css';
 export default function PublicApp(){
+ const [route,setRoute]=useState(()=>window.location.hash||'#/');
+ useEffect(()=>{const update=()=>setRoute(window.location.hash||'#/');window.addEventListener('hashchange',update);return()=>window.removeEventListener('hashchange',update);},[]);
+ const isLanding=['#/','#','', '#/ambientes/todos'].includes(route.split('?')[0]);
  const [ready,setReady]=useState(false),[failed,setFailed]=useState(false),[attempt,setAttempt]=useState(0);
  useEffect(()=>{
   document.documentElement.classList.add('eme-public');
@@ -24,6 +28,6 @@ export default function PublicApp(){
   }).catch(()=>{if(active){registerPublishedProperties([]);setFailed(true);}}).finally(()=>{clearTimeout(timeout);if(active)setReady(true);});
   return()=>{active=false;controller.abort();clearTimeout(timeout);};
  },[attempt]);
- return ready?<><App key={attempt}/>{failed&&<div role="status" className="collection-connection-notice">Não foi possível atualizar os anúncios. <button onClick={()=>{setReady(false);setAttempt(v=>v+1);}}>Tentar novamente</button></div>}</>:<div role="status" style={{padding:32,color:'#173c32'}}>Preparando a coleção…</div>;
+ return ready?<>{isLanding?<LandingPage key={attempt}/>:<App key={attempt}/>}{failed&&<div role="status" className="collection-connection-notice">Não foi possível atualizar os anúncios. <button onClick={()=>{setReady(false);setAttempt(v=>v+1);}}>Tentar novamente</button></div>}</>:<div role="status" style={{padding:32,color:'#173c32'}}>Preparando a coleção…</div>;
 }
 
