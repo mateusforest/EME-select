@@ -5,7 +5,7 @@ export function mountLanding(root,properties){
  hydrateLanding(root,properties,lifecycle.signal);
 
       const $=selector=>root.querySelector(selector);
-      const assets={"litoral": "/assets/landing/litoral.avif", "cidade": "/assets/landing/cidade.avif", "bairro": "/assets/landing/bairro.avif", "condominio": "/assets/landing/condominio.avif", "cobertura": "/assets/landing/cobertura.avif", "terreno": "/assets/landing/terreno.avif", "rural": "/assets/landing/rural.avif", "loja": "/assets/landing/loja.avif", "sala": "/assets/landing/sala.avif", "galpao": "/assets/landing/galpao.avif", "lotecondominio": "/assets/landing/lotecondominio.avif", "casaindependente": "/assets/landing/casaindependente.avif", "apartamento": "/assets/landing/apartamento.avif", "garden": "/assets/landing/garden.avif"};
+      const assets={"litoral": "/assets/landing/litoral-hq.avif", "cidade": "/assets/landing/cidade-hq.avif", "bairro": "/assets/landing/bairro-hq.avif", "condominio": "/assets/landing/condominio-hq.avif", "cobertura": "/assets/landing/cobertura-hq.avif", "terreno": "/assets/landing/terreno-hq.avif", "rural": "/assets/landing/rural-hq.avif", "loja": "/assets/landing/loja-hq.avif", "sala": "/assets/landing/sala-hq.avif", "galpao": "/assets/landing/galpao-hq.avif", "lotecondominio": "/assets/landing/lotecondominio-hq.avif", "casaindependente": "/assets/landing/casaindependente-hq.avif", "apartamento": "/assets/landing/apartamento-hq.avif", "garden": "/assets/landing/garden-hq.avif"};
       assets.serra=$('[data-layer="0"]').src;
       const environments={serra:{label:'Serra',region:'serra'},litoral:{label:'Litoral',region:'litoral'},cidade:{label:'Cidade',region:'urbano'}};
       const choices={
