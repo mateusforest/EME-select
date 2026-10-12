@@ -1,3 +1,4 @@
+import {brokerUser,brokerSnapshot} from '../shared/broker.mjs';
 import {createHash} from 'node:crypto';
 import {emptyFinance, applyFinanceCommand} from '../shared/finance.mjs';
 
@@ -52,6 +53,7 @@ export function attachFinance({db, transaction, stamp, send}) {
     return {version:current.version,state:JSON.parse(current.data),updatedAt:current.updated_at,...metadata(),history:db.prepare('SELECT f.id,f.action,f.state_version AS version,f.created_at AS createdAt,u.name AS author FROM finance_audit f JOIN users u ON u.id=f.actor_id ORDER BY f.id DESC LIMIT 100').all()};
   };
   function handle(path, req, res, user, body) {
+    if(path==='/api/broker/commissions'){brokerUser(user);if(req.method!=='GET')failWith(405,'Operação indisponível.');const current=row(),meta=metadata();const properties=db.prepare('SELECT id,title,assignee_id AS assigneeId FROM evaluations').all();send(res,200,brokerSnapshot(JSON.parse(current.data),user,properties,meta.members));return true;}
     if (path !== '/api/finance' && path !== '/api/finance/commands') return false;
     financeAdmin(user);
     if (path === '/api/finance' && req.method === 'GET') { send(res,200,snapshot()); return true; }

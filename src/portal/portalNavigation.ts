@@ -13,7 +13,7 @@ export interface PortalNavigationItem {
 }
 
 export const portalNavigation: PortalNavigationItem[] = [
-  { id: 'hoje', label: 'Visão geral', title: 'Sua operação, em um só lugar.', description: 'Acompanhe os imóveis, as publicações e os próximos passos.', icon: LayoutDashboard, group: 'Sua operação', status: 'active' },
+  { id: 'hoje', label: 'Meu dia', title: 'Seu próximo passo começa aqui.', description: 'Acompanhe os imóveis, as publicações e os próximos passos.', icon: LayoutDashboard, group: 'Sua operação', status: 'active' },
   { id: 'imoveis', label: 'Imóveis e captações', title: 'Da captação ao anúncio.', description: 'Uma ficha por imóvel. Materiais, cadastro e publicação.', icon: House, group: 'Sua operação', status: 'active' },
   { id: 'empreendimentos', label: 'Empreendimentos', title: 'Uma experiência completa. Unidade por unidade.', description: 'Cenário DeVille, plantas, andares e disponibilidade.', icon: House, group: 'Sua operação', status: 'active', adminOnly: true },
   { id: 'avaliacoes', secondary: true, label: 'Avaliações', title: 'Cada imóvel começa com uma boa leitura.', description: 'Cadastro, responsável, curadoria e histórico em um só lugar.', icon: ClipboardCheck, group: 'Sua operação', status: 'active' },
@@ -21,12 +21,14 @@ export const portalNavigation: PortalNavigationItem[] = [
   { id: 'relacionamento', label: 'Atendimento e visitas', title: 'Toda conversa merece continuidade.', description: 'Histórico de contatos, agenda de visitas e controle de chaves.', icon: MessageSquare, group: 'Sua operação', status: 'active' },
   { id: 'locacoes', label: 'Locações', title: 'Cuidar também é acompanhar.', description: 'Contratos, manutenção e compromissos da administração mensal.', icon: KeyRound, group: 'Sua operação', status: 'active' },
   { id: 'documentos', label: 'Documentos', title: 'Informação organizada. Acesso responsável.', description: 'Documentos privados, versões, validade e revisão da equipe.', icon: FileText, group: 'Sua operação', status: 'active' },
+  { id: 'comissoes', label: 'Minhas comissões', title: 'Clareza em cada conquista.', description: 'Participações, potencial e pagamentos individuais.', icon: Wallet, group: 'Sua operação', status: 'active' },
+  { id: 'conversas', label: 'Conversas da equipe', title: 'O contexto fica com o negócio.', description: 'Converse com a gestão e registre os próximos passos por imóvel.', icon: MessageSquare, group: 'Sua operação', status: 'active' },
   { id: 'financeiro', label: 'Central financeira', title: 'Clareza para cuidar do crescimento.', description: 'Receitas, despesas, caixa e resultado da EME.', icon: Wallet, group: 'Gestão e inteligência', status: 'active', adminOnly: true },
   { id: 'padrao', label: 'Padrão de curadoria', title: 'O que faz um imóvel ser EME.', description: 'Os critérios utilizados nas novas avaliações, por tipo de imóvel.', icon: SlidersHorizontal, group: 'Gestão e inteligência', status: 'active' },
-  { id: 'inteligencia', label: 'Central de IA', title: 'Inteligência com supervisão da EME.', description: 'Conferência da régua e análises com revisão da equipe.', icon: Sparkles, group: 'Gestão e inteligência', status: 'active' },
+  { id: 'inteligencia', label: 'Assistente Select', title: 'Inteligência para o seu trabalho.', description: 'Conferência da régua e análises com revisão da equipe.', icon: Sparkles, group: 'Gestão e inteligência', status: 'active' },
   { id: 'spatial', label: 'Spatial Studio', title: 'EME Spatial', description: 'Estúdio de espaços · projetos, orçamento e produção.', icon: Sparkles, group: 'Gestão e inteligência', status: 'active', adminOnly:true },
   { id: 'qualidade', label: 'Qualidade da equipe', title: 'Um padrão que se constrói em equipe.', description: 'Evidências de atendimento para orientar e desenvolver a equipe.', icon: ShieldCheck, group: 'Gestão e inteligência', status: 'active', adminOnly: true },
-  { id: 'pessoas', label: 'Quem faz a EME', title: 'Quem faz a EME.', description: 'Perfis, retratos e cargos apresentados na página inicial.', icon: Users, group: 'Gestão e inteligência', status: 'active', adminOnly: true },
+  { id: 'pessoas', label: 'Nossa equipe', title: 'Nossa equipe.', description: 'Perfis, retratos e cargos apresentados na página inicial.', icon: Users, group: 'Gestão e inteligência', status: 'active', adminOnly: true },
   { id: 'equipe', label: 'Equipe e acessos', title: 'Pessoas certas. Responsabilidades claras.', description: 'Contas individuais e acesso conforme a função.', icon: Users, group: 'Gestão e inteligência', status: 'active', adminOnly: true },
   { id: 'conta', label: 'Minha conta', title: 'Seu acesso, sob seu cuidado.', description: 'Informações da sua conta na EME Select.', icon: KeyRound, group: 'Sua conta', status: 'active' },
 ];

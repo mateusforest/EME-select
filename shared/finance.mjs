@@ -1,3 +1,4 @@
+import {applyBrokerAgreement} from './broker.mjs';
 /** Manual management ledger. Amounts are BRL integer cents; percentages are basis points. */
 export const DRE_GROUPS = Object.freeze([
   { id: 'revenue', label: 'Receita bruta da EME' },
@@ -145,6 +146,7 @@ export function applyFinanceCommand(input, command, rawContext) {
   const today = date(saoPauloDate(context.now))
   const state = structuredClone(input)
   const data = command.data
+  if(command.type.startsWith('broker.'))return applyBrokerAgreement(state,command,context);
   switch (command.type) {
     case 'account.save': {
       const prior = data.id ? state.accounts.find(item => item.id === id(data.id)) : null
@@ -158,6 +160,7 @@ export function applyFinanceCommand(input, command, rawContext) {
     case 'entry.save': {
       const prior = data.id ? state.entries.find(item => item.id === id(data.id)) : null
       if (prior && prior.status !== 'open') fail('Lançamentos baixados ou cancelados não podem ser editados.')
+      if (prior?.agreementId) fail('Comissão vinculada a acordo preserva seus valores. Use cancelamento com justificativa.');
       if (prior?.operationId) fail('Lançamentos de uma operação preservam os valores originais. Cancele e registre a correção.')
       if (data.operationId || data.recurrenceId || data.recurrenceMonth) fail('Vínculos automáticos devem ser criados pela operação ou recorrência.')
       put(state.entries, entryDraft({ ...prior, ...data }, prior, state, context)); break

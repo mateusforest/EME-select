@@ -1,3 +1,4 @@
+import {brokerUser,brokerSnapshot} from '../../shared/broker.mjs';
 import {peopleRecordId} from '../people.mjs';
 import {applyFinanceCommand} from '../../shared/finance.mjs';
 import {financeEnvelope, financeFingerprint, financeStateSize, financeAdmin} from '../finance.mjs';
@@ -7,9 +8,9 @@ export function attachCloudFinance({client,hashOf}) {
   const metadata=async()=>{
     const [members,properties]=await Promise.all([
       rest('eme_profiles?select=id,name,role,active&order=name'),
-      rest('eme_cases?id=neq.'+peopleRecordId+'&select=id,data->>title&order=created_at.desc'),
+      rest('eme_cases?id=neq.'+peopleRecordId+'&select=id,assignee_id,data->>title&order=created_at.desc'),
     ]);
-    return {members,properties:properties.map(item=>({id:item.id,title:item.title||'Imóvel sem título'}))};
+    return {members,properties:properties.map(item=>({id:item.id,title:item.title||'Imóvel sem título',assigneeId:item.assignee_id}))};
   };
   const row=async()=>{
     const value=(await rest('eme_finance_state?id=eq.company&select=version,data,updated_at'))[0];
@@ -21,6 +22,7 @@ export function attachCloudFinance({client,hashOf}) {
     return {version:current.version,state:current.data,updatedAt:current.updated_at,...meta,history:history.map(item=>({id:item.id,action:item.action,version:item.state_version,createdAt:item.created_at,author:item.eme_profiles?.name||'Administrador'}))};
   };
   async function handle(path,req,res,user,body,send) {
+    if(path==='/api/broker/commissions'){brokerUser(user);if(req.method!=='GET'){const e=new Error('Operação indisponível.');e.status=405;throw e;}const [current,meta]=await Promise.all([row(),metadata()]);send(200,brokerSnapshot(current.data,user,meta.properties,meta.members));return true;}
     if(path!=='/api/finance'&&path!=='/api/finance/commands')return false;
     financeAdmin(user);
     if(path==='/api/finance'&&req.method==='GET'){send(200,await snapshot());return true;}
