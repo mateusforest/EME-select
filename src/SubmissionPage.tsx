@@ -20,7 +20,7 @@ export default function SubmissionPage() {
     <a className="skip-link" href="#ficha-imovel">Ir para o formulário</a>
     <header className="submission-site-header">
       <a className="submission-brand" href="/#/" aria-label="EME Select — início">
-        <img className="select-mark" src="/assets/select-ribbon-lockup.svg" width="66" height="64" alt="" aria-hidden="true" />
+        <img className="select-mark" src="/assets/select-ribbon-lockup.webp" width="66" height="64" alt="" aria-hidden="true" />
       </a>
       <a className="submission-back" href="/#/">Conheça a EME <ArrowUpRight size={16} aria-hidden="true" /></a>
     </header>
