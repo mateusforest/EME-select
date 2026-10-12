@@ -124,7 +124,7 @@
 #eme-select-completa .em-voice-bottom>span{font-size:11px;color:#b4c7b9}
 #eme-select-completa[data-search=open] .em-left-track,#eme-select-completa[data-search=open] .em-environments,#eme-select-completa[data-search=open] .em-stage-note{visibility:hidden}
 #eme-select-completa[data-search=open] .em-path{display:none}
-@media(max-width:900px){
+@media(max-width:1100px){
   #eme-select-completa{--em-header-height:122px}
   #eme-select-completa .em-header{grid-template-columns:auto minmax(0,1fr);align-content:center;gap:6px 12px;width:calc(100% - 32px);height:auto;min-height:100px;margin-top:10px;padding:8px 14px;border-radius:18px}
   #eme-select-completa .em-logo{grid-column:1;grid-row:1}
@@ -378,6 +378,26 @@
 #eme-select-completa .em-logo{display:flex;align-items:center;width:54px;height:52px;padding:0;letter-spacing:normal}
 #eme-select-completa .em-logo .select-mark{display:block;width:54px;height:52px;object-fit:contain;filter:none}
 #eme-select-completa .ef-footer-logo .select-mark{display:block;width:82px;height:80px;object-fit:contain;filter:none}
-@media(max-width:900px){#eme-select-completa .em-logo,#eme-select-completa .em-logo .select-mark{width:46px;height:44px}}
+@media(max-width:1100px){#eme-select-completa .em-logo,#eme-select-completa .em-logo .select-mark{width:46px;height:44px}}
 
 @media(max-width:380px){#eme-select-completa .em-header-nav a{padding-left:5px;padding-right:5px;font-size:10px}}
+
+/* One readable team entry, with enough space around the centered search. */
+#eme-select-completa .em-header{max-width:1200px}
+#eme-select-completa .em-header-nav a{font-size:12px}
+#eme-select-completa .ef-people{scroll-margin-top:28px;gap:24px}
+#eme-select-completa .ef-people-label .ef-kicker{font:400 28px/1.2 Georgia,serif;letter-spacing:-.5px;text-transform:none;color:var(--ef-ink);margin-bottom:12px}
+#eme-select-completa .ef-people details{padding:20px;border:1px solid var(--ef-line);border-radius:16px;background:#fafaf54d}
+#eme-select-completa .ef-people summary{min-height:52px}
+#eme-select-completa .ef-property{gap:44px;align-items:start}
+#eme-select-completa .ef-property-gallery{border-radius:18px;min-height:440px;isolation:isolate}
+#eme-select-completa .ef-property-photo{object-fit:contain;background:#142e25}
+#eme-select-completa .ef-photo-tag,#eme-select-completa .ef-gallery-controls{z-index:2}
+#eme-select-completa .ef-gallery-controls{border-radius:999px;padding:5px;background:#103026ed;gap:5px}
+#eme-select-completa .ef-gallery-controls button{width:40px;height:40px;border-radius:50%}
+#eme-select-completa .ef-property-copy{padding:18px 0}
+#eme-select-completa .ef-property-copy h3{font-size:34px;line-height:1.18;letter-spacing:-.8px}
+#eme-select-completa .ef-property-copy .ef-button{border-radius:11px;min-height:46px}
+#eme-select-completa .ef-gallery-status{position:absolute;z-index:3;left:16px;right:16px;top:58px;background:#103026ee;color:#edf2e8;padding:10px 12px;border-radius:9px;font-size:12px}
+@media(max-width:520px){#eme-select-completa{--em-header-height:164px}#eme-select-completa .em-header-nav{flex-wrap:wrap;gap:0 3px}#eme-select-completa .em-header-nav a{font-size:11px;padding:7px 8px;min-height:32px}}
+@media(max-width:600px){#eme-select-completa .ef-property{gap:22px}#eme-select-completa .ef-property-gallery{min-height:0;aspect-ratio:4/3}#eme-select-completa .ef-property-copy h3{font-size:30px}#eme-select-completa .ef-people details{padding:17px}}

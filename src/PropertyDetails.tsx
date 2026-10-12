@@ -40,6 +40,28 @@ export default function PropertyDetails({
         <p className="details-demo">{preview?'Prévia em avaliação · dados a conferir':property.isIllustrative===false?'Imóvel da coleção EME Select':'Acervo demonstrativo · dados ilustrativos'}</p>
       </div>
 
+      <header className="details-editorial-header">
+          <div className="details-heading-row">
+            <p className="details-eyebrow">Coleção {collectionName}</p>
+            <div className="details-utilities">
+              <button
+                className={`details-icon-button${favorite ? ' is-favorite' : ''}`}
+                type="button"
+                onClick={onToggleFavorite}
+                aria-pressed={favorite}
+                aria-label={favorite ? 'Remover dos favoritos' : 'Salvar nos favoritos'}
+                title={favorite ? 'Remover dos favoritos' : 'Salvar nos favoritos'}
+              ><Heart size={19} fill={favorite ? 'currentColor' : 'none'} aria-hidden="true" /></button>
+              <button className="details-icon-button" type="button" onClick={onShare} aria-label="Compartilhar imóvel" title="Compartilhar imóvel">
+                <Share2 size={18} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+
+          <h1 id="details-title" className="details-title">{property.title}</h1>
+          <p className="details-location"><MapPin size={15} aria-hidden="true" />{property.location}</p>
+      </header>
+
       <div className="details-layout">
         <section className="details-visual" aria-label="Imagem e informações do ambiente">
           {property.isIllustrative===false?<PropertyGallery key={property.id} images={property.images||[]} title={property.title}/>:<a
@@ -78,30 +100,33 @@ export default function PropertyDetails({
 
           <div className="details-story">
             <span className="details-eyebrow">{residential ? 'Uma forma de viver' : 'Possibilidades do espaço'}</span>
-            <PropertyPresentation description={property.description} features={property.tags}/>
+            <PropertyPresentation description={property.description} features={property.tags.filter(tag => !property.reasons.includes(tag))}/>
+          </div>
+          <div className="details-support">
+          <section className="details-curation" aria-labelledby="details-curation-title">
+            <div className="details-section-heading">
+              <h2 id="details-curation-title">{preview?'Diferenciais em avaliação':'Destaques do imóvel'}</h2>
+              <span className="details-small-label">O que chama atenção</span>
+            </div>
+            <ul className="details-reasons">
+              {property.reasons.map(reason => <li key={reason}><span className="details-reason-dot" aria-hidden="true" />{reason}</li>)}
+            </ul>
+          </section>
+
+          <details className="details-documents">
+            <summary>Documentação e próximos passos <span>+</span></summary>
+            <p>{property.isIllustrative===false?'A equipe pode esclarecer o escopo e a data das verificações e orientar sobre a documentação atualizada para a negociação.':'Conheça as verificações previstas. Este imóvel de exemplo não passou por análise documental.'}</p>
+            <button className="details-document-link" type="button" onClick={() => onDialog('documents')}>
+              <FileText size={17} aria-hidden="true" />
+              <span>Ver documentação e verificações</span>
+              <ArrowRight size={19} aria-hidden="true" />
+            </button>
+          </details>
+
           </div>
         </section>
 
-        <aside className="details-information" aria-label="Detalhes e curadoria do imóvel">
-          <div className="details-heading-row">
-            <p className="details-eyebrow">Coleção {collectionName}</p>
-            <div className="details-utilities">
-              <button
-                className={`details-icon-button${favorite ? ' is-favorite' : ''}`}
-                type="button"
-                onClick={onToggleFavorite}
-                aria-pressed={favorite}
-                aria-label={favorite ? 'Remover dos favoritos' : 'Salvar nos favoritos'}
-                title={favorite ? 'Remover dos favoritos' : 'Salvar nos favoritos'}
-              ><Heart size={19} fill={favorite ? 'currentColor' : 'none'} aria-hidden="true" /></button>
-              <button className="details-icon-button" type="button" onClick={onShare} aria-label="Compartilhar imóvel" title="Compartilhar imóvel">
-                <Share2 size={18} aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-
-          <h1 id="details-title" className="details-title">{property.title}</h1>
-          <p className="details-location"><MapPin size={15} aria-hidden="true" />{property.location}</p>
+        <aside className="details-information" aria-label="Valores e informações do imóvel">
           <div className="details-price-block">
             <span className="details-operation">{property.operation === 'alugar' ? 'Locação' : 'À venda'}</span>
             <p className="details-price">{property.isIllustrative===false&&!property.price?'Valor a informar':money(property.price)}{property.operation === 'alugar' && <span> / mês</span>}</p>
@@ -118,29 +143,6 @@ export default function PropertyDetails({
           </div>
 
           <dl className="details-extra-facts">{[["Banheiros",property.bathrooms],["Área total (m²)",property.totalArea],["Ano de construção",property.yearBuilt]].filter(([,v])=>v!=null).map(([label,value])=><div key={String(label)}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
-          <section className="details-curation" aria-labelledby="details-curation-title">
-            <div className="details-section-heading">
-              <h2 id="details-curation-title">{preview?'Diferenciais em avaliação':'Curadoria EME'}</h2>
-              <span className="details-small-label">O que chama atenção</span>
-            </div>
-            <ul className="details-reasons">
-              {property.reasons.map(reason => <li key={reason}><span className="details-reason-dot" aria-hidden="true" />{reason}</li>)}
-            </ul>
-          </section>
-
-          <section className="details-documents" aria-labelledby="details-documents-title">
-            <div className="details-section-heading">
-              <h2 id="details-documents-title">Documentação</h2>
-              <span className="details-status">{property.isIllustrative===false?'Consultar a equipe':'Não verificada'}</span>
-            </div>
-            <p>{property.isIllustrative===false?'A equipe pode esclarecer o escopo e a data das verificações e orientar sobre a documentação atualizada para a negociação.':'Conheça as verificações previstas. Este imóvel de exemplo não passou por análise documental.'}</p>
-            <button className="details-document-link" type="button" onClick={() => onDialog('documents')}>
-              <FileText size={17} aria-hidden="true" />
-              <span>Ver documentação e verificações</span>
-              <ArrowRight size={19} aria-hidden="true" />
-            </button>
-          </section>
-
           <div className="details-cta-group">
             <button className="details-book" type="button" onClick={onBook}>
               <span>Agendar visita</span><ArrowRight size={23} strokeWidth={1.5} aria-hidden="true" />
@@ -149,7 +151,7 @@ export default function PropertyDetails({
           </div>
         </aside>
       </div>
-      <div className="details-bottomline"><span>06 / Detalhes e curadoria</span><span>EME Select</span></div>
+      <div className="details-bottomline"><span>Conheça cada detalhe. Imagine sua rotina.</span><span>EME Select</span></div>
     </main>
   );
 }

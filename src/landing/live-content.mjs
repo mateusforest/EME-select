@@ -1,3 +1,4 @@
+import {createPhotoCache} from '../photo-cache.mjs';
 import {propertyPhotos} from './published-search.mjs';
 
 export function hydrateLanding(root, properties, signal) {
@@ -13,18 +14,43 @@ export function hydrateLanding(root, properties, signal) {
     const photos = propertyPhotos(item);
     const image = $('[data-property-photo]');
     const gallery = $('.ef-property-gallery');
-    let index = 0;
-    function showPhoto(delta = 0) {
+    let index = 0, requested = 0, version = 0, animation;
+    const cache = createPhotoCache();
+    const incoming = image.cloneNode(false); incoming.removeAttribute('data-property-photo');
+    incoming.removeAttribute('src'); incoming.alt = ''; incoming.setAttribute('aria-hidden','true'); incoming.hidden = true;
+    gallery.append(incoming);
+    const status = document.createElement('span'); status.className = 'ef-gallery-status'; status.setAttribute('role','status'); status.hidden = true; gallery.append(status);
+    async function showPhoto(delta = 0) {
       if (!photos.length) { gallery.hidden = true; return; }
-      index = (index + delta + photos.length) % photos.length;
-      image.src = photos[index].url;
-      image.alt = photos[index].caption || item.title;
-      $('[data-photo-count]').textContent = String(index+1).padStart(2,'0')+' / '+String(photos.length).padStart(2,'0');
+      requested = (requested + delta + photos.length) % photos.length;
+      const next = requested, ticket = ++version;
+      animation?.cancel(); incoming.hidden = true; status.hidden = true;
+      gallery.setAttribute('aria-busy','true');
+      try {
+        const source = await cache.load(photos[next].url);
+        if (signal.aborted || ticket !== version) return;
+        incoming.src = source; await incoming.decode();
+        if (signal.aborted || ticket !== version) return;
+        if (delta && !matchMedia('(prefers-reduced-motion: reduce)').matches && incoming.animate) {
+          incoming.hidden = false;
+          animation = incoming.animate([{opacity:0},{opacity:1}],{duration:220,easing:'ease-out',fill:'forwards'});
+          await animation.finished.catch(() => undefined);
+        }
+        if (signal.aborted || ticket !== version) return;
+        image.src = source; image.alt = photos[next].caption || item.title;
+        incoming.hidden = true; animation?.cancel(); index = next;
+        $('[data-photo-count]').textContent = String(index+1).padStart(2,'0')+' / '+String(photos.length).padStart(2,'0');
+        for (const offset of [1,-1]) void cache.load(photos[(index+offset+photos.length)%photos.length].url).catch(() => undefined);
+      } catch {
+        if (signal.aborted || ticket !== version) return;
+        requested = index; incoming.hidden = true; status.textContent = 'Não foi possível carregar a foto. Tente novamente.'; status.hidden = false;
+      } finally {if (ticket === version) gallery.setAttribute('aria-busy','false');}
     }
-    showPhoto();
+    void showPhoto();
+    signal.addEventListener('abort',() => {version++; animation?.cancel(); cache.dispose(); incoming.remove(); status.remove();},{once:true});
     for (const [selector,delta] of [['[data-photo-prev]',-1],['[data-photo-next]',1]]) {
       const button = $(selector);button.hidden = photos.length < 2;
-      button.addEventListener('click',() => showPhoto(delta),{signal});
+      button.addEventListener('click',() => void showPhoto(delta),{signal});
     }
     $('.ef-property-copy .ef-kicker').textContent = item.location;
     $('.ef-property-copy h3').textContent = item.title.toLocaleLowerCase('pt-BR').replace(/^./,c => c.toUpperCase());

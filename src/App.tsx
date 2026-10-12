@@ -68,6 +68,7 @@ function Header({ tour, favorites, onFavorites, onContact }: { tour: boolean; fa
         </div>}
       </div>
       <a href="#/curadoria" aria-current={hash === '#/curadoria' ? 'page' : undefined}>Nossa curadoria</a>
+      <a href="#/?secao=equipe">Nossa equipe</a>
       <a href="/enviar-imovel">Para proprietários</a>
       <a href={SPATIAL_URL} className="sp-nav-link">EME Spatial ↗</a>
     </nav>
@@ -84,7 +85,7 @@ function Header({ tour, favorites, onFavorites, onContact }: { tour: boolean; fa
       <a href="#/empreendimentos/casa-m-veredas">Casa M Veredas <ArrowUpRight size={17} /></a>
           <a href={G400_ROUTE}>G400 · Yclodema<ArrowUpRight size={17} /></a>
       {environments.map(e => <a key={e.id} href={environmentHref(e.id)}>{e.name}<ArrowUpRight size={17} /></a>)}
-      <a href="#/curadoria">Nossa curadoria<ArrowUpRight size={17} /></a><a href="/enviar-imovel">Para proprietários<ArrowUpRight size={17} /></a>
+      <a href="#/?secao=equipe">Nossa equipe<ArrowUpRight size={17} /></a><a href="#/curadoria">Nossa curadoria<ArrowUpRight size={17} /></a><a href="/enviar-imovel">Para proprietários<ArrowUpRight size={17} /></a>
       <button onClick={() => { setMenuOpen(false); onContact(); }}>Fale com a EME<MessageCircle size={18} /></button>
     </nav>}
   </header>;

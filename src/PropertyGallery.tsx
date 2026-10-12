@@ -2,10 +2,11 @@ import {useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useStat
 import type {KeyboardEvent, PointerEvent} from 'react';
 import {ArrowLeft, ArrowRight, Expand, Maximize2, Pause, Play, RotateCcw, X} from 'lucide-react';
 import {gsap} from 'gsap';
+import {createPhotoCache} from './photo-cache.mjs';
 import './property-gallery.css';
 
 type Photograph = {url: string; caption: string; room?: string; width?: number; height?: number};
-type Chapter = {name: string; start: number; end: number};
+type Chapter = {name: string; start: number; indices: number[]};
 type Dimensions = {width: number; height: number};
 
 /** The old image remains visible until the next photograph has decoded pixels. */
@@ -19,6 +20,15 @@ function decodePhoto(image: HTMLImageElement) {
 export default function PropertyGallery({images, title}: {images: Photograph[]; title: string}) {
   const photos = useMemo(() => images.filter(image => Boolean(image.url)), [images]);
   const photoKey = JSON.stringify(photos);
+  const cache = useMemo(() => createPhotoCache(), [photoKey]);
+  const [sources, setSources] = useState<Record<string,string>>({});
+  const cacheGeneration = useRef(cache); cacheGeneration.current = cache;
+  const loadPhoto = useCallback(async (url: string) => {
+    const source = await cache.load(url);
+    if (cacheGeneration.current === cache) setSources(previous => previous[url] === source ? previous : {...previous, [url]: source});
+    return source;
+  }, [cache]);
+  useEffect(() => cache.retain(), [cache]);
   const [index, setIndex] = useState(0), [incoming, setIncoming] = useState<number | null>(null);
   const [loading, setLoading] = useState(false), [error, setError] = useState('');
   const [initialFailed, setInitialFailed] = useState(false), [initialReady, setInitialReady] = useState(false);
@@ -28,18 +38,19 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
   const [viewport, setViewport] = useState<Dimensions>(() => ({width: window.innerWidth, height: window.innerHeight}));
   const root = useRef<HTMLElement>(null), dialog = useRef<HTMLDialogElement>(null);
   const expand = useRef<HTMLButtonElement>(null), close = useRef<HTMLButtonElement>(null);
+  const target = useRef(0);
   const request = useRef(0), busy = useRef(false), direction = useRef(1), retry = useRef<number | null>(null);
   const gesture = useRef<{x: number; y: number; id: number} | null>(null);
   const headingId = useId();
   const safeIndex = Math.min(index, Math.max(0, photos.length - 1));
   const current = photos[safeIndex];
   const chapters = useMemo(() => photos.reduce<Chapter[]>((all, photo, position) => {
-    const name = photo.room?.trim() || 'Fotografias', previous = all[all.length - 1];
-    if (previous?.name === name) previous.end = position;
-    else all.push({name, start: position, end: position});
+    const name = photo.room?.trim() || 'Fotografias', previous = all.find(chapter => chapter.name === name);
+    if (previous) previous.indices.push(position);
+    else all.push({name, start: position, indices: [position]});
     return all;
   }, []), [photos]);
-  const activeChapter = chapters.find(chapter => safeIndex >= chapter.start && safeIndex <= chapter.end);
+  const activeChapter = chapters.find(chapter => chapter.indices.includes(safeIndex));
 
   function rememberDimensions(image: HTMLImageElement, url: string) {
     const width = image.naturalWidth, height = image.naturalHeight;
@@ -47,7 +58,7 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
     setDimensions(previous => previous[url]?.width === width && previous[url]?.height === height ? previous : {...previous, [url]: {width, height}});
   }
   function framing(photo: Photograph, inDialog: boolean) {
-    if (!inDialog) return (photo.width||0)<(photo.height||0)?'contained':'cover';
+    if (!inDialog) {const size = dimensions[photo.url] || photo; return (size.width||0)<(size.height||0)?'contained':'cover';}
     // Decoded dimensions take precedence over metadata, including for older listings.
     const size = dimensions[photo.url] || (photo.width && photo.height ? {width: photo.width, height: photo.height} : null);
     // Unknown or undersized files stay in their original framing, never enlarged to cover.
@@ -71,27 +82,55 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
   }, []);
 
   useEffect(() => {
-    request.current++; busy.current = false; retry.current = null;
+    request.current++; busy.current = false; retry.current = null; target.current = 0; setSources({}); setInitialReady(false);
     setIndex(0); setIncoming(null); setLoading(false); setError(''); setInitialFailed(false); setPlaying(false);
   }, [photoKey]);
 
-  // Adjacent stops are preloaded rather than downloading the complete gallery at once.
+  // Decode the current and adjacent images once; thumbnails reuse the same pixels.
   useEffect(() => {
-    for (const next of [safeIndex - 1, safeIndex + 1]) {
-      if (!photos[next]) continue;
-      const image = new Image(); image.src = photos[next].url;
-      decodePhoto(image).catch(() => undefined);
+    if (!photos.length) return;
+    let active = true;
+    for (const offset of [0, 1, -1, 2]) {
+      const position = (safeIndex + offset + photos.length) % photos.length;
+      void loadPhoto(photos[position].url).catch(() => {
+        if (active && position === safeIndex && cacheGeneration.current === cache) {
+          setInitialFailed(true); setError('Não foi possível carregar esta fotografia. Tente novamente.');
+        }
+      });
     }
-  }, [safeIndex, photoKey]);
+    return () => {active = false;};
+  }, [safeIndex, cache, loadPhoto]);
+  useEffect(() => {
+    let active = true;
+    // One background download at a time, without duplicating foreground requests.
+    void (async () => {
+      for (const photo of photos) {
+        if (!active) break;
+        try { await loadPhoto(photo.url); } catch { /* The selected photo offers retry. */ }
+      }
+    })();
+    return () => {active = false;};
+  }, [cache, loadPhoto]);
 
   const go = useCallback((next: number, automatic = false) => {
-    if (busy.current || !photos.length) return;
+    if (!photos.length) return;
     const position = (next + photos.length) % photos.length;
-    if (position === safeIndex) return;
     if (!automatic) setPlaying(false);
-    busy.current = true; retry.current = position; direction.current = next < safeIndex ? -1 : 1;
-    setError(''); setLoading(true); setIncoming(position);
-  }, [photos.length, safeIndex]);
+    if (busy.current && position === target.current) return;
+    const version = ++request.current;
+    direction.current = next < target.current ? -1 : 1;
+    target.current = position;
+    setIncoming(null); setError('');
+    if (position === safeIndex) {busy.current = false; setLoading(false); return;}
+    busy.current = true; retry.current = position; setLoading(true);
+    void loadPhoto(photos[position].url).then(() => {
+      if (version === request.current) setIncoming(position);
+    }).catch(() => {
+      if (version !== request.current) return;
+      busy.current = false; target.current = safeIndex; setLoading(false); setPlaying(false);
+      setError('Esta fotografia não carregou. A imagem anterior foi mantida.');
+    });
+  }, [photos, safeIndex, loadPhoto]);
 
   useLayoutEffect(() => {
     if (incoming === null || !root.current) return;
@@ -110,17 +149,17 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
       if (reduced) {finish(); return;}
       // Native-sized photos only dissolve; even a small scale tween would enlarge their pixels.
       // Larger photographs retain a subtle directional move without additional zoom.
-      timeline = gsap.timeline({onComplete: finish, defaults: {ease: 'sine.inOut'}});
+      timeline = gsap.timeline({onComplete: finish, defaults: {ease: 'power2.out'}});
       timeline.fromTo(incomingElements, {opacity: 0, x: (_position, element: HTMLImageElement) => element.closest('.pg-frame-original') ? 0 : direction.current * 5},
-        {opacity: 1, x: 0, duration: 1.1}, 0);
+        {opacity: 1, x: 0, duration: .28}, 0);
       timeline.fromTo(outgoingElements, {x: 0},
-        {x: (_position, element: HTMLImageElement) => element.closest('.pg-frame-original') ? 0 : direction.current * -3, duration: 1.1}, 0);
+        {x: (_position, element: HTMLImageElement) => element.closest('.pg-frame-original') ? 0 : direction.current * -3, duration: .28}, 0);
     }).catch(() => {
       if (cancelled || version !== request.current) return;
       setLoading(false); setIncoming(null); setPlaying(false); busy.current = false;
       setError('Esta fotografia não carregou. A imagem anterior foi mantida.');
     });
-    return () => {cancelled = true; timeline?.kill(); gsap.set(outgoingElements, {clearProps: 'transform'});};
+    return () => {cancelled = true; if (timeline) {timeline.kill(); gsap.set(outgoingElements, {clearProps: 'transform'});}};
   }, [incoming, reduced]);
 
   useEffect(() => {
@@ -151,8 +190,8 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
   function closeTour() {setPlaying(false); dialog.current?.close();}
   function onKeyDown(event: KeyboardEvent<HTMLElement>) {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
-    if (event.key === 'ArrowRight') {event.preventDefault(); go(safeIndex + 1);}
-    if (event.key === 'ArrowLeft') {event.preventDefault(); go(safeIndex - 1);}
+    if (event.key === 'ArrowRight') {event.preventDefault(); go(target.current + 1);}
+    if (event.key === 'ArrowLeft') {event.preventDefault(); go(target.current - 1);}
     if (event.key === 'Home') {event.preventDefault(); go(0);}
     if (event.key === 'End') {event.preventDefault(); go(photos.length - 1);}
   }
@@ -165,14 +204,12 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
     const start = gesture.current; gesture.current = null;
     if (!start || start.id !== event.pointerId) return;
     const dx = event.clientX - start.x, dy = event.clientY - start.y;
-    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.4) go(safeIndex + (dx < 0 ? 1 : -1));
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.4) go(target.current + (dx < 0 ? 1 : -1));
   }
   function retryPhoto() {
     if (retry.current !== null && retry.current !== safeIndex) {go(retry.current); return;}
     setError(''); setInitialFailed(false); setInitialReady(false);
-    root.current?.querySelectorAll<HTMLImageElement>('.pg-photo-current').forEach(image => {
-      const source = image.src; image.removeAttribute('src'); image.src = source;
-    });
+    void loadPhoto(current.url).then(() => setInitialReady(true)).catch(() => {setInitialFailed(true); setError('Não foi possível carregar esta fotografia. Tente novamente.');});
   }
   function togglePlaying() {
     if (!playing && safeIndex === photos.length - 1) go(0, true);
@@ -181,19 +218,19 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
   if (!current) return <div className="pg-empty">Fotografias em breve.</div>;
 
   const controls = <div className="pg-controls">
-    <button type="button" aria-label="Foto anterior" onClick={() => go(safeIndex - 1)} disabled={photos.length < 2 || loading || incoming !== null}><ArrowLeft size={19}/></button>
+    <button type="button" aria-label="Foto anterior" onClick={() => go(target.current - 1)} disabled={photos.length < 2}><ArrowLeft size={19}/></button>
     <span aria-live={playing ? 'off' : 'polite'}>{String(safeIndex + 1).padStart(2, '0')} <i>/</i> {String(photos.length).padStart(2, '0')}</span>
-    <button type="button" aria-label="Próxima foto" onClick={() => go(safeIndex + 1)} disabled={photos.length < 2 || loading || incoming !== null}><ArrowRight size={19}/></button>
+    <button type="button" aria-label="Próxima foto" onClick={() => go(target.current + 1)} disabled={photos.length < 2}><ArrowRight size={19}/></button>
   </div>;
   const originalFraming = framing(current, true) === 'original';
   const stage = (inDialog = false) => <div className="pg-stage"
     onPointerDown={startGesture} onPointerUp={endGesture} onPointerCancel={() => {gesture.current = null;}}>
-    <div className={`pg-image-frame pg-frame-${framing(current, inDialog)}`}><img className={`pg-photo pg-photo-current${initialFailed ? ' pg-photo-failed' : ''}`} src={current.url}
+    <div className={`pg-image-frame pg-frame-${framing(current, inDialog)}`}><img className={`pg-photo pg-photo-current${initialFailed ? ' pg-photo-failed' : ''}`} src={sources[current.url]}
       alt={current.caption || title} fetchPriority="high" draggable={false}
       onLoad={event => {rememberDimensions(event.currentTarget, current.url); setInitialReady(true); setInitialFailed(false);}}
       onError={() => {setInitialReady(false); setInitialFailed(true); setPlaying(false); setError('Não foi possível carregar esta fotografia. Tente novamente ou escolha outra imagem.');}}/></div>
     {incoming !== null && photos[incoming] && <div key={photos[incoming].url} className={`pg-image-frame pg-frame-incoming pg-frame-${framing(photos[incoming], inDialog)}`}>
-      <img className="pg-photo pg-photo-incoming" src={photos[incoming].url} alt="" aria-hidden="true" draggable={false} onLoad={event => rememberDimensions(event.currentTarget, photos[incoming].url)}/>
+      <img className="pg-photo pg-photo-incoming" src={sources[photos[incoming].url]} alt="" aria-hidden="true" draggable={false} onLoad={event => rememberDimensions(event.currentTarget, photos[incoming].url)}/>
     </div>}
     {!initialReady && incoming === null && !initialFailed && <span className="pg-loading" role="status">Carregando fotografia…</span>}
     {initialFailed && incoming === null && <div className="pg-unavailable"><span>Fotografia indisponível</span><button type="button" onClick={retryPhoto}><RotateCcw size={16}/>Tentar novamente</button></div>}
@@ -201,7 +238,7 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
     {loading && <span className="pg-loading" role="status">Preparando próxima fotografia…</span>}
   </div>;
   const chapterNavigation = (inDialog = false) => chapters.length > 1 && <nav className={`pg-chapters${inDialog ? ' pg-chapters-dark' : ''}`} aria-label="Ambientes do percurso">
-    {chapters.map((chapter, position) => <button type="button" key={chapter.start} onClick={() => go(chapter.start)} disabled={loading || incoming !== null}
+    {chapters.map((chapter, position) => <button type="button" key={chapter.start} onClick={() => go(chapter.start)}
       aria-current={activeChapter === chapter ? 'step' : undefined}><span>{String(position + 1).padStart(2, '0')}</span>{chapter.name}</button>)}
   </nav>;
   const playback = () => photos.length > 1 && !reduced && <button type="button" className="pg-playback" onClick={togglePlaying}
@@ -217,9 +254,9 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
     </div></div>
     {chapterNavigation()}
     {photos.length > 1 && <div className="pg-thumbnails" aria-label="Escolher fotografia">
-      {photos.map((photo, position) => <button type="button" key={photo.url + position} onClick={() => go(position)} disabled={loading || incoming !== null}
+      {photos.map((photo, position) => <button type="button" key={photo.url + position} onClick={() => go(position)} onPointerEnter={() => void loadPhoto(photo.url).catch(() => undefined)} onFocus={() => void loadPhoto(photo.url).catch(() => undefined)}
         aria-label={'Ver foto ' + (position + 1) + ': ' + photo.caption} aria-current={safeIndex === position ? 'true' : undefined}>
-        <img src={photo.url} alt="" loading="lazy" draggable={false}/><span>{String(position + 1).padStart(2, '0')}</span>
+        {sources[photo.url] && <img src={sources[photo.url]} alt="" decoding="async" draggable={false}/>}<span>{String(position + 1).padStart(2, '0')}</span>
       </button>)}
     </div>}
     {!open && errorNotice()}
