@@ -24,10 +24,13 @@
     <section class="em-voice" id="em-voice" role="dialog" aria-labelledby="em-voice-title" hidden>
       <div class="em-search-top"><span>Busca por voz</span><button class="em-search-close cursor-interaction" type="button" data-voice-close aria-label="Fechar busca por voz"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
       <h2 id="em-voice-title">Conte do seu jeito.</h2>
-      <p class="em-voice-hint">Fale sobre o lugar, a rotina e o que faz diferença para você. Revise o texto antes de buscar.</p>
-      <label for="em-transcript">Seu pedido</label>
+      <p class="em-voice-hint">Fale no seu ritmo. Pare a gravação, revise seu pedido e envie.</p>
+      <div class="em-voice-recording" aria-hidden="true"><div class="em-voice-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span data-voice-time>00:00</span></div>
+      <div class="em-voice-actions"><button type="button" class="em-voice-stop cursor-interaction" data-voice-stop hidden>Parar gravação</button><button type="button" class="em-voice-start cursor-interaction" data-voice-start hidden>Gravar novamente</button><button type="button" class="em-voice-cancel cursor-interaction" data-voice-cancel>Cancelar</button></div>
+      <label for="em-transcript">Seu pedido · revise antes de enviar</label>
       <textarea id="em-transcript" data-transcript rows="3" maxlength="500"></textarea>
-      <div class="em-voice-bottom"><span data-voice-status role="status">A transcrição usa o serviço de voz do navegador. Você pode digitar seu pedido.</span><button class="em-solid-button cursor-interaction" type="button" data-transcript-send>Buscar com este texto <span aria-hidden="true">→</span></button></div>
+      <div class="em-voice-bottom"><span data-voice-status role="status">A transcrição usa o serviço de voz do navegador. Você pode digitar seu pedido.</span><button class="em-solid-button cursor-interaction" type="button" data-transcript-send>Enviar busca <span aria-hidden="true">→</span></button></div>
+          <p class="em-voice-privacy">A fala é transcrita pelo serviço de voz do navegador. A busca só é enviada quando você confirma.</p>
     </section>
     <section class="em-search-results" data-search-results aria-labelledby="em-search-title" hidden>
       <div class="em-search-top"><span>Sua busca</span><button class="em-search-close cursor-interaction" type="button" data-search-close aria-label="Voltar aos ambientes"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>

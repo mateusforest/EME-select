@@ -1,3 +1,4 @@
+import {createVoiceSearch} from './voice-search.mjs';
 import {hydrateLanding} from './live-content.mjs';
 import {publishedSearch,propertyPhotos} from './published-search.mjs';
 export function mountLanding(root,properties,initialView={}){
@@ -611,37 +612,15 @@ function interpretEmeSearch(query) {
         announce(found.matches.length+' imóveis encontrados nos anúncios publicados.');
       }
       $('[data-search-form]').addEventListener('submit',event=>{event.preventDefault();runNaturalSearch();});
-      let recognition=null;
-      function stopVoice(){
-        if(!recognition)return;
-        const previous=recognition;recognition=null;
-        previous.onend=null;previous.onerror=null;previous.onresult=null;
-        try{previous.abort();}catch{}
-      }
+      const voice=createVoiceSearch(root,{signal:lifecycle.signal,onCancel:()=>closeSearch(),onSend:text=>{searchInput.value=text;runNaturalSearch();}});
+      function stopVoice(){voice.cancel();}
       $('[data-search-mic]').addEventListener('click',()=>{
         if(searchMode==='voice'){closeSearch();return;}
-        $('[data-transcript]').value=searchInput.value.trim();
-        setSearchMode('voice');
-        const status=$('[data-voice-status]');
-        const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-        if(!SpeechRecognition){status.textContent='A voz não está disponível neste navegador. Digite seu pedido abaixo.';$('[data-transcript]').focus();return;}
-        const instance=new SpeechRecognition();recognition=instance;
-        instance.lang='pt-BR';instance.interimResults=true;instance.continuous=false;
-        status.textContent='Ouvindo… Fale seu pedido. A transcrição é processada pelo serviço de voz do navegador.';
-        instance.onresult=event=>{$('[data-transcript]').value=Array.from(event.results).map(result=>result[0].transcript).join(' ').slice(0,500);};
-        instance.onerror=event=>{status.textContent=event.error==='not-allowed'?'Microfone não autorizado. Você pode digitar seu pedido.':'Não foi possível transcrever. Você pode digitar ou tentar novamente.';};
-        instance.onend=()=>{if(status.textContent.startsWith('Ouvindo'))status.textContent='Confira o texto e toque em buscar.';if(recognition===instance)recognition=null;};
-        try{instance.start();}catch{recognition=null;status.textContent='Não foi possível iniciar o microfone. Digite seu pedido.';}
-        $('[data-voice-close]').focus({preventScroll:true});
+        setSearchMode('voice');voice.open(searchInput.value.trim());
       });
       $('[data-voice-close]').addEventListener('click',()=>closeSearch());
       $('[data-search-close]').addEventListener('click',()=>closeSearch());
       $('[data-refine]').addEventListener('click',()=>{searchInput.focus({preventScroll:true});searchInput.select();});
-      $('[data-transcript-send]').addEventListener('click',()=>{
-        const text=$('[data-transcript]').value.trim();
-        if(!text){$('[data-transcript]').focus();announce('Digite o pedido para buscar.');return;}
-        searchInput.value=text;runNaturalSearch();
-      });
       $('[data-search-example]').addEventListener('click',()=>{searchInput.value='Quero uma casa em Vacaria';runNaturalSearch();});
       root.addEventListener('keydown',event=>{
         if(event.key==='Escape'&&searchMode){event.stopImmediatePropagation();event.preventDefault();closeSearch();}
