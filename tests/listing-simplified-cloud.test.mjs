@@ -16,7 +16,7 @@ test('cloud final OK records approval atomically without completing documentary 
  async function publish(body,session=token){const res=await fetch(origin+'/api/listings/'+id+'/publish',{method:'POST',headers:{Origin:origin,Cookie:'eme_cloud_session='+session,'Content-Type':'application/json'},body:JSON.stringify(body)});return {status:res.status,body:await res.json()};}
  const body={version:3,confirmed:true,reviewMode:'simplified'};
  assert.equal((await publish({...body,confirmed:false})).status,400);assert.equal((await publish({...body,version:2})).status,409);assert.equal((await publish(body,brokerToken)).status,403);assert.equal(writes,0);
- const response=await publish(body);assert.equal(response.status,200,JSON.stringify(response.body));assert.equal(response.body.published,true);assert.equal(row.data.stage,'Entrada aprovada');assert.equal(row.data.curation,undefined);assert.equal(row.data.published.privateAddress,undefined);assert.equal(row.data.published.images[0].width,870);assert.equal(writes,1);
+ const response=await publish(body);assert.equal(response.status,200,JSON.stringify(response.body));assert.equal(response.body.published,true);assert.equal(row.data.stage,'Em avaliação');assert.equal(row.data.curation,undefined);assert.equal(row.data.published.privateAddress,undefined);assert.equal(row.data.published.images[0].width,870);assert.equal(writes,1);
  row.data.draft={...row.data.draft,price:null,area:null,neighborhood:'',description:'',reasons:''};row.data.photos=[];row.data.published=null;row.data.stage='Em avaliação';
  const minimal=await publish({...body,version:row.version});
  assert.equal(minimal.status,200,JSON.stringify(minimal.body));assert.equal(minimal.body.published,true);assert.deepEqual(minimal.body.blockers,[]);

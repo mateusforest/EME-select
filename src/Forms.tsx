@@ -1,6 +1,8 @@
+import {LeadSend} from './LeadCapture';
+import type {LeadPayload} from './leadCapture';
 import { useId, useState, type FormEvent, type ReactNode } from 'react';
-import { ArrowLeft, ArrowUpRight, MessageCircle } from 'lucide-react';
-import { CONTACT, whatsappUrl, type Property } from './data';
+import { ArrowUpRight, MessageCircle } from 'lucide-react';
+import { CONTACT, type Property } from './data';
 import './forms.css';
 
 type ContactFields = { name: string; phone: string; message: string; consent: boolean };
@@ -59,21 +61,19 @@ function Consent({ id, value, error, onChange }: { id: string; value: boolean; e
       <span>Autorizo a EME Select a entrar em contato comigo sobre esta solicitação.</span>
     </label>
     {error && <p className="form-error" id={`${id}-error`}>{error}</p>}
-    <p className="form-data-note">Seus dados ficam apenas nesta tela. Você revisa a mensagem antes de abrir o WhatsApp e confirma o envio por lá.</p>
+    <p className="form-data-note">Ao enviar, seus dados ficam registrados de forma privada no portal da EME para acompanhar esta solicitação. Você também poderá continuar pelo WhatsApp.</p>
   </div>;
 }
 
-function Review({ message, onEdit, onClose, children, booking = false }: { message: string; onEdit: () => void; onClose: () => void; children: ReactNode; booking?: boolean }) {
+function Review({ message, onEdit, onClose, children, booking = false, payload }: { payload:LeadPayload; message: string; onEdit: () => void; onClose: () => void; children: ReactNode; booking?: boolean }) {
   return <section className="form-shell form-review" aria-label="Revisão da solicitação">
     <span className="form-eyebrow">Um passo de cada vez</span>
     <h2 tabIndex={-1} ref={node => { node?.focus(); }}>Confira seu pedido.</h2>
-    <p className="form-intro">Tudo pronto para iniciar uma conversa com nossa equipe. A mensagem ainda não foi enviada.</p>
+    <p className="form-intro">A equipe recebe os dados abaixo quando você confirma o envio da solicitação.</p>
     <dl className="form-review-data">{children}</dl>
     {booking && <p className="form-notice">Horário sujeito à confirmação da equipe.</p>}
     <p className="form-contact"><MessageCircle size={17} aria-hidden="true" /> {CONTACT.brand} · {CONTACT.display}</p>
-    <a className="form-primary" href={whatsappUrl(message)} target="_blank" rel="noopener noreferrer">Enviar pelo WhatsApp <ArrowUpRight size={18} aria-hidden="true" /></a>
-    <p className="form-external-note">Abre em uma nova aba. O envio é concluído por você no WhatsApp.</p>
-    <div className="form-review-actions"><button className="form-text-button" type="button" onClick={onEdit}><ArrowLeft size={16} aria-hidden="true" />Editar informações</button><button className="form-text-button" type="button" onClick={onClose}>Fechar</button></div>
+    <LeadSend payload={payload} message={message} onEdit={onEdit} onClose={onClose}/>
   </section>;
 }
 
@@ -113,7 +113,7 @@ export function BookingForm({ property, onClose }: { property?: Property; onClos
   const reference = property ? `${property.title} · ${property.id}` : 'Quero conversar sobre uma visita';
   const message = [`Olá, EME Select! Gostaria de solicitar uma visita.`, `Referência: ${reference}`, `Nome: ${values.name.trim()}`, `Telefone: ${values.phone.trim()}`, `Data sugerida: ${readableDate(values.date)}`, `Período: ${values.period || 'A combinar'}`, `Horário sugerido: ${values.time || 'A combinar'}`, ...(values.message.trim() ? [`Mensagem: ${values.message.trim()}`] : []), 'Entendo que o horário e a disponibilidade precisam ser confirmados pela equipe.', 'Autorizo o contato da EME Select sobre esta solicitação.'].join('\n');
 
-  if (review) return <Review message={message} onEdit={() => setReview(false)} onClose={onClose} booking>
+  if (review) return <Review payload={{name:values.name,phone:values.phone,message:values.message,consent:values.consent,interest:reference,propertyId:property?.isIllustrative===false?property.id:null,intent:'visit',visit:{date:values.date,period:values.period,time:values.time}}} message={message} onEdit={() => setReview(false)} onClose={onClose} booking>
     <ReviewItem label="Seu interesse">{reference}</ReviewItem>
     <ReviewItem label="Nome">{values.name.trim()}</ReviewItem>
     <ReviewItem label="Telefone">{values.phone.trim()}</ReviewItem>

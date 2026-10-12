@@ -1,3 +1,4 @@
+import LeadCapture from './LeadCapture';
 import App from './App';
 import {resolvePublicRoute} from './public-presentation.mjs';
 import LandingPage from './landing/LandingPage';
@@ -30,6 +31,6 @@ export default function PublicApp(){
   }).catch(()=>{if(active){registerPublishedProperties([]);setFailed(true);}}).finally(()=>{clearTimeout(timeout);if(active)setReady(true);});
   return()=>{active=false;controller.abort();clearTimeout(timeout);};
  },[attempt]);
- return ready?<>{isLanding?<LandingPage key={`${attempt}:${route}`} route={route}/>:<App key={attempt}/>}{failed&&<div role="status" className="collection-connection-notice">Não foi possível atualizar os anúncios. <button onClick={()=>{setReady(false);setAttempt(v=>v+1);}}>Tentar novamente</button></div>}</>:<div role="status" style={{padding:32,color:'#173c32'}}>Preparando a coleção…</div>;
+ return ready?<><LeadCapture/>{isLanding?<LandingPage key={`${attempt}:${route}`} route={route}/>:<App key={attempt}/>}{failed&&<div role="status" className="collection-connection-notice">Não foi possível atualizar os anúncios. <button onClick={()=>{setReady(false);setAttempt(v=>v+1);}}>Tentar novamente</button></div>}</>:<div role="status" style={{padding:32,color:'#173c32'}}>Preparando a coleção…</div>;
 }
 

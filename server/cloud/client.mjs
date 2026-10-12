@@ -7,6 +7,8 @@ export function createClient(env=process.env,fetcher=fetch){
   const response=await fetcher(url+path,{method,headers:{apikey:key,...(!publicKey&&key.startsWith('eyJ')?{Authorization:'Bearer '+key}:{}),...(body!==undefined&&!raw?{'Content-Type':'application/json'}:{}),...headers},...(body!==undefined?{body:raw?body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(20000)});
   if(!response.ok){let error={};try{error=await response.json();}catch{}const message=error.message||error.msg||'';
    if(message.includes('RATE_LIMIT')||response.status===429)fail(429,'Muitas tentativas. Aguarde antes de tentar novamente.');
+   if(message.includes('LEAD_REQUEST_REUSED'))fail(409,'Esta referência de contato já foi usada.');
+   if(message.includes('LEAD_'))fail(400,'Confira o interesse, o responsável e os dados do lead.');
    if(message.includes('STALE_VERSION'))fail(409,'O cadastro mudou. Reabra antes de continuar.');
    if(message.includes('ALREADY_CONFIGURED'))fail(409,'O administrador inicial já foi configurado.');
    if(message.includes('UNAUTHORIZED'))fail(401,'Entre novamente.');

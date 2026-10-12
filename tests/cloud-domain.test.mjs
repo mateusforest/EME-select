@@ -10,7 +10,7 @@ test('cloud curation cannot approve missing evidence or broker sign-offs',()=>{
  reviewed=decision(reviewed,{version:2,action:'submit',reason:'Encaminhado para decisão humana.'},broker);
  assert.throws(()=>decision(reviewed,{version:3,action:'approve',reason:'Todas as evidências foram verificadas.',acknowledged:true},broker));
  reviewed=decision(reviewed,{version:3,action:'approve',reason:'Todas as evidências foram verificadas.',acknowledged:true},admin);assert.equal(reviewed.stage,'Entrada aprovada');
- assert.ok(curation(changed(reviewed)).blockers.length);assert.equal(changed({...reviewed,published:{id:'x'}}).published,null);
+ assert.ok(curation(changed(reviewed)).blockers.length);assert.deepEqual(changed({...reviewed,published:{id:'x'}}).published,{id:'x'});
 });
 
 function complete(type='Casa',scores=[5,5,5,5,5]) {

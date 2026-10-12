@@ -9,13 +9,15 @@ export interface PortalNavigationItem {
   group: string;
   status: 'active' | 'planned';
   adminOnly?: boolean;
+  secondary?: boolean;
 }
 
 export const portalNavigation: PortalNavigationItem[] = [
-  { id: 'hoje', label: 'Visão geral', title: 'Seu olhar. Agora, com continuidade.', description: 'Acompanhe sua carteira e os próximos passos.', icon: LayoutDashboard, group: 'Sua operação', status: 'active' },
-  { id: 'imoveis', label: 'Imóveis e anúncios', title: 'Cada lugar merece uma boa apresentação.', description: 'Cadastro, fotografias e apresentação de cada imóvel.', icon: House, group: 'Sua operação', status: 'active' },
+  { id: 'hoje', label: 'Visão geral', title: 'Sua operação, em um só lugar.', description: 'Acompanhe os imóveis, as publicações e os próximos passos.', icon: LayoutDashboard, group: 'Sua operação', status: 'active' },
+  { id: 'imoveis', label: 'Imóveis e captações', title: 'Da captação ao anúncio.', description: 'Uma ficha por imóvel. Materiais, cadastro e publicação.', icon: House, group: 'Sua operação', status: 'active' },
   { id: 'empreendimentos', label: 'Empreendimentos', title: 'Uma experiência completa. Unidade por unidade.', description: 'Cenário DeVille, plantas, andares e disponibilidade.', icon: House, group: 'Sua operação', status: 'active', adminOnly: true },
-  { id: 'avaliacoes', label: 'Avaliações', title: 'Cada imóvel começa com uma boa leitura.', description: 'Cadastro, responsável, curadoria e histórico em um só lugar.', icon: ClipboardCheck, group: 'Sua operação', status: 'active' },
+  { id: 'avaliacoes', secondary: true, label: 'Avaliações', title: 'Cada imóvel começa com uma boa leitura.', description: 'Cadastro, responsável, curadoria e histórico em um só lugar.', icon: ClipboardCheck, group: 'Sua operação', status: 'active' },
+  { id: 'leads', label: 'Leads e entrada', title: 'Cada interesse, acompanhado.', description: 'Entrada do site, distribuição e histórico dos contatos.', icon: MessageSquare, group: 'Sua operação', status: 'active' },
   { id: 'relacionamento', label: 'Atendimento e visitas', title: 'Toda conversa merece continuidade.', description: 'Histórico de contatos, agenda de visitas e controle de chaves.', icon: MessageSquare, group: 'Sua operação', status: 'active' },
   { id: 'locacoes', label: 'Locações', title: 'Cuidar também é acompanhar.', description: 'Contratos, manutenção e compromissos da administração mensal.', icon: KeyRound, group: 'Sua operação', status: 'active' },
   { id: 'documentos', label: 'Documentos', title: 'Informação organizada. Acesso responsável.', description: 'Documentos privados, versões, validade e revisão da equipe.', icon: FileText, group: 'Sua operação', status: 'active' },

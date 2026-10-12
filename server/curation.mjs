@@ -10,7 +10,7 @@ export function attachCuration({db,fail,text,fields,caseFor,transaction,audit,st
   }
   function persist(id,data) {db.prepare('INSERT INTO curation VALUES (?,?) ON CONFLICT(evaluation_id) DO UPDATE SET data=excluded.data').run(id,JSON.stringify(data));}
   function version(item,body) {if(!Number.isInteger(body.version)) fail(400,'A versão do dossiê é obrigatória.');if(item.version!==body.version) fail(409,'O dossiê mudou. Recarregue antes de continuar.');}
-  function bump(id,stage) {if(stage!=='Entrada aprovada'&&db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='listings'").get())db.prepare('UPDATE listings SET published=NULL,published_version=NULL,version=version+1 WHERE id=?').run(id);db.prepare('UPDATE evaluations SET stage=?,version=version+1,updated_at=? WHERE id=?').run(stage,stamp(),id);}
+  function bump(id,stage) {db.prepare('UPDATE evaluations SET stage=?,version=version+1,updated_at=? WHERE id=?').run(stage,stamp(),id);}
   function handle(path,req,res,user,body,details) {
     const match=path.match(/^\/api\/evaluations\/([a-f0-9-]{36})\/(curation|decision)$/);
     if(!match)return false;

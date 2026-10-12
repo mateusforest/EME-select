@@ -1,0 +1,32 @@
+import {randomUUID} from 'node:crypto';
+import {createLeads} from './leads.mjs';
+import {leadFail} from '../shared/leads.mjs';
+export function attachLocalLeads({db,transaction,stamp,consume}){
+ db.exec(`CREATE TABLE IF NOT EXISTS lead_settings(id TEXT PRIMARY KEY,version INTEGER NOT NULL DEFAULT 0,mode TEXT NOT NULL DEFAULT 'property',brokers TEXT NOT NULL DEFAULT '[]',last_assignee TEXT);
+ CREATE TABLE IF NOT EXISTS leads(id TEXT PRIMARY KEY,version INTEGER NOT NULL DEFAULT 1,property_id TEXT REFERENCES evaluations(id),assignee_id TEXT REFERENCES users(id),phone TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'new',data TEXT NOT NULL,next_contact_at TEXT,first_contact_at TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
+ CREATE INDEX IF NOT EXISTS leads_assignee ON leads(assignee_id,updated_at);
+ CREATE TABLE IF NOT EXISTS lead_receipts(request_id TEXT PRIMARY KEY,payload_hash TEXT NOT NULL,lead_id TEXT NOT NULL REFERENCES leads(id));
+ CREATE TABLE IF NOT EXISTS lead_events(id TEXT PRIMARY KEY,lead_id TEXT NOT NULL REFERENCES leads(id),actor_id TEXT REFERENCES users(id),action TEXT NOT NULL,detail TEXT NOT NULL,created_at TEXT NOT NULL);
+ INSERT OR IGNORE INTO lead_settings(id) VALUES('company');`);
+ const settings=()=>{const row=db.prepare("SELECT * FROM lead_settings WHERE id='company'").get();return {...row,brokers:JSON.parse(row.brokers)};};
+ const members=()=>db.prepare('SELECT id,name,role,active,must_change FROM users ORDER BY name').all();
+ const live=user=>{const actor=db.prepare('SELECT * FROM users WHERE id=?').get(user.id);if(!actor?.active||actor.must_change)leadFail(401,'Entre novamente.');return actor;};
+ const event=(id,actor,action,detail)=>db.prepare('INSERT INTO lead_events VALUES(?,?,?,?,?,?)').run(randomUUID(),id,actor,action,JSON.stringify(detail),stamp());
+ const store={
+  receive:(input,hash)=>transaction(()=>{
+   const receipt=db.prepare('SELECT * FROM lead_receipts WHERE request_id=?').get(input.requestId);if(receipt){if(receipt.payload_hash!==hash)leadFail(409,'Esta referência já foi usada.');return;}
+   const config=settings(),people=members(),at=stamp();let property,assignee=null;
+   if(input.propertyId){property=db.prepare('SELECT e.assignee_id,l.published FROM evaluations e JOIN listings l ON l.id=e.id WHERE e.id=?').get(input.propertyId);if(!property?.published)leadFail(400,'Este imóvel não está disponível.');}
+   const prior=db.prepare("SELECT * FROM leads WHERE phone=? AND property_id IS ? AND status NOT IN('won','lost') ORDER BY updated_at DESC").all(input.data.phone,input.propertyId).find(l=>(input.propertyId||JSON.parse(l.data).interest===input.data.interest)&&Date.parse(l.updated_at)>Date.parse(at)-30*86400000);
+   if(prior){db.prepare('UPDATE leads SET version=version+1,updated_at=? WHERE id=?').run(at,prior.id);event(prior.id,null,'received_again',input.data);}
+   else{if(config.mode==='property'&&property&&people.some(p=>p.id===property.assignee_id&&p.active&&!p.must_change))assignee=property.assignee_id;
+    if(config.mode==='round_robin'){const ids=config.brokers.filter(id=>people.some(p=>p.id===id&&p.active&&!p.must_change&&p.role==='corretor'));if(ids.length){assignee=ids[(ids.indexOf(config.last_assignee)+1)%ids.length];db.prepare("UPDATE lead_settings SET last_assignee=? WHERE id='company'").run(assignee);}}
+    db.prepare('INSERT INTO leads(id,property_id,assignee_id,phone,data,created_at,updated_at) VALUES(?,?,?,?,?,?,?)').run(input.requestId,input.propertyId,assignee,input.data.phone,JSON.stringify(input.data),at,at);event(input.requestId,null,'received',{...input.data,routing:config.mode,assigneeId:assignee});}
+   db.prepare('INSERT INTO lead_receipts VALUES(?,?,?)').run(input.requestId,hash,prior?.id||input.requestId);
+  }),
+  snapshot:async user=>{const actor=live(user),rows=db.prepare('SELECT * FROM leads WHERE ?=1 OR assignee_id=? ORDER BY updated_at DESC LIMIT 500').all(actor.role==='admin'?1:0,actor.id);return {leads:rows.map(row=>({...row,data:JSON.parse(row.data),events:db.prepare('SELECT * FROM lead_events WHERE lead_id=? ORDER BY created_at DESC').all(row.id).map(e=>({...e,detail:JSON.parse(e.detail)}))})),members:members().filter(p=>actor.role==='admin'||p.id===actor.id).map(p=>({...p,active:!!p.active})),settings:actor.role==='admin'?settings():null,limit:500};},
+  update:(_req,user,id,value)=>transaction(()=>{const actor=live(user),row=db.prepare('SELECT * FROM leads WHERE id=?').get(id);if(!row||actor.role!=='admin'&&row.assignee_id!==actor.id)leadFail(403,'Acesso não permitido.');if(row.version!==value.version)leadFail(409,'Este lead mudou. Atualize a tela.');if(actor.role!=='admin'&&value.assigneeId!==row.assignee_id)leadFail(403,'Somente a gestão redistribui leads.');if(value.assigneeId&&!members().some(p=>p.id===value.assigneeId&&p.active&&!p.must_change))leadFail(400,'Escolha uma pessoa ativa.');db.prepare('UPDATE leads SET version=version+1,status=?,assignee_id=?,next_contact_at=?,first_contact_at=?,updated_at=? WHERE id=?').run(value.status,value.assigneeId,value.nextContactAt,['in_progress','waiting','visit','won'].includes(value.status)?row.first_contact_at||stamp():row.first_contact_at,stamp(),id);event(id,actor.id,'updated',{author:actor.name,fromStatus:row.status,status:value.status,fromAssigneeId:row.assignee_id,assigneeId:value.assigneeId,nextContactAt:value.nextContactAt,note:value.note});}),
+  settings:(_req,user,value)=>transaction(()=>{const actor=live(user);if(actor.role!=='admin')leadFail(403,'Somente a gestão altera a distribuição.');if(settings().version!==value.version)leadFail(409,'A distribuição mudou. Atualize a tela.');if(value.brokers.some(id=>!members().some(p=>p.id===id&&p.active&&!p.must_change&&p.role==='corretor')))leadFail(400,'Escolha corretores ativos.');db.prepare("UPDATE lead_settings SET version=version+1,mode=?,brokers=?,last_assignee=NULL WHERE id='company'").run(value.mode,JSON.stringify(value.brokers));db.prepare('INSERT INTO audit(actor_id,action,detail,created_at) VALUES(?,?,?,?)').run(actor.id,'Distribuição de leads atualizada',JSON.stringify(value),stamp());}),
+ };
+ return createLeads({store,rate:async req=>{consume('lead:'+req.socket.remoteAddress,8);consume('lead:total',200);}});
+}

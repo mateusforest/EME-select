@@ -78,7 +78,7 @@ test('SQLite abandonment uses the exact five-minute boundary and rechecks live a
     CREATE TABLE evaluations(id TEXT PRIMARY KEY,title TEXT,version INTEGER,assignee_id TEXT,updated_at TEXT);
     CREATE TABLE listings(id TEXT PRIMARY KEY,data TEXT);
     CREATE TABLE curation(evaluation_id TEXT PRIMARY KEY,data TEXT);
-    CREATE TABLE listing_photos(id TEXT PRIMARY KEY,listing_id TEXT);`);
+    CREATE TABLE listing_photos(id TEXT PRIMARY KEY,listing_id TEXT,archived INTEGER NOT NULL DEFAULT 0);`);
   const user = { id: randomUUID(), name: 'Admin local', role: 'admin' }, caseId = randomUUID(), id = randomUUID();
   let clock = Date.parse('2026-09-16T15:00:00Z'), calls = 0, response;
   const stamp = () => new Date(clock).toISOString();

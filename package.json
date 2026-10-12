@@ -14,7 +14,8 @@
     "test:cloud": "node --test tests/cloud-domain.test.mjs tests/cloud-schema.test.mjs tests/photo-policy.test.mjs tests/finance-schema.test.mjs tests/finance-routing.test.mjs tests/developments-cloud.test.mjs",
     "test:finance": "node --test tests/finance-domain.test.mjs tests/finance-api.test.mjs tests/finance-schema.test.mjs tests/finance-routing.test.mjs",
     "test:operations": "node --test tests/operations-domain.test.mjs tests/operations-api.test.mjs tests/operations-schema.test.mjs tests/intelligence.test.mjs",
-    "test:whatsapp": "node --test tests/whatsapp.test.mjs"
+    "test:whatsapp": "node --test tests/whatsapp.test.mjs",
+    "test:leads": "node --test tests/leads.test.mjs tests/leads-cloud.test.mjs"
   },
   "dependencies": {
     "gsap": "3.15.0",
