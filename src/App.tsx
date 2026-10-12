@@ -53,7 +53,7 @@ function Header({ tour, favorites, onFavorites, onContact }: { tour: boolean; fa
   }, [exploreOpen]);
   return <header className={`site-header${tour ? ' site-header--tour' : ''}`}>
     <a className="brand brand--emerald" href="#/" aria-label="EME Select — início">
-      <svg className="select-mark" viewBox="41 63 900 642" width="64" height="46" aria-hidden="true" focusable="false"><image href="/assets/brand-lockup.png" width="2172" height="724" /></svg>
+      <img className="select-mark" src="/assets/select-ribbon-lockup.svg" width="66" height="64" alt="" aria-hidden="true" />
     </a>
     <nav className="desktop-nav" aria-label="Navegação principal">
       <div className="desktop-explore-wrap" ref={exploreRef} onKeyDown={event => { if (event.key === 'Escape') { setExploreOpen(false); exploreRef.current?.querySelector('button')?.focus(); } }} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setExploreOpen(false); }}>
@@ -112,7 +112,7 @@ function OwnerPage() {
   return <main className="owners-page" id="conteudo"><section className="owners-intro"><span className="eyebrow">Para proprietários</span><h1>Seu imóvel.<br /><em>Um olhar à altura.</em></h1><p>Uma apresentação cuidadosa começa muito antes de um anúncio. Conte sobre o seu imóvel e dê o primeiro passo para uma avaliação pela nossa equipe.</p><ol><li><span>01</span><div><h2>Conhecemos o imóvel</h2><p>Características, localização, estado de conservação e seu objetivo.</p></div></li><li><span>02</span><div><h2>Construímos uma leitura</h2><p>Referências de mercado, documentação e critérios de entrada na coleção.</p></div></li><li><span>03</span><div><h2>Planejamos a apresentação</h2><p>Se selecionado, definimos juntos a estratégia de venda ou locação.</p></div></li></ol><p className="owners-note">O envio das informações inicia uma conversa e não garante a inclusão do imóvel no catálogo.</p></section><section className="owner-form-panel" aria-label="Apresentar meu imóvel"><OwnerForm onClose={() => { window.location.hash = '#/'; }} /></section></main>;
 }
 
-function Footer({ onPrivacy }: { onPrivacy: () => void }) { return <footer className="site-footer"><a href="#/" aria-label="EME Select — início"><svg className="select-mark" viewBox="41 63 900 642" width="64" height="46" aria-hidden="true" focusable="false"><image href="/assets/brand-lockup.png" width="2172" height="724" /></svg></a><span>Rio Grande do Sul · Imóveis selecionados</span><button onClick={onPrivacy}>Privacidade</button><a href="/portalselect">Portal da equipe</a><a href={whatsappUrl('Olá! Gostaria de conhecer a EME Select.')} target="_blank" rel="noopener noreferrer">{CONTACT.display}<ArrowUpRight size={12} /></a></footer>; }
+function Footer({ onPrivacy }: { onPrivacy: () => void }) { return <footer className="site-footer"><a href="#/" aria-label="EME Select — início"><img className="select-mark" src="/assets/select-ribbon-lockup.svg" width="66" height="64" alt="" aria-hidden="true" /></a><span>Rio Grande do Sul · Imóveis selecionados</span><button onClick={onPrivacy}>Privacidade</button><a href="/portalselect">Portal da equipe</a><a href={whatsappUrl('Olá! Gostaria de conhecer a EME Select.')} target="_blank" rel="noopener noreferrer">{CONTACT.display}<ArrowUpRight size={12} /></a></footer>; }
 
 export default function App() {
   const hash = useSceneNavigation();
