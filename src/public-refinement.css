@@ -1,0 +1,12 @@
+/* Public identity and typography. Registration and portal layouts stay independent. */
+.eme-public{--serif:Georgia,'Times New Roman',serif;--font-display:Georgia,'Times New Roman',serif;--font-body:Arial,Helvetica,sans-serif;font-family:var(--font-body)}
+.eme-public .site-header .brand.brand--emerald,.eme-public .site-header .brand.brand--emerald:hover,.eme-public .site-header .brand.brand--emerald:active,.eme-public .submission-brand,.eme-public .submission-brand:hover{display:flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:0;box-shadow:none;width:76px;height:60px;padding:0}
+.eme-public .select-mark{display:block;width:64px;height:46px;flex-shrink:0;overflow:hidden}
+.eme-public .site-header--tour .select-mark{filter:brightness(0) invert(1)}
+.eme-public .details-title{font-size:clamp(32px,3.1vw,52px);line-height:1.12;letter-spacing:-.035em;text-wrap:pretty}
+.eme-public .catalog-property-copy h2,.eme-public .row-info h3{line-height:1.2;letter-spacing:-.025em}
+.eme-public .catalog-property-reason,.eme-public .details-reasons li{font-family:var(--font-body);font-size:14px;line-height:1.75}
+.eme-public .desktop-nav,.eme-public .contact-button{font-family:var(--font-body);font-size:12px}
+.eme-public .site-footer{font-size:11px;line-height:1.6}
+.eme-public .site-footer button{font-size:11px}
+@media(max-width:600px){.eme-public .site-header .brand.brand--emerald,.eme-public .submission-brand{width:60px;height:50px}.eme-public .select-mark{width:52px;height:38px}.eme-public .details-title{font-size:34px}}

@@ -24,7 +24,7 @@ export default function PropertyDetails({
   const environment = environmentById(property.environment);
   const collectionName = property.environment === 'urbano' ? 'Urbana' : environment.name;
   const visitHref = `#/visita/${property.id}`;
-  const backHref = property.hasInterior ? visitHref : `/#/ambientes/${property.environment}`;
+  const backHref = property.hasInterior ? visitHref : '#/colecao';
   const imageHref = property.hasInterior ? visitHref : property.image;
   const facts = propertyFacts(property).map(fact=>property.isIllustrative===false&&!property.area&&fact.label==='Área'?{...fact,value:'A informar'}:fact);
   const residential = supportsBedrooms(property.environment, property.type);
@@ -35,7 +35,7 @@ export default function PropertyDetails({
       <div className="details-topline">
         <a className="details-back" href={backHref}>
           <ArrowLeft size={18} aria-hidden="true" />
-          {property.hasInterior ? 'Voltar à visita' : `Voltar para ${environment.name}`}
+          {property.hasInterior ? 'Voltar à visita' : 'Voltar à coleção'}
         </a>
         <p className="details-demo">{preview?'Prévia em avaliação · dados a conferir':property.isIllustrative===false?'Imóvel da coleção EME Select':'Acervo demonstrativo · dados ilustrativos'}</p>
       </div>

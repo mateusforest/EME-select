@@ -1,3 +1,4 @@
+import {publicTitle,publicReasons} from './public-presentation.mjs';
 export type EnvironmentId = 'todos' | 'litoral' | 'serra' | 'urbano' | 'condominios' | 'comercial' | 'terrenos' | 'industrial';
 export type PropertyType = 'Casa' | 'Apartamento' | 'Compacto' | 'Cabana' | 'Cobertura'
   | 'Loja' | 'Sala comercial' | 'Edifício corporativo'
@@ -292,5 +293,5 @@ export function whatsappUrl(message: string): string {
 
 export const environmentById = (id: string) => environments.find(e => e.id === id) ?? environments[0];
 
-export function registerPublishedProperties(real:Property[]){properties.splice(0,properties.length,...real.filter(p=>p.isIllustrative===false));}
+export function registerPublishedProperties(real:Property[]){properties.splice(0,properties.length,...real.filter(p=>p.isIllustrative===false).map(p=>({...p,title:publicTitle(p.title),reasons:publicReasons(p)})));}
 export const hasPublishedProperties=()=>properties.some(p=>p.isIllustrative===false);

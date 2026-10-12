@@ -1,6 +1,6 @@
 import {hydrateLanding} from './live-content.mjs';
 import {publishedSearch,propertyPhotos} from './published-search.mjs';
-export function mountLanding(root,properties){
+export function mountLanding(root,properties,initialView={}){
  const lifecycle=new AbortController();
  hydrateLanding(root,properties,lifecycle.signal);
 
@@ -652,6 +652,12 @@ function interpretEmeSearch(query) {
       $('[data-close]').addEventListener('click',closeChoices);
       root.addEventListener('keydown',event=>{if(event.key==='Escape'){if(state.panel)closeChoices();else if(state.entry)goBack();}});
       updateCopy();updatePath();
+      const initialEnv=Object.hasOwn(environments,initialView.ambiente)?initialView.ambiente:'serra';
+      if(initialEnv!=='serra')setEnvironment(initialEnv);
+      if(Object.hasOwn(choices,initialView.categoria)){
+        openType(initialView.categoria);
+        if(optionsFor(initialView.categoria).some(option=>option.id===initialView.opcao))chooseOption(initialView.opcao);
+      }
     
       return () => {lifecycle.abort();stopVoice();travelVersion++;camera.destroy();root.getAnimations?.({subtree:true}).forEach(animation=>animation.cancel());};
 }

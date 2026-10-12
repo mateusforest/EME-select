@@ -1,3 +1,4 @@
+import {environmentHref} from './public-presentation.mjs';
 import PeopleSection from './PeopleSection';
 import { SpatialFeature, SPATIAL_URL } from './developments/SpatialFeature';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
@@ -52,16 +53,13 @@ function Header({ tour, favorites, onFavorites, onContact }: { tour: boolean; fa
   }, [exploreOpen]);
   return <header className={`site-header${tour ? ' site-header--tour' : ''}`}>
     <a className="brand brand--emerald" href="#/" aria-label="EME Select — início">
-      <span className="brand-aura" aria-hidden="true" />
-      <svg className="brand-monogram" viewBox="505 730 1770 1370" width="72" height="56" aria-hidden="true" focusable="false">
-        <image href="/assets/brand-emerald-reference.webp" width="2880" height="2880" />
-      </svg>
+      <svg className="select-mark" viewBox="41 63 900 642" width="64" height="46" aria-hidden="true" focusable="false"><image href="/assets/brand-lockup.png" width="2172" height="724" /></svg>
     </a>
     <nav className="desktop-nav" aria-label="Navegação principal">
       <div className="desktop-explore-wrap" ref={exploreRef} onKeyDown={event => { if (event.key === 'Escape') { setExploreOpen(false); exploreRef.current?.querySelector('button')?.focus(); } }} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setExploreOpen(false); }}>
         <button className="desktop-explore-trigger" aria-expanded={exploreOpen} aria-controls="desktop-explore-menu" onClick={() => setExploreOpen(open => !open)}>Explorar <ChevronDown size={13} /></button>
         {exploreOpen && <div className="desktop-explore-menu" id="desktop-explore-menu">
-          <div><span className="eyebrow">Por ambiente</span>{environments.map(e => <a key={e.id} href={e.id === 'todos' ? '#/' : `#/ambientes/${e.id}`}>{e.id === 'todos' ? 'Todos os ambientes' : e.name}<ArrowUpRight size={13} /></a>)}</div>
+          <div><span className="eyebrow">Por ambiente</span>{environments.map(e => <a key={e.id} href={environmentHref(e.id)}>{e.id === 'todos' ? 'Todos os ambientes' : e.name}<ArrowUpRight size={13} /></a>)}</div>
           <div><span className="eyebrow">Por tipo de imóvel</span>{[{ label: 'Casas', type: 'Casa' }, { label: 'Casas em condomínio', type: 'Casa', region: 'condominios' as const }, { label: 'Apartamentos', type: 'Apartamento' }, { label: 'Compactos', type: 'Compacto', operation: 'alugar' as const }, { label: 'Condomínios horizontais', type: 'Condomínio horizontal' }, { label: 'Condomínios verticais', type: 'Condomínio vertical' }, { label: 'Lojas', type: 'Loja' }, { label: 'Salas comerciais', type: 'Sala comercial' }, { label: 'Edifícios corporativos', type: 'Edifício corporativo' }, { label: 'Terrenos urbanos', type: 'Terreno urbano' }, { label: 'Lotes em condomínio', type: 'Lote em condomínio' }, { label: 'Terras agrícolas', type: 'Terra agrícola' }, { label: 'Galpões', type: 'Galpão' }, { label: 'Pavilhões', type: 'Pavilhão' }, { label: 'Centros de distribuição', type: 'Centro de distribuição', operation: 'alugar' as const }].map(item => <a key={`${item.region || 'todos'}:${item.type}`} href={catalogHash({ region: item.region, type: item.type, operation: item.operation || properties.find(property => property.type === item.type)?.operation || 'comprar' })}>{item.label}<ArrowUpRight size={13} /></a>)}</div>
           <a href={MORADAS_ROUTE}>Moradas da Serra · DeVille <ArrowUpRight size={17} /></a>
           <a href="#/empreendimentos/casa-m-veredas">Casa M Veredas <ArrowUpRight size={17} /></a>
@@ -85,7 +83,7 @@ function Header({ tour, favorites, onFavorites, onContact }: { tour: boolean; fa
       <a href={MORADAS_ROUTE}>Moradas da Serra · DeVille<ArrowUpRight size={17} /></a>
       <a href="#/empreendimentos/casa-m-veredas">Casa M Veredas <ArrowUpRight size={17} /></a>
           <a href={G400_ROUTE}>G400 · Yclodema<ArrowUpRight size={17} /></a>
-      {environments.map(e => <a key={e.id} href={e.id === 'todos' ? '#/' : `#/ambientes/${e.id}`}>{e.name}<ArrowUpRight size={17} /></a>)}
+      {environments.map(e => <a key={e.id} href={environmentHref(e.id)}>{e.name}<ArrowUpRight size={17} /></a>)}
       <a href="#/curadoria">Nossa curadoria<ArrowUpRight size={17} /></a><a href="/enviar-imovel">Para proprietários<ArrowUpRight size={17} /></a>
       <button onClick={() => { setMenuOpen(false); onContact(); }}>Fale com a EME<MessageCircle size={18} /></button>
     </nav>}
@@ -114,7 +112,7 @@ function OwnerPage() {
   return <main className="owners-page" id="conteudo"><section className="owners-intro"><span className="eyebrow">Para proprietários</span><h1>Seu imóvel.<br /><em>Um olhar à altura.</em></h1><p>Uma apresentação cuidadosa começa muito antes de um anúncio. Conte sobre o seu imóvel e dê o primeiro passo para uma avaliação pela nossa equipe.</p><ol><li><span>01</span><div><h2>Conhecemos o imóvel</h2><p>Características, localização, estado de conservação e seu objetivo.</p></div></li><li><span>02</span><div><h2>Construímos uma leitura</h2><p>Referências de mercado, documentação e critérios de entrada na coleção.</p></div></li><li><span>03</span><div><h2>Planejamos a apresentação</h2><p>Se selecionado, definimos juntos a estratégia de venda ou locação.</p></div></li></ol><p className="owners-note">O envio das informações inicia uma conversa e não garante a inclusão do imóvel no catálogo.</p></section><section className="owner-form-panel" aria-label="Apresentar meu imóvel"><OwnerForm onClose={() => { window.location.hash = '#/'; }} /></section></main>;
 }
 
-function Footer({ onPrivacy }: { onPrivacy: () => void }) { return <footer className="site-footer"><a href="#/">EME SELECT</a><span>Rio Grande do Sul · Imóveis selecionados</span><button onClick={onPrivacy}>Privacidade</button><a href="/portalselect">Portal da equipe</a><a href={whatsappUrl('Olá! Gostaria de conhecer a EME Select.')} target="_blank" rel="noopener noreferrer">{CONTACT.display}<ArrowUpRight size={12} /></a></footer>; }
+function Footer({ onPrivacy }: { onPrivacy: () => void }) { return <footer className="site-footer"><a href="#/" aria-label="EME Select — início"><svg className="select-mark" viewBox="41 63 900 642" width="64" height="46" aria-hidden="true" focusable="false"><image href="/assets/brand-lockup.png" width="2172" height="724" /></svg></a><span>Rio Grande do Sul · Imóveis selecionados</span><button onClick={onPrivacy}>Privacidade</button><a href="/portalselect">Portal da equipe</a><a href={whatsappUrl('Olá! Gostaria de conhecer a EME Select.')} target="_blank" rel="noopener noreferrer">{CONTACT.display}<ArrowUpRight size={12} /></a></footer>; }
 
 export default function App() {
   const hash = useSceneNavigation();
