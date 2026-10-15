@@ -1,4 +1,4 @@
-import LeadCapture from './LeadCapture';
+import LeadCapture from './LeadCapture.tsx';
 import App from './App';
 import {resolvePublicRoute} from './public-presentation.mjs';
 import LandingPage from './landing/LandingPage';

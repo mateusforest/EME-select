@@ -422,3 +422,5 @@
 #eme-select-completa .em-voice-privacy{font-size:10px;line-height:1.5;color:#a9bda9;margin:16px 0 0}
 @keyframes em-voice-pulse{from{height:5px;opacity:.6}to{height:29px;opacity:1}}
 @media(prefers-reduced-motion:reduce){#eme-select-completa [data-voice-state="recording"] .em-voice-wave i{animation:none;height:17px}#eme-select-completa [data-voice-state="recording"] .em-voice-wave i:nth-child(2n){height:27px}}
+
+#eme-select-completa .ef-spatial-logo{display:block;width:160px;height:160px;max-width:100%;object-fit:contain;border-radius:12px;margin-bottom:24px}

@@ -10,3 +10,5 @@
 .sp-nav-link{font-weight:600!important;color:#21513b!important}
 .sp-feature :focus-visible{outline:3px solid #b38c52;outline-offset:5px}
 @media(max-width:800px){.sp-feature{grid-template-columns:1fr;margin:45px 5%}.sp-feature>img{height:460px}.sp-feature>div{padding:35px}.sp-feature h2{font-size:38px}}
+
+.sp-feature .sp-feature-logo{display:block;width:160px;height:160px;max-width:100%;object-fit:contain;border-radius:12px;margin-bottom:24px}

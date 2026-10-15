@@ -1,4 +1,4 @@
-import {LeadSend} from './LeadCapture';
+import {LeadSend} from './LeadCapture.tsx';
 import type {LeadPayload} from './leadCapture';
 import { useId, useState, type FormEvent, type ReactNode } from 'react';
 import { ArrowUpRight, MessageCircle } from 'lucide-react';
