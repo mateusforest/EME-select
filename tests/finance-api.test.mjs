@@ -7,6 +7,9 @@ import {join,resolve} from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
 import {createPortalApi} from '../server/portal-api.mjs';
 import {attachCloudFinance} from '../server/cloud/finance.mjs';
+import {attachFinance} from '../server/finance.mjs';
+import {peopleRecordId} from '../server/people.mjs';
+import {developmentRecordId} from '../shared/development.mjs';
 import {emptyFinance,financeReport} from '../shared/finance.mjs';
 
 test('finance HTTP: private persistent ledger, optimistic writes, repeat protection and real cash settlement',async t=>{
@@ -73,6 +76,25 @@ test('finance HTTP: private persistent ledger, optimistic writes, repeat protect
     assert.equal(latest.state.entries.find(entry=>entry.id===entryId).status,'cancelled');
     assert.equal((await execute(command('entry.save',{description:'Valor inválido',category:'sale_fee',amountCents:0.5,recognition:'recognized',competenceDate:'2026-09-16',dueDate:'2026-09-16',behavior:'variable'}))).status,400);
   });
+  await t.test('owner plan commits all partners once, reserves profit and persists net payment with tax payable',async()=>{
+    assert.equal((await execute(command('settings.save',{cashTargetCents:0}))).status,200);
+    for(const name of ['Sócio A','Sócio B']) assert.equal((await execute(command('partner.save',{name,shareBps:5000}))).status,200);
+    assert.equal((await execute(command('entry.save',{description:'Honorários confirmados',category:'sale_fee',amountCents:20000,recognition:'recognized',competenceDate:'2026-09-16',dueDate:'2026-09-16',settleNow:true,accountId,settledDate:'2026-09-16'}))).status,200);
+    const plan=command('distribution.plan',{from:'2026-09-01',to:'2026-09-30',dueDate:'2026-09-16',reason:'Deliberação testada pela API'});
+    const beforeVersion=latest.version;
+    assert.equal((await execute(plan)).status,200);
+    const owners=latest.state.entries.filter(e=>e.category==='partner_distribution');
+    assert.equal(owners.length,2);assert.deepEqual(owners.map(e=>e.amountCents),[10000,10000]);
+    assert.equal(latest.version,beforeVersion+1);assert.equal(report().cash.balanceCents,120000);
+    assert.equal((await execute(plan)).status,200);assert.equal(latest.version,beforeVersion+1);
+    assert.equal(latest.state.entries.filter(e=>e.category==='partner_distribution').length,2);
+    const payment=command('entry.settle',{id:owners[0].id,accountId,settledDate:'2026-09-16',withholdingCents:1000,withholdingDueDate:'2026-09-30'});
+    assert.equal((await execute(payment)).status,200);assert.equal(report().cash.balanceCents,111000);
+    assert.equal(report().dre.combined.netProfitCents,20000);
+    assert.equal(latest.state.entries.filter(e=>e.sourceEntryId===owners[0].id).length,1);
+    assert.equal((await execute(payment)).status,200);assert.equal(report().cash.balanceCents,111000);
+    assert.equal(latest.state.entries.filter(e=>e.sourceEntryId===owners[0].id).length,1);
+  });
   await t.test('ledger survives restart, audit is separate from team history and cannot be overwritten',async()=>{
     const expected=structuredClone(latest);api.close();api=createPortalApi({dbPath,now:()=>Date.parse('2026-09-16T15:00:00Z')});
     latest=(await request(admin,'/finance')).body;assert.deepEqual(latest,expected);
@@ -126,4 +148,74 @@ test('cloud retry crossing a commit reaches the locked receipt check instead of 
   },rpc:async(name,input)=>{rpcCalls++;assert.equal(input.p_version,0);assert.equal(input.p_data,null);return current;}};
   await attachCloudFinance({client,hashOf:()=> 'session'}).handle('/api/finance/commands',{method:'POST'},{},admin,{version:0,requestId:randomUUID(),command:{type:'settings.save',data:{reserveBps:1500}}},(status,value)=>{result={status,...value};});
   assert.equal(receiptCalls,1);assert.equal(rpcCalls,1);assert.equal(result.status,200);assert.equal(result.version,1);assert.equal(result.state.settings.reserveBps,1500);
+});
+
+test('local finance uses current urban and rural listings while preserving evaluation identities',t=>{
+  const db=new DatabaseSync(':memory:');t.after(()=>db.close());
+  db.exec(`CREATE TABLE users(id TEXT PRIMARY KEY,name TEXT,role TEXT,active INTEGER,must_change INTEGER);
+    CREATE TABLE evaluations(id TEXT PRIMARY KEY,title TEXT,city TEXT,type TEXT,assignee_id TEXT);
+    CREATE TABLE listings(id TEXT PRIMARY KEY,data TEXT);`);
+  const admin={id:randomUUID(),name:'Admin',role:'admin',active:1,must_change:0};
+  db.prepare('INSERT INTO users VALUES(?,?,?,?,?)').run(admin.id,admin.name,admin.role,1,0);
+  const urban=randomUUID(),rural=randomUUID(),legacy=randomUUID();
+  const add=(id,title,type,draft)=>{
+    db.prepare('INSERT INTO evaluations VALUES(?,?,?,?,?)').run(id,title,'Cidade anterior',type,admin.id);
+    if(draft)db.prepare('INSERT INTO listings VALUES(?,?)').run(id,JSON.stringify(draft));
+  };
+  add(urban,'Título antigo da avaliação','Casa',{title:'Casa urbana atualizada',city:'Vacaria',type:'Casa',ownerContact:'não deve sair no catálogo'});
+  add(rural,'Outra avaliação antiga','Terra agrícola',{title:'Fazenda cadastrada',city:'Bom Jesus',type:'Terra agrícola'});
+  add(legacy,'Avaliação histórica sem anúncio','Terreno urbano');
+  let response;
+  const finance=attachFinance({db,stamp:()=> '2026-09-16T15:00:00Z',send:(_res,status,value)=>{response={status,...value};},transaction:fn=>{
+    db.exec('BEGIN');try{fn();db.exec('COMMIT');}catch(error){db.exec('ROLLBACK');throw error;}
+  }});
+  const read=()=>finance.handle('/api/finance',{method:'GET'},{},admin);
+  read();
+  assert.deepEqual(response.properties.map(p=>[p.id,p.title,p.source]),[
+    [urban,'Casa urbana atualizada','listing'],[rural,'Fazenda cadastrada','listing'],[legacy,'Avaliação histórica sem anúncio','evaluation'],
+  ]);
+  assert.equal(response.properties.find(p=>p.id===rural).type,'Terra agrícola');
+  assert.equal(response.properties.find(p=>p.id===urban).city,'Vacaria');
+  assert.ok(response.properties.every(p=>!('ownerContact'in p)&&!('data'in p)));
+  const submit=propertyId=>finance.handle('/api/finance/commands',{method:'POST'},{},admin,{version:response.version,requestId:randomUUID(),command:{type:'entry.save',data:{description:'Honorários cadastrados',category:'sale_fee',amountCents:10000,recognition:'forecast',competenceDate:'2026-09-16',dueDate:'2026-09-30',propertyId}}});
+  for(const propertyId of [urban,rural,legacy])submit(propertyId);
+  assert.deepEqual(response.state.entries.map(e=>e.propertyId),[urban,rural,legacy]);
+  const version=response.version;
+  assert.throws(()=>submit(randomUUID()),/Imóvel: selecione um cadastro/);
+  read();assert.equal(response.version,version);
+  assert.throws(()=>finance.handle('/api/finance',{method:'GET'},{},{...admin,role:'corretor'}),error=>error.status===403);
+});
+
+test('cloud finance shares the listing catalog across reads and writes and excludes special records',async()=>{
+  const admin={id:randomUUID(),name:'Admin',role:'admin',active:true,must_change:false};
+  const urban=randomUUID(),rural=randomUUID(),legacy=randomUUID(),directory=randomUUID(),development=randomUUID();
+  const rows=[
+    {id:urban,title:'Avaliação antiga',listingTitle:'Casa urbana atualizada',listingCity:'Vacaria',listingType:'Casa',assignee_id:admin.id},
+    {id:rural,title:'Nome antigo rural',listingTitle:'Fazenda cadastrada',listingCity:'Bom Jesus',listingType:'Terra agrícola',assignee_id:admin.id},
+    {id:legacy,title:'Avaliação histórica sem anúncio',listingTitle:null,type:'Terreno urbano',city:'Vacaria',assignee_id:admin.id},
+    {id:peopleRecordId,title:'Pessoas'}, {id:developmentRecordId,title:'Empreendimento'},
+    {id:directory,title:'Outro diretório',kind:'directory'}, {id:development,title:'Outro empreendimento',kind:'development'},
+  ];
+  let state={version:0,data:emptyFinance(),updated_at:'2026-09-16T15:00:00Z'},writes=0,reads=0,response;
+  const client={rest:async path=>{
+    reads++;
+    if(path.startsWith('eme_profiles?'))return [admin];
+    if(path.startsWith('eme_cases?')){assert.ok(path.includes('listingTitle:data->draft->>title'));assert.ok(path.includes('&id=neq.'+developmentRecordId));return rows;}
+    if(path.startsWith('eme_finance_state?'))return [state];
+    if(path.startsWith('eme_finance_audit?')||path.startsWith('eme_finance_receipts?'))return [];
+    throw Error('Unexpected request '+path);
+  },rpc:async(name,body)=>{assert.equal(name,'eme_save_finance');writes++;state={...state,version:state.version+1,data:body.p_data};return state;}};
+  const finance=attachCloudFinance({client,hashOf:()=> 'session'});
+  const invoke=(path,body,user=admin)=>finance.handle(path,{method:body?'POST':'GET'},{},user,body,(status,value)=>{response={status,...value};});
+  await assert.rejects(invoke('/api/finance',undefined,{...admin,role:'corretor'}),error=>error.status===403);
+  assert.equal(reads,0);
+  await invoke('/api/finance');
+  assert.deepEqual(response.properties.map(p=>[p.id,p.title,p.source]),[
+    [urban,'Casa urbana atualizada','listing'],[rural,'Fazenda cadastrada','listing'],[legacy,'Avaliação histórica sem anúncio','evaluation'],
+  ]);
+  const submit=propertyId=>invoke('/api/finance/commands',{version:state.version,requestId:randomUUID(),command:{type:'entry.save',data:{description:'Honorários cadastrados',category:'sale_fee',amountCents:10000,recognition:'forecast',competenceDate:'2026-09-16',dueDate:'2026-09-30',propertyId}}});
+  for(const propertyId of [urban,rural,legacy])await submit(propertyId);
+  assert.deepEqual(response.state.entries.map(e=>e.propertyId),[urban,rural,legacy]);
+  for(const propertyId of [peopleRecordId,developmentRecordId,directory,development,randomUUID()])await assert.rejects(submit(propertyId),/Imóvel: selecione um cadastro/);
+  assert.equal(writes,3);assert.equal(state.version,3);
 });

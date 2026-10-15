@@ -1,6 +1,7 @@
 import {brokerUser,brokerSnapshot} from '../shared/broker.mjs';
 import {createHash} from 'node:crypto';
 import {emptyFinance, applyFinanceCommand} from '../shared/finance.mjs';
+import {financeProperties} from './finance-properties.mjs';
 
 const MAX_STATE_BYTES = 2_000_000;
 const failWith = (status, message) => { const error = new Error(message); error.status = status; throw error; };
@@ -46,14 +47,20 @@ export function attachFinance({db, transaction, stamp, send}) {
   const row = () => db.prepare("SELECT * FROM finance_state WHERE id='company'").get();
   const metadata = () => ({
     members:db.prepare('SELECT id,name,role,active FROM users ORDER BY name').all().map(member => ({...member,active:Boolean(member.active)})),
-    properties:db.prepare('SELECT id,title FROM evaluations ORDER BY title').all(),
+    properties:financeProperties(db.prepare(`
+      SELECT e.id,e.title,e.city,e.type,e.assignee_id,
+        json_extract(l.data,'$.title') AS listingTitle,
+        json_extract(l.data,'$.city') AS listingCity,
+        json_extract(l.data,'$.type') AS listingType
+      FROM evaluations e LEFT JOIN listings l ON l.id=e.id
+    `).all()),
   });
   const snapshot = () => {
     const current=row();
     return {version:current.version,state:JSON.parse(current.data),updatedAt:current.updated_at,...metadata(),history:db.prepare('SELECT f.id,f.action,f.state_version AS version,f.created_at AS createdAt,u.name AS author FROM finance_audit f JOIN users u ON u.id=f.actor_id ORDER BY f.id DESC LIMIT 100').all()};
   };
   function handle(path, req, res, user, body) {
-    if(path==='/api/broker/commissions'){brokerUser(user);if(req.method!=='GET')failWith(405,'Operação indisponível.');const current=row(),meta=metadata();const properties=db.prepare('SELECT id,title,assignee_id AS assigneeId FROM evaluations').all();send(res,200,brokerSnapshot(JSON.parse(current.data),user,properties,meta.members));return true;}
+    if(path==='/api/broker/commissions'){brokerUser(user);if(req.method!=='GET')failWith(405,'Operação indisponível.');const current=row(),meta=metadata();send(res,200,brokerSnapshot(JSON.parse(current.data),user,meta.properties,meta.members));return true;}
     if (path !== '/api/finance' && path !== '/api/finance/commands') return false;
     financeAdmin(user);
     if (path === '/api/finance' && req.method === 'GET') { send(res,200,snapshot()); return true; }

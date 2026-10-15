@@ -1,5 +1,7 @@
 import {brokerUser,brokerSnapshot} from '../../shared/broker.mjs';
 import {peopleRecordId} from '../people.mjs';
+import {developmentRecordId} from '../../shared/development.mjs';
+import {financeProperties} from '../finance-properties.mjs';
 import {applyFinanceCommand} from '../../shared/finance.mjs';
 import {financeEnvelope, financeFingerprint, financeStateSize, financeAdmin} from '../finance.mjs';
 
@@ -8,9 +10,9 @@ export function attachCloudFinance({client,hashOf}) {
   const metadata=async()=>{
     const [members,properties]=await Promise.all([
       rest('eme_profiles?select=id,name,role,active&order=name'),
-      rest('eme_cases?id=neq.'+peopleRecordId+'&select=id,assignee_id,data->>title&order=created_at.desc'),
+      rest('eme_cases?id=neq.'+peopleRecordId+'&id=neq.'+developmentRecordId+'&select=id,assignee_id,title:data->>title,kind:data->>kind,city:data->>city,type:data->>type,listingTitle:data->draft->>title,listingCity:data->draft->>city,listingType:data->draft->>type&order=created_at.desc'),
     ]);
-    return {members,properties:properties.map(item=>({id:item.id,title:item.title||'Imóvel sem título',assigneeId:item.assignee_id}))};
+    return {members,properties:financeProperties(properties)};
   };
   const row=async()=>{
     const value=(await rest('eme_finance_state?id=eq.company&select=version,data,updated_at'))[0];

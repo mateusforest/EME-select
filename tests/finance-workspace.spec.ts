@@ -55,9 +55,9 @@ test('financial admin records a real decimal amount, settles it and sees accrual
   await dialog.getByRole('button',{name:'Salvar registro',exact:true}).click();
   await expect(dialog).toHaveCount(0);
   expect(app.state().entries[0].amountCents).toBe(123456);
-  await page.getByRole('button',{name:'Baixar',exact:true}).click();
+  await page.getByRole('button',{name:'Pagar',exact:true}).click();
   await dialog.getByLabel('Conta da movimentação',{exact:true}).selectOption(app.state().accounts[0].id);
-  await dialog.getByRole('button',{name:'Confirmar baixa',exact:true}).click();
+  await dialog.getByRole('button',{name:'Confirmar pagamento',exact:true}).click();
   await expect(dialog).toHaveCount(0);
   expect(app.state().entries[0].status).toBe('settled');
   await tab(page,'DRE e projeções');
@@ -75,7 +75,7 @@ test('operation creates linked revenue and commission; recurring administration 
   const dialog=page.getByRole('dialog');
   await dialog.getByLabel('Nome da operação',{exact:true}).fill('Venda apartamento frente ao mar');
   await dialog.getByLabel('Receita da EME (R$)',{exact:true}).fill('15000');
-  await dialog.getByLabel('Participação do corretor na receita EME (%)',{exact:true}).fill('30');
+  await dialog.getByLabel('Participação do corretor após tributos (%)',{exact:true}).fill('30');
   await dialog.getByLabel('Reserva da empresa nesta operação (%)',{exact:true}).fill('15');
   await dialog.getByLabel('Corretor responsável',{exact:true}).selectOption(broker.id);
   await dialog.getByLabel('Imóvel vinculado',{exact:true}).selectOption(property.id);
@@ -151,9 +151,10 @@ test('partner rules and manual DRE adjustments remain explicit; no payment is cr
     await dialog.getByRole('button',{name:'Salvar registro',exact:true}).click();
     await expect(dialog).toHaveCount(0);
   }
-  const simulation=page.locator('.pf-panel').filter({has:page.getByRole('heading',{name:'Simulação de distribuição'})});
-  await expect(simulation).toContainText('8.000,00');
-  await expect(simulation).toContainText('4.800,00');
+  const simulation=page.locator('.pf-panel').filter({has:page.getByRole('heading',{name:'Destinação do resultado aos sócios'})});
+  await expect(simulation).toContainText('6.000,00');
+  await expect(simulation).toContainText('4.000,00');
+  await expect(simulation.getByRole('button',{name:'Programar distribuição',exact:true})).toBeDisabled();
   expect(app.state().entries.filter(entry=>entry.category==='partner_distribution')).toHaveLength(0);
   await tab(page,'DRE e projeções');
   await page.getByRole('button',{name:'Ajuste manual',exact:true}).click();

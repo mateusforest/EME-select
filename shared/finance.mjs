@@ -1,4 +1,5 @@
 import {applyBrokerAgreement} from './broker.mjs';
+import { allocateWeighted, partnerCapitalReport } from './finance-partners.mjs';
 /** Manual management ledger. Amounts are BRL integer cents; percentages are basis points. */
 export const DRE_GROUPS = Object.freeze([
   { id: 'revenue', label: 'Receita bruta da EME' },
@@ -40,6 +41,7 @@ export const FINANCE_CATEGORIES = Object.freeze([
   cat('loan_in', 'Empréstimo recebido', 'in'),
   cat('loan_repayment', 'Amortização de empréstimo (principal)', 'out'),
   cat('partner_distribution', 'Distribuição de lucros', 'out'),
+  cat('partner_withholding', 'Imposto retido dos lucros do sócio a recolher', 'out'),
   cat('investment', 'Investimentos e bens de capital', 'out'),
 ])
 const categories = new Map(FINANCE_CATEGORIES.map(item => [item.id, item]))
@@ -161,9 +163,14 @@ export function applyFinanceCommand(input, command, rawContext) {
       const prior = data.id ? state.entries.find(item => item.id === id(data.id)) : null
       if (prior && prior.status !== 'open') fail('Lançamentos baixados ou cancelados não podem ser editados.')
       if (prior?.agreementId) fail('Comissão vinculada a acordo preserva seus valores. Use cancelamento com justificativa.');
+      if (prior?.allocationId) fail('Valores de um plano de sócios são preservados. Cancele o lançamento e recalcule o plano.')
+      if (prior?.sourceEntryId) fail('O imposto retido preserva o vínculo com a distribuição. Corrija a distribuição de origem.')
       if (prior?.operationId) fail('Lançamentos de uma operação preservam os valores originais. Cancele e registre a correção.')
       if (data.operationId || data.recurrenceId || data.recurrenceMonth) fail('Vínculos automáticos devem ser criados pela operação ou recorrência.')
-      put(state.entries, entryDraft({ ...prior, ...data }, prior, state, context)); break
+      const result = entryDraft({ ...prior, ...data }, prior, state, context)
+      put(state.entries, result)
+      if (bool(data.settleNow, false)) return applyFinanceCommand(state, { type: 'entry.settle', data: { id: result.id, accountId: data.accountId, settledDate: data.settledDate, destinationAccountId: data.destinationAccountId, withholdingCents: data.withholdingCents, withholdingDueDate: data.withholdingDueDate } }, context)
+      break
     }
     case 'entry.settle': {
       const prior = found(state.entries, data.id, 'Lançamento')
@@ -173,6 +180,43 @@ export function applyFinanceCommand(input, command, rawContext) {
       const settledDate = date(data.settledDate, 'Data da baixa')
       if (settledDate > today) fail('Uma baixa real não pode estar no futuro. Mantenha o lançamento em aberto.')
       if (settledDate < account.openingDate) fail('A baixa não pode anteceder o saldo inicial da conta.')
+      const withholdingCents = integer(data.withholdingCents ?? 0, 'Imposto retido', 0, prior.amountCents)
+      if (withholdingCents && prior.category !== 'partner_distribution') fail('Esta retenção é exclusiva de distribuição de lucros.')
+      const withholdingDueDate = withholdingCents ? date(data.withholdingDueDate, 'Vencimento do imposto retido') : null
+      if (prior.category === 'loan_repayment' && prior.allocationId && settledDate < saoPauloDate(prior.createdAt)) fail('A data do pagamento não pode anteceder a programação do reembolso. Para valores antigos, confira o histórico do sócio.')
+      if (prior.partnerId && ['capital_in', 'loan_in', 'loan_repayment'].includes(prior.category)) {
+        const partner = found(state.partners, prior.partnerId, 'Sócio')
+        if (partner.openingDate && settledDate <= partner.openingDate) fail('Este movimento deve ser posterior à data do histórico do sócio, para não duplicar valores.')
+      }
+      if (prior.category === 'partner_distribution' || (prior.category === 'loan_repayment' && prior.partnerId)) {
+        const withoutThis = { ...state, entries: state.entries.filter(e => e.id !== prior.id) }
+        const check = financeReport(withoutThis, { from: prior.competenceDate.slice(0, 7) + '-01', to: monthEnd(prior.competenceDate.slice(0, 7)), asOf: today })
+        if (state.settings.cashTargetCents == null) fail('Defina a meta de caixa antes de confirmar pagamentos aos sócios.')
+        if (prior.amountCents > check.distribution.freeCashCents) fail('O pagamento ultrapassa o caixa livre após a reserva e os compromissos.')
+        if (prior.amountCents - withholdingCents > (check.cash.accounts.find(a => a.id === account.id)?.balanceCents ?? 0)) fail('A conta selecionada não tem saldo suficiente para este pagamento ao sócio.')
+        if (prior.category === 'partner_distribution') {
+          if (prior.amountCents > Math.min(check.distribution.unallocatedProfitCents, check.distribution.cashProfitCents)) fail('A distribuição ultrapassa o lucro acumulado e recebido disponível.')
+          if (check.partnerCapital.repayableExcessCents > 0) fail('Programe primeiro o reembolso prioritário dos aportes em Sócios e regras.')
+          if (!prior.allocationId && (!check.distribution.ready || prior.amountCents > (check.distribution.periodShares.find(p => p.id === prior.partnerId)?.amountCents || 0))) fail('A distribuição ultrapassa a participação disponível deste sócio na competência. Use o plano em Sócios e regras.')
+        } else {
+          const partner = check.partnerCapital.rows.find(p => p.id === prior.partnerId)
+          if (!partner || prior.amountCents > partner.outstandingCents - partner.pendingRepaymentCents) fail('A devolução ultrapassa o saldo reembolsável do sócio.')
+          if (prior.amountCents > check.partnerCapital.availableBudgetCents) fail('A devolução ultrapassa o teto mensal atual, inclusive os pagamentos já programados.')
+          if (!prior.allocationId && prior.amountCents > partner.repaymentCents) fail('A devolução ultrapassa a prioridade de reembolso ou o teto mensal. Use Sócios e regras para programar o plano.')
+        }
+        // A backdated payment must also have coverage at the actual payment date.
+        if (settledDate !== today) {
+          const atPayment = financeReport(withoutThis, { from: settledDate.slice(0, 7) + '-01', to: monthEnd(settledDate.slice(0, 7)), asOf: settledDate })
+          if (prior.amountCents > atPayment.distribution.freeCashCents) fail('Não havia caixa livre suficiente na data informada para o pagamento.')
+          if (prior.amountCents - withholdingCents > (atPayment.cash.accounts.find(a => a.id === account.id)?.balanceCents ?? 0)) fail('A conta não tinha saldo suficiente na data informada para o pagamento.')
+          if (prior.category === 'partner_distribution' && prior.amountCents > Math.min(atPayment.distribution.unallocatedProfitCents, atPayment.distribution.cashProfitCents)) fail('Não havia lucro recebido suficiente na data informada para distribuir.')
+          if (prior.category === 'loan_repayment') {
+            const atDatePartner = atPayment.partnerCapital.rows.find(p => p.id === prior.partnerId)
+            if (!atDatePartner || prior.amountCents > atDatePartner.outstandingCents - atDatePartner.pendingRepaymentCents) fail('O empréstimo reembolsável ainda não estava disponível na data informada.')
+            if (prior.amountCents > atPayment.partnerCapital.availableBudgetCents) fail('A devolução ultrapassa o teto do mês da data de pagamento.')
+          }
+        }
+      }
       if (retained(prior)) {
         const heldAtDate = heldThirdParty(state, settledDate, prior.propertyId)
         const heldNow = heldThirdParty(state, today, prior.propertyId)
@@ -187,12 +231,29 @@ export function applyFinanceCommand(input, command, rawContext) {
         if (settledDate < destination.openingDate) fail('A transferência não pode anteceder o saldo inicial do destino.')
         destinationAccountId = destination.id
       }
-      put(state.entries, { ...prior, status: 'settled', recognition: 'recognized', accountId: account.id, destinationAccountId, settledDate, updatedAt: context.now }); break
+      put(state.entries, { ...prior, status: 'settled', recognition: 'recognized', accountId: account.id, destinationAccountId, settledDate, ...(prior.category === 'partner_distribution' ? { withholdingCents } : {}), updatedAt: context.now })
+      if (withholdingCents) {
+        const tax = entryDraft({ description: `Retenção · ${prior.description}`.slice(0, 160), category: 'partner_withholding', amountCents: withholdingCents, recognition: 'recognized', competenceDate: settledDate, dueDate: withholdingDueDate, partnerId: prior.partnerId, notes: 'Valor de retenção informado na confirmação do pagamento. Conferir apuração e guia com a contabilidade.' }, null, state, context)
+        state.entries.push({ ...tax, sourceEntryId: prior.id })
+      }
+      if (prior.operationId && category(prior.category).dreGroup === 'revenue') {
+        state.entries = state.entries.map(e => e.operationId === prior.operationId && e.status !== 'cancelled' ? { ...e, recognition: 'recognized', updatedAt: context.now } : e)
+        state.operations = state.operations.map(o => o.id === prior.operationId ? { ...o, recognition: 'recognized', updatedAt: context.now } : o)
+      }
+      break
     }
     case 'entry.cancel': {
       const prior = found(state.entries, data.id, 'Lançamento')
       if (prior.status === 'cancelled') fail('Este lançamento já está cancelado.')
       if (prior.operationId) fail('Cancele a operação para estornar juntos a receita, a comissão e os custos vinculados.')
+      const taxes = state.entries.filter(e => e.sourceEntryId === prior.id && e.status !== 'cancelled')
+      if (taxes.some(e => e.status === 'settled')) fail('Estorne primeiro o recolhimento vinculado antes de cancelar a distribuição de origem.')
+      if (prior.sourceEntryId && prior.status === 'open') fail('Cancele a distribuição de origem para desfazer a retenção e o pagamento juntos.')
+      if (prior.category === 'third_party_in' && prior.status === 'settled') {
+        const withoutReceipt = { ...state, entries: state.entries.filter(e => e.id !== prior.id) }
+        if (heldThirdParty(withoutReceipt, today) < 0 || (prior.propertyId && heldThirdParty(withoutReceipt, today, prior.propertyId) < 0)) fail('O cancelamento deixaria retenções ou repasses sem saldo de terceiros. Corrija primeiro os movimentos vinculados.')
+      }
+      for (const tax of taxes) put(state.entries, { ...tax, status: 'cancelled', cancelReason: text(data.reason, 'Motivo do cancelamento', 600), updatedAt: context.now })
       put(state.entries, { ...prior, status: 'cancelled', cancelReason: text(data.reason, 'Motivo do cancelamento', 600), updatedAt: context.now }); break
     }
     case 'recurrence.save': {
@@ -224,18 +285,22 @@ export function applyFinanceCommand(input, command, rawContext) {
       const operationId = newId(data.id)
       if (state.operations.some(item => item.id === operationId)) fail('Esta operação já foi registrada.', 'finance_conflict', 409)
       const amountCents = integer(data.amountCents, 'Receita da EME', 1)
+      const taxCents = integer(data.taxCents ?? 0, 'Impostos e deduções', 0, amountCents)
+      const commissionBaseCents = amountCents - taxCents
+      const recognition = choice(data.recognition || 'recognized', ['forecast', 'recognized'], 'Reconhecimento')
       const commissionBps = integer(data.commissionBps ?? state.settings.defaultCommissionBps, 'Percentual da comissão', 0, 10000)
       const directCostCents = integer(data.directCostCents ?? 0, 'Custos diretos')
       const reserveBps = integer(data.reserveBps ?? state.settings.reserveBps ?? 0, 'Percentual de reserva', 0, 10000)
       const linked = dimensions(data, null, state, context)
       if (commissionBps > 0 && !linked.brokerId) fail('Selecione um corretor para registrar comissão.')
-      const result = { id: operationId, title: text(data.title, 'Nome da operação'), kind: choice(data.kind, ['sale', 'rental', 'management', 'other'], 'Tipo da operação'), status: 'active', cancelReason: null, amountCents, commissionBps, commissionCents: percentCents(amountCents, commissionBps), directCostCents, reserveBps, reserveCents: percentCents(amountCents, reserveBps), brokerId: linked.brokerId, propertyId: linked.propertyId, competenceDate: date(data.competenceDate, 'Competência'), dueDate: date(data.dueDate, 'Vencimento'), notes: text(data.notes, 'Observações', 1200, false), ...metadata(null, context) }
+      const result = { id: operationId, title: text(data.title, 'Nome da operação'), kind: choice(data.kind, ['sale', 'rental', 'management', 'other'], 'Tipo da operação'), status: 'active', cancelReason: null, amountCents, taxCents, commissionBaseCents, recognition, commissionBps, commissionCents: percentCents(commissionBaseCents, commissionBps), directCostCents, reserveBps, reserveCents: percentCents(amountCents, reserveBps), brokerId: linked.brokerId, propertyId: linked.propertyId, competenceDate: date(data.competenceDate, 'Competência'), dueDate: date(data.dueDate, 'Vencimento'), notes: text(data.notes, 'Observações', 1200, false), ...metadata(null, context) }
       state.operations.push(result)
       const add = (description, entryCategory, amount) => {
-        const item = entryDraft({ description, category: entryCategory, amountCents: amount, recognition: 'recognized', competenceDate: result.competenceDate, dueDate: result.dueDate, behavior: 'variable', brokerId: result.brokerId, propertyId: result.propertyId, notes: result.notes }, null, state, context)
+        const item = entryDraft({ description, category: entryCategory, amountCents: amount, recognition, competenceDate: result.competenceDate, dueDate: result.dueDate, behavior: 'variable', brokerId: result.brokerId, propertyId: result.propertyId, notes: result.notes }, null, state, context)
         state.entries.push({ ...item, operationId })
       }
       add(result.title, { sale: 'sale_fee', rental: 'rental_fee', management: 'management_fee', other: 'other_revenue' }[result.kind], amountCents)
+      if (taxCents) add(`Impostos · ${result.title}`, 'revenue_deduction', taxCents)
       if (result.commissionCents) add(`Comissão · ${result.title}`, 'broker_commission', result.commissionCents)
       if (directCostCents) add(`Custos diretos · ${result.title}`, 'operation_cost', directCostCents)
       break
@@ -252,14 +317,44 @@ export function applyFinanceCommand(input, command, rawContext) {
       const prior = data.id ? state.partners.find(item => item.id === id(data.id)) : null
       const merged = { ...prior, ...data }
       const result = { id: prior?.id || newId(data.id), name: text(merged.name, 'Nome do sócio'), shareBps: integer(merged.shareBps, 'Participação', 0, 10000), active: bool(merged.active), ...metadata(prior, context) }
+      result.openingDate = merged.openingDate ? date(merged.openingDate, 'Data do histórico do sócio') : null
+      for (const key of ['openingCapitalCents', 'openingLoanCents', 'openingRepaidCents']) result[key] = integer(merged[key] ?? 0, 'Histórico do sócio')
+      if (result.openingRepaidCents > result.openingLoanCents) fail('As devoluções históricas não podem superar os empréstimos históricos.')
+      if ((result.openingCapitalCents || result.openingLoanCents || result.openingRepaidCents) && !result.openingDate) fail('Informe a data dos saldos históricos do sócio.')
+      if (result.openingDate > today) fail('O histórico do sócio não pode estar no futuro.')
+      const movements = state.entries.filter(e => e.partnerId === result.id && e.status === 'settled' && ['capital_in', 'loan_in', 'loan_repayment'].includes(e.category))
+      if (result.openingDate && movements.some(e => e.settledDate <= result.openingDate)) fail('O histórico deve anteceder os movimentos já registrados para não duplicar aportes.')
+      if (prior && ['openingDate', 'openingCapitalCents', 'openingLoanCents', 'openingRepaidCents'].some(key => (result[key] ?? null) !== (prior[key] ?? (key === 'openingDate' ? null : 0))) && state.entries.some(e => e.partnerId === result.id && e.status !== 'cancelled' && e.category === 'loan_repayment')) fail('O histórico está preservado após programar devoluções. Cancele as devoluções antes de corrigir o histórico.')
       const total = sum(state.partners.filter(item => item.active && item.id !== result.id).map(item => item.shareBps)) + (result.active ? result.shareBps : 0)
       if (total > 10000) fail('A soma das participações dos sócios não pode superar 100%.')
       put(state.partners, result); break
     }
     case 'settings.save': {
-      for (const key of ['reserveBps', 'defaultCommissionBps', 'cashTargetCents', 'initialInvestmentCents']) {
+      for (const key of ['reserveBps', 'defaultCommissionBps', 'cashTargetCents', 'initialInvestmentCents', 'partnerRepaymentBps']) {
         if (!Object.hasOwn(data, key)) continue
         state.settings[key] = data[key] === null ? null : integer(data[key], 'Configuração', 0, key.endsWith('Bps') ? 10000 : LIMIT)
+      }
+      if (Object.hasOwn(data, 'repaymentPolicy')) state.settings.repaymentPolicy = choice(data.repaymentPolicy, ['excess_first'], 'Regra de compensação')
+      break
+    }
+    case 'distribution.plan':
+    case 'repayment.plan': {
+      const from = date(data.from), to = date(data.to), dueDate = date(data.dueDate, 'Vencimento')
+      if (from !== monthStart(from) || to !== monthEnd(from.slice(0, 7)) || from > today) fail('Selecione uma competência mensal atual ou passada.')
+      const reason = text(data.reason, 'Deliberação dos sócios', 600)
+      const report = financeReport(state, { from, to, asOf: today })
+      const profit = command.type === 'distribution.plan'
+      if (state.settings.cashTargetCents == null) fail('Defina a meta de caixa antes de programar pagamentos aos sócios.')
+      if (profit ? !report.distribution.ready : !report.partnerCapital.ready) fail('Confira os sócios ativos, as participações somando 100% e as regras de caixa.')
+      const limit = profit ? report.distribution.eligibleCents : report.partnerCapital.plannedCents
+      if (limit <= 0) fail(profit ? 'Não há lucro recebido disponível após as reservas, compromissos e compensação dos aportes.' : 'Não há compensação disponível dentro do teto mensal e do caixa protegido.')
+      const amount = integer(data.amountCents ?? limit, 'Valor do plano', 1, limit)
+      const shares = profit ? profitAllocations(amount, state.partners.filter(p => p.active), state.entries.filter(e => e.category === 'partner_distribution' && e.status !== 'cancelled' && e.recognition === 'recognized' && inRange(e.competenceDate, from, to))) : allocateWeighted(amount, report.partnerCapital.rows.map(p => ({ ...p, weight: p.repaymentCents })))
+      const allocationId = newId()
+      const competenceDate = profit ? [today, to].sort()[0] : today
+      for (const share of shares.filter(p => p.amountCents > 0)) {
+        const item = entryDraft({ description: `${profit ? 'Lucros' : 'Compensação de aportes'} · ${share.name} · ${profit ? from.slice(0, 7) : today.slice(0, 7)}`, category: profit ? 'partner_distribution' : 'loan_repayment', amountCents: share.amountCents, recognition: 'recognized', competenceDate, dueDate, partnerId: share.id, notes: reason }, null, state, context)
+        state.entries.push({ ...item, allocationId, sourcePeriod: profit ? from.slice(0, 7) : today.slice(0, 7) })
       }
       break
     }
@@ -294,7 +389,8 @@ const dre = values => ({
   netProfitCents: values.revenue - values.deductions - values.direct_cost - values.opex + values.financial_income - values.financial_expense - values.income_tax,
 })
 const operating = entry => Boolean(category(entry.category).dreGroup)
-const signed = entry => category(entry.category).direction === 'in' ? entry.amountCents : category(entry.category).direction === 'out' ? -entry.amountCents : 0
+const cashAmount = entry => entry.amountCents - (entry.category === 'partner_distribution' ? entry.withholdingCents || 0 : 0)
+const signed = entry => category(entry.category).direction === 'in' ? cashAmount(entry) : category(entry.category).direction === 'out' ? -cashAmount(entry) : 0
 const recurrenceActive = (entry, period) => entry.active && entry.startMonth <= period && (!entry.endMonth || entry.endMonth >= period)
 function allocations(total, partners) {
   const base = partners.map(partner => { const product = BigInt(total) * BigInt(partner.shareBps); return { id: partner.id, name: partner.name, shareBps: partner.shareBps, amountCents: Number(product / 10000n), remainder: Number(product % 10000n) } })
@@ -302,6 +398,12 @@ function allocations(total, partners) {
   const order = [...base].sort((a, b) => b.remainder - a.remainder || a.id.localeCompare(b.id))
   for (const row of order) { if (remaining <= 0) break; row.amountCents++; remaining-- }
   return base.map(({ remainder: _remainder, ...item }) => item)
+}
+function profitAllocations(total, partners, existing) {
+  const prior = sum(existing.map(e => e.amountCents))
+  const target = allocations(prior + total, partners)
+  const rows = target.map(p => ({ ...p, weight: Math.max(0, p.amountCents - sum(existing.filter(e => e.partnerId === p.id).map(e => e.amountCents))) }))
+  return allocateWeighted(total, rows).map(({ weight: _, ...p }) => p)
 }
 export function financeReport(state, { from, to, asOf }, members = []) {
   date(from); date(to); date(asOf)
@@ -337,7 +439,7 @@ export function financeReport(state, { from, to, asOf }, members = []) {
   const overdue = open.filter(item => item.dueDate < asOf)
   const period = {
     receivedCents: sum(periodCash.filter(item => category(item.category).direction === 'in' && !retained(item)).map(item => item.amountCents)),
-    paidCents: sum(periodCash.filter(item => category(item.category).direction === 'out').map(item => item.amountCents)),
+    paidCents: sum(periodCash.filter(item => category(item.category).direction === 'out').map(cashAmount)),
     fixedCostsCents: sum(recognized.filter(item => category(item.category).direction === 'out' && operating(item) && item.behavior === 'fixed').map(item => item.amountCents)),
     variableCostsCents: sum(recognized.filter(item => category(item.category).direction === 'out' && operating(item) && item.behavior === 'variable').map(item => item.amountCents)),
     overdueReceivableCents: sum(overdue.filter(item => category(item.category).direction === 'in').map(item => item.amountCents)),
@@ -356,7 +458,7 @@ export function financeReport(state, { from, to, asOf }, members = []) {
       projected.push({ ...recurrence, dueDate: recurrenceDate(periodMonth,recurrence.dueDay) })
     }
     const receivableCents = sum(projected.filter(item => category(item.category).direction === 'in' && !retained(item)).map(item => item.amountCents))
-    const payableCents = sum(projected.filter(item => category(item.category).direction === 'out').map(item => item.amountCents))
+    const payableCents = sum(projected.filter(item => category(item.category).direction === 'out').map(cashAmount))
     const thirdPartyInCents = sum(projected.filter(item => item.category === 'third_party_in').map(item => item.amountCents))
     const thirdPartyOutCents = sum(projected.filter(item => item.category === 'third_party_out').map(item => item.amountCents))
     const retainedFeesCents = sum(projected.filter(retained).map(item => item.amountCents))
@@ -376,9 +478,12 @@ export function financeReport(state, { from, to, asOf }, members = []) {
   })
   const partners = state.partners.filter(item => item.active)
   const allocatedBps = sum(partners.map(item => item.shareBps))
-  const priorDistribution = sum(active.filter(item => item.category === 'partner_distribution' && item.recognition === 'recognized' && inRange(item.competenceDate, from, to)).map(item => item.amountCents))
+  const distributions = active.filter(item => item.category === 'partner_distribution' && item.recognition === 'recognized')
+  const periodDistributions = distributions.filter(item => inRange(item.competenceDate, from, to))
+  const priorDistribution = sum(periodDistributions.map(item => item.amountCents))
+  const allDistributions = sum(distributions.map(item => item.amountCents))
   const payableHorizon = [to, addDays(asOf, 30)].sort().at(-1)
-  let ownPayables = sum(open.filter(item => item.category !== 'third_party_out' && category(item.category).direction === 'out' && item.dueDate <= payableHorizon).map(item => item.amountCents))
+  let ownPayables = sum(open.filter(item => item.category !== 'third_party_out' && category(item.category).direction === 'out' && (item.dueDate <= payableHorizon || (item.partnerId && ['partner_distribution', 'loan_repayment', 'partner_withholding'].includes(item.category)))).map(cashAmount))
   // Protect agreed monthly costs even when the operator has not generated their invoices yet.
   for (let periodMonth = currentMonth; periodMonth <= payableHorizon.slice(0, 7); periodMonth = addMonths(`${periodMonth}-01`, 1)) {
     for (const recurrence of state.recurrences.filter(item => recurrenceActive(item, periodMonth) && item.category !== 'third_party_out' && category(item.category).direction === 'out')) {
@@ -391,7 +496,22 @@ export function financeReport(state, { from, to, asOf }, members = []) {
   const realizedProfitBuckets = buckets()
   for (const entry of recognized.filter(item => item.competenceDate <= asOf)) { const group = category(entry.category).dreGroup; if (group) realizedProfitBuckets[group] = safeAdd(realizedProfitBuckets[group], entry.amountCents) }
   for (const adjustment of state.adjustments.filter(item => item.status === 'active' && inRange(item.competenceDate, from, to) && item.competenceDate <= asOf)) realizedProfitBuckets[adjustment.group] = safeAdd(realizedProfitBuckets[adjustment.group], adjustment.amountCents)
-  const eligibleCents = Math.max(0, Math.min(dre(realizedProfitBuckets).netProfitCents - priorDistribution, availableCents - cashProtection - ownPayables))
+  const cumulativeBuckets = buckets()
+  for (const entry of active.filter(item => item.recognition === 'recognized' && item.competenceDate <= asOf)) {
+    const group = category(entry.category).dreGroup
+    if (group) cumulativeBuckets[group] = safeAdd(cumulativeBuckets[group], entry.amountCents)
+  }
+  for (const adjustment of state.adjustments.filter(item => item.status === 'active' && item.competenceDate <= asOf)) cumulativeBuckets[adjustment.group] = safeAdd(cumulativeBuckets[adjustment.group], adjustment.amountCents)
+  const accumulatedProfitCents = dre(cumulativeBuckets).netProfitCents
+  const unallocatedProfitCents = Math.max(0, accumulatedProfitCents - allDistributions)
+  const cashEarned = sum(settled.filter(item => operating(item) && item.competenceDate <= asOf).map(signed))
+  const accruedUnpaidCosts = sum(open.filter(item => item.recognition === 'recognized' && item.competenceDate <= asOf && operating(item) && category(item.category).direction === 'out').map(item => item.amountCents))
+  // Opening cash, loans and contributions cannot fund a proposal described as received profit.
+  const cashProfitCents = Math.max(0, cashEarned - accruedUnpaidCosts - allDistributions)
+  const freeCashCents = thirdPartyNet < 0 ? 0 : Math.max(0, availableCents - cashProtection - ownPayables)
+  const partnerCapital = partnerCapitalReport(state, asOf, freeCashCents)
+  const periodProfitCents = dre(realizedProfitBuckets).netProfitCents
+  const eligibleCents = partnerCapital.repayableExcessCents > 0 ? 0 : Math.max(0, Math.min(periodProfitCents - priorDistribution, unallocatedProfitCents, cashProfitCents, freeCashCents))
   const ready = partners.length > 0 && allocatedBps === 10000
   const operatingSettled = settled.filter(operating)
   const recoveredCents = sum(operatingSettled.map(signed))
@@ -416,10 +536,17 @@ export function financeReport(state, { from, to, asOf }, members = []) {
   if (state.settings.reserveBps === null) warnings.push('O percentual de reserva por operação ainda não foi definido.')
   if (!validInvestment) warnings.push('Informe o investimento inicial para acompanhar o payback.')
   if (Object.values(manual).some(Boolean)) warnings.push('A DRE inclui ajustes manuais, que não alteram o saldo das contas.')
+  if (partnerCapital.unattributedCents > 0) warnings.push('Há aportes ou empréstimos sem sócio vinculado. Eles não entram no histórico individual até serem identificados.')
+  if (partnerCapital.repayableExcessCents > 0) warnings.push('A distribuição aguarda o reembolso prioritário do investimento excedente, dentro do teto mensal e do caixa protegido.')
+  if (partnerCapital.rows.some(p => p.repaidCents + p.pendingRepaymentCents > p.lentCents)) warnings.push('As devoluções de um sócio superam os empréstimos registrados. Confira o histórico antes de novos pagamentos.')
+  if (allDistributions > Math.max(0, accumulatedProfitCents)) warnings.push('Distribuições registradas superam o lucro acumulado atual. Revise o histórico e eventuais cancelamentos.')
   return {
     cash: { balanceCents, thirdPartyHeldCents, availableCents, reserveSuggestedCents, targetCents, gapCents: targetCents === null ? null : Math.max(0, targetCents - availableCents), accounts: cashRows },
     period, dre: { automatic: dre(auto), manual: dre(manual), combined: totalDre }, mrrCents, arrCents: mrrCents * 12,
-    projections, brokers, distribution: { eligibleCents, allocatedBps, ready, payableHorizon, commitmentsCents: ownPayables, shares: ready ? allocations(eligibleCents, partners) : [] },
+    projections, brokers, partnerCapital, distribution: { eligibleCents, allocatedBps, ready, payableHorizon, commitmentsCents: ownPayables, shares: ready ? profitAllocations(eligibleCents, partners, periodDistributions) : [],
+      periodProfitCents, periodShares: ready ? profitAllocations(Math.max(0, periodProfitCents - priorDistribution), partners, periodDistributions) : [], accumulatedProfitCents, unallocatedProfitCents, cashProfitCents,
+      declaredCents: priorDistribution, paidCents: sum(periodDistributions.filter(e => e.status === 'settled' && e.settledDate <= asOf).map(e => e.amountCents)),
+      pendingCents: sum(periodDistributions.filter(e => e.status === 'open').map(e => e.amountCents)), protectionCents: cashProtection, freeCashCents },
     payback: { investmentCents, recoveredCents, remainingCents, monthsEstimate, reached }, warnings,
   }
 }
