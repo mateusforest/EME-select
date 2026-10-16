@@ -8,6 +8,7 @@ async function mockPortal(page:Page,options:{authenticated?:boolean;role?:TeamUs
   let authenticated=options.authenticated??true;
   const user={...admin,role:options.role??'admin',mustChangePassword:options.mustChangePassword??false};
   const requests:string[]=[];
+  await page.route('**/api.bcb.gov.br/**',route=>route.abort());
   await page.route('**/api/**',async route=>{
     const path=new URL(route.request().url()).pathname;requests.push(path);
     if(path==='/api/auth/session')return route.fulfill(options.sessionError?{status:503,json:{error:'O serviço de acesso está temporariamente indisponível.'}}:{json:{user:authenticated?user:null,needsSetup:false}});
@@ -15,6 +16,7 @@ async function mockPortal(page:Page,options:{authenticated?:boolean;role?:TeamUs
     if(!authenticated)return route.fulfill({status:401,json:{error:'Entre com sua conta.'}});
     if(path==='/api/evaluations')return route.fulfill({json:{evaluations:[evaluation]}});
     if(path==='/api/assignees')return route.fulfill({json:{members:[user]}});
+    if(path==='/api/leads')return route.fulfill({json:{leads:[]}});
     if(path==='/api/listings')return route.fulfill({json:{listings:[]}});
     if(path==='/api/operations')return route.fulfill({json:{version:0,state:{version:1,tickets:[],visits:[],leases:[],documents:[],reviews:[]},properties:[{id:evaluation.id,title:evaluation.title,assigneeId:user.id}],members:[user],history:[]}});
     if(path==='/api/intelligence')return route.fulfill({json:{settings:{configured:false,enabled:false,model:'gpt-5-mini',version:0,canConfigure:user.role==='admin'},properties:[{id:evaluation.id,title:evaluation.title,version:1}],runs:[]}});
@@ -53,9 +55,9 @@ test('a legacy demo URL requires login and opens the real overview, ignoring for
   await page.getByLabel('Senha',{exact:true}).fill('portal-test-password');
   await page.getByRole('button',{name:'Entrar no portal',exact:true}).click();
   await expectOnePortal(page);
-  await expect(page.getByRole('heading',{level:1})).toHaveText('Seu olhar. Agora, com continuidade.');
-  await expect(page.locator('tbody tr')).toHaveCount(1);
-  await expect(page.locator('tbody')).toContainText(evaluation.title);
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Seu próximo passo começa aqui.');
+  await expect(page.locator('.broker-property')).toHaveCount(1);
+  await expect(page.locator('.broker-property')).toContainText(evaluation.title);
   await expect(page.getByRole('alert')).toHaveCount(0);
   expect(requests).toContain('/api/evaluations');
 });
@@ -81,7 +83,7 @@ test('the former example property collection redirects to the saved listings mod
   await page.goto('/portalselect/demo/carteira');
   await expect(page).toHaveURL(/\/portalselect\/imoveis$/);
   await expectOnePortal(page);
-  await expect(page.getByRole('heading',{level:1})).toHaveText('Cada lugar merece uma boa apresentação.');
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Da captação ao anúncio.');
   await expect(page.getByRole('button',{name:/Cadastrar imóvel|Novo imóvel/}).first()).toBeVisible();
   await expect.poll(()=>requests.includes('/api/listings')).toBe(true);
   await expect(page.getByText('Os 18 imóveis ilustrativos que compõem o site da EME.',{exact:true})).toHaveCount(0);
@@ -120,19 +122,19 @@ test('mobile operational modules use the team menu, fit the viewport and return 
   await page.setViewportSize({width:390,height:844});
   await mockPortal(page);
   await page.goto('/portalselect');
-  await expect(page.getByRole('heading',{level:1})).toHaveText('Seu olhar. Agora, com continuidade.');
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Seu próximo passo começa aqui.');
   await page.getByRole('button',{name:'Abrir navegação',exact:true}).click();
-  await navigation(page).getByRole('link',{name:'Central de IA',exact:true}).click();
+  await navigation(page).getByRole('link',{name:'Assistente Select',exact:true}).click();
   await expect(page).toHaveURL(/\/portalselect\/inteligencia$/);
-  await expect(page.getByRole('heading',{level:1})).toHaveText('Inteligência com supervisão da EME.');
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Inteligência para o seu trabalho.');
   await expect(page.getByRole('heading',{name:'Comece por um imóvel.',exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Solicitar análise IA',exact:true})).toBeDisabled();
   await expect(page.getByRole('button',{name:'Abrir navegação',exact:true})).toHaveAttribute('aria-expanded','false');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
   await page.getByRole('button',{name:'Abrir navegação',exact:true}).click();
-  await navigation(page).getByRole('link',{name:'Visão geral',exact:true}).click();
+  await navigation(page).getByRole('link',{name:'Meu dia',exact:true}).click();
   await expect(page).toHaveURL(/\/portalselect$/);
-  await expect(page.locator('tbody')).toContainText(evaluation.title);
+  await expect(page.locator('.broker-property')).toContainText(evaluation.title);
   expect(errors).toEqual([]);
 });
 

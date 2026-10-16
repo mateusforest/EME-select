@@ -4,6 +4,7 @@ import { api, ApiError, type TeamUser } from './api';
 import TeamWorkspace from './TeamWorkspace';
 import './portal.css';
 import './team.css';
+import './shell.css';
 const ListingPreview = lazy(()=>import('./ListingPreview'));
 // Old bookmarks enter the authenticated portal without loading prototype data.
 const legacyRoute = location.pathname.match(/^\/portalselect\/demo(?:\/(.*))?$/);
