@@ -20,7 +20,7 @@ test('green shell, official dated indicators, collapse persistence and account n
  await page.getByRole('button',{name:'Indicadores do mercado e fontes'}).click();await expect(page.getByRole('region',{name:'Referências dos indicadores'})).toContainText('01/09/2026');await page.keyboard.press('Escape');
  await page.screenshot({path:'test-results/select-shell-desktop.png',fullPage:false});
  await page.getByRole('button',{name:'Recolher menu'}).click();await expect(page.locator('.pt-live')).toHaveClass(/is-nav-collapsed/);await page.reload();await expect(page.locator('.pt-live')).toHaveClass(/is-nav-collapsed/);
- await page.getByRole('button',{name:'Expandir menu'}).click();await page.getByRole('button',{name:'Minha conta · Mateus Exemplo'}).click();await expect(page).toHaveURL(/\/conta$/);await expect(nav.getByRole('link',{name:'Minha conta',exact:true})).toHaveAttribute('aria-current','page');
+ await page.getByRole('button',{name:'Expandir menu'}).click();await page.getByRole('button',{name:'Minha conta · Mateus Exemplo'}).click();await expect(page).toHaveURL(/\/conta$/);await expect(nav.getByRole('link',{name:'Minha conta',exact:true})).toHaveAttribute('aria-current','page');await expect(nav.getByRole('link',{name:'Minha conta',exact:true})).toBeInViewport();
 });
 test('calculator updates SAC and Price, validates values, preserves inputs and restores focus',async({page})=>{
  await setup(page);
