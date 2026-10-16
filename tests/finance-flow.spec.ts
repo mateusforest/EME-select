@@ -172,3 +172,87 @@ test('initial cash 50k plus earned honorarium 100k keeps DRE at 100k and becomes
   await tab(page,'DRE e projeções');
   await page.screenshot({path:'tmp/finance-initial-50k-receipt-100k-desktop.png',fullPage:true});
 });
+
+test('partner contribution buttons save received and pending amounts visibly, survive reload and settle only once',async({page})=>{
+  const a=await app(page);
+  a.seed({type:'account.save',data:{name:'Caixa de teste',kind:'bank',openingDate:day,openingBalanceCents:0}});
+  a.seed({type:'settings.save',data:{cashTargetCents:0,reserveBps:1000}});
+  a.seed({type:'partner.save',data:{name:'Sócia Ana',shareBps:10000}});
+  await a.open();await tab(page,'Sócios e regras');
+  await page.getByRole('button',{name:'Lançar capital',exact:true}).click();
+  let dialog=page.getByRole('dialog');
+  await dialog.getByLabel('Valor do aporte (R$)',{exact:true}).fill('50000');
+  await expect(dialog.getByLabel('O dinheiro já entrou na empresa?',{exact:true})).toHaveValue('');
+  await dialog.getByLabel('O dinheiro já entrou na empresa?',{exact:true}).selectOption('yes');
+  await submit(page,'Registrar aporte');
+  expect(a.report().cash.availableCents).toBe(5000000);
+  expect(a.report().partnerCapital.rows[0].capitalCents).toBe(5000000);
+  const movements=page.getByRole('region',{name:'Movimentos de aportes',exact:true});
+  await expect(movements.getByRole('row').filter({hasText:'Capital social · Sócia Ana'})).toContainText('Recebido');
+  await page.getByRole('button',{name:'Lançar aporte reembolsável',exact:true}).click();
+  dialog=page.getByRole('dialog');
+  await dialog.getByLabel('Valor do aporte (R$)',{exact:true}).fill('10000');
+  await dialog.getByLabel('O dinheiro já entrou na empresa?',{exact:true}).selectOption('no');
+  await submit(page,'Registrar aporte');
+  expect(a.report().cash.availableCents).toBe(5000000);
+  expect(a.report().partnerCapital.rows[0].pendingLoanCents).toBe(1000000);
+  await expect(movements.getByRole('row').filter({hasText:'Aporte reembolsável · Sócia Ana'})).toContainText('A receber');
+  await page.reload();await tab(page,'Sócios e regras');
+  // The contribution history must not disappear when viewing another accounting month.
+  await page.getByLabel('Competência selecionada').fill('2025-01');
+  await expect(movements.getByRole('row').filter({hasText:'Aporte reembolsável · Sócia Ana'})).toBeVisible();
+  await movements.getByRole('button',{name:'Receber aporte',exact:true}).click();
+  await submit(page,'Confirmar recebimento');
+  expect(a.report().cash.availableCents).toBe(6000000);
+  expect(a.report().partnerCapital.rows[0].pendingLoanCents).toBe(0);
+  expect(a.report().partnerCapital.rows[0].lentCents).toBe(1000000);
+  expect(a.report().dre.combined.netProfitCents).toBe(0);
+  expect(a.state().entries).toHaveLength(2);
+  await expect(movements.getByRole('button',{name:'Receber aporte',exact:true})).toHaveCount(0);
+  await page.screenshot({path:'tmp/finance14-contributions-desktop.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:'tmp/finance14-contributions-mobile.png',fullPage:true});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();
+});
+
+test('contribution without account recovers into dedicated form and backend rejection preserves entered value',async({page})=>{
+  const a=await app(page);
+  a.seed({type:'partner.save',data:{name:'Sócio Bruno',shareBps:10000,openingDate:day,openingLoanCents:100000}});
+  await a.open();await tab(page,'Sócios e regras');
+  await page.getByRole('button',{name:'Lançar aporte reembolsável',exact:true}).click();
+  await page.getByRole('button',{name:'Cadastrar conta e continuar',exact:true}).click();
+  await page.getByRole('dialog').getByLabel('Nome da conta',{exact:true}).fill('Conta anterior ao aporte');
+  await page.getByRole('dialog').getByRole('button',{name:'Salvar registro',exact:true}).click();
+  const dialog=page.getByRole('dialog');
+  await expect(dialog.getByRole('button',{name:'Registrar aporte',exact:true})).toBeVisible();
+  await dialog.getByLabel('Valor do aporte (R$)',{exact:true}).fill('1000');
+  await dialog.getByLabel('O dinheiro já entrou na empresa?',{exact:true}).selectOption('yes');
+  await dialog.getByRole('button',{name:'Registrar aporte',exact:true}).click();
+  await expect(dialog.getByRole('alert')).toContainText('posterior à data do histórico');
+  expect(a.state().entries).toHaveLength(0);
+  await dialog.getByLabel('O dinheiro já entrou na empresa?',{exact:true}).selectOption('no');
+  await submit(page,'Registrar aporte');
+  expect(a.state().entries[0].amountCents).toBe(100000);
+  expect(a.state().entries[0].status).toBe('open');
+});
+
+test('outlook calculates costs and quotas on real ledger forecasts and updates after rule changes',async({page})=>{
+  const a=await app(page);
+  a.seed({type:'account.save',data:{name:'Conta',kind:'bank',openingDate:day,openingBalanceCents:5000000}});
+  a.seed({type:'settings.save',data:{reserveBps:1000,cashTargetCents:1800000,defaultCommissionBps:5000}});
+  for(const name of ['Sócia Ana','Sócio Bruno'])a.seed({type:'partner.save',data:{name,shareBps:5000}});
+  a.seed({type:'operation.create',data:{title:'Venda prevista',kind:'sale',amountCents:10000000,taxCents:1200000,commissionBps:5000,reserveBps:1000,brokerId:broker.id,recognition:'forecast',competenceDate:day,dueDate:day}});
+  a.seed({type:'recurrence.save',data:{name:'Estrutura mensal',category:'marketing',amountCents:600000,startMonth:month,dueDay:25}});
+  await a.open();
+  const outlook=page.getByRole('region',{name:'Projeção de caixa e ganhos dos sócios'});
+  await expect(outlook.getByRole('table').first().getByRole('row').nth(1)).toContainText('38.000,00');
+  await expect(outlook.getByRole('table').nth(1).getByRole('row').filter({hasText:'Sócia Ana'})).toContainText('19.000,00');
+  await expect(outlook).toContainText('Não some as retiradas');
+  await outlook.getByRole('button',{name:'Ajustar reserva e metas',exact:true}).click();
+  await page.getByRole('dialog').getByLabel('Meta de caixa próprio (R$)',{exact:true}).fill('100000');
+  await submit(page);
+  await expect(outlook.getByRole('table').nth(1).getByRole('row').filter({hasText:'Sócia Ana'}).getByRole('cell').last()).toHaveText('R$ 0,00');
+  expect(a.report().cash.availableCents).toBe(5000000);
+  expect(a.report().dre.combined.netProfitCents).toBe(0);
+  await page.screenshot({path:'tmp/finance14-outlook-desktop.png',fullPage:true});
+});

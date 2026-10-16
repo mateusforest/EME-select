@@ -433,7 +433,7 @@ export function financeReport(state, { from, to, asOf }, members = []) {
   const totalDre = dre(combined)
   const operationById = new Map(state.operations.map(item => [item.id, item]))
   // Earmarking suggestion only: no ledger expense and no automatic movement of money.
-  const reserveSuggestedCents = sum(settled.filter(item => item.operationId && category(item.category).dreGroup === 'revenue').map(item => percentCents(item.amountCents, operationById.get(item.operationId)?.reserveBps || 0)))
+  const reserveSuggestedCents = sum(settled.filter(item => category(item.category).dreGroup === 'revenue').map(item => percentCents(item.amountCents, item.operationId ? (operationById.get(item.operationId)?.reserveBps ?? state.settings.reserveBps ?? 0) : (state.settings.reserveBps ?? 0))))
   const targetCents = state.settings.cashTargetCents
   const open = active.filter(item => item.status === 'open')
   const overdue = open.filter(item => item.dueDate < asOf)

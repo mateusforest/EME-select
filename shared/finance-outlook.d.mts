@@ -1,0 +1,3 @@
+import type { FinanceState } from './finance.mjs'
+export interface FinanceOutlookRow { month: string; profitCents: number; revenueCents: number; expensesCents: number; cashCents: number; protectionCents: number; commitmentsCents: number; capitalReceiptsCents: number; compensationCents: number; remainingExcessCents: number; profitAvailableCents: number; cashAfterCents: number; partners: Array<{id: string; name: string; shareBps: number; monthProfitCents: number; compensationCents: number; profitAvailableCents: number}> }
+export function financeOutlook(state: FinanceState, asOf: string): { rows: FinanceOutlookRow[]; warnings: string[] }

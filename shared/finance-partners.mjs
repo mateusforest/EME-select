@@ -22,6 +22,7 @@ export function partnerCapitalReport(state, asOf, freeCashCents) {
     const historical = partner.openingDate && partner.openingDate <= asOf
     const cash = settled.filter(e => e.partnerId === partner.id)
     const pending = activeEntries.filter(e => e.partnerId === partner.id && e.status === 'open' && e.recognition === 'recognized')
+    const contributions = activeEntries.filter(e => e.partnerId === partner.id && e.status === 'open')
     const capitalCents = (historical ? partner.openingCapitalCents || 0 : 0) + total(cash, 'capital_in')
     const lentCents = (historical ? partner.openingLoanCents || 0 : 0) + total(cash, 'loan_in')
     const repaidCents = (historical ? partner.openingRepaidCents || 0 : 0) + total(cash, 'loan_repayment')
@@ -29,6 +30,7 @@ export function partnerCapitalReport(state, asOf, freeCashCents) {
     const outstandingCents = Math.max(0, lentCents - repaidCents)
     return { id: partner.id, name: partner.name, active: partner.active, shareBps: partner.shareBps,
       capitalCents, lentCents, repaidCents, pendingRepaymentCents, outstandingCents,
+      pendingCapitalCents: total(contributions, 'capital_in'), pendingLoanCents: total(contributions, 'loan_in'),
       netInvestmentCents: Math.max(0, capitalCents + lentCents - repaidCents - pendingRepaymentCents),
       excessCents: 0, repaymentCents: 0,
       profitPaidCents: total(cash, 'partner_distribution'), profitPendingCents: total(pending, 'partner_distribution') }
