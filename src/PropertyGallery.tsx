@@ -1,7 +1,6 @@
 import {useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import type {KeyboardEvent, PointerEvent} from 'react';
 import {ArrowLeft, ArrowRight, Expand, Maximize2, Pause, Play, RotateCcw, X} from 'lucide-react';
-import {gsap} from 'gsap';
 import {createPhotoCache} from './photo-cache.mjs';
 import './property-gallery.css';
 
@@ -58,7 +57,7 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
     setDimensions(previous => previous[url]?.width === width && previous[url]?.height === height ? previous : {...previous, [url]: {width, height}});
   }
   function framing(photo: Photograph, inDialog: boolean) {
-    if (!inDialog) {const size = dimensions[photo.url] || photo; return (size.width||0)<(size.height||0)?'contained':'cover';}
+    if (!inDialog) return 'cover';
     // Decoded dimensions take precedence over metadata, including for older listings.
     const size = dimensions[photo.url] || (photo.width && photo.height ? {width: photo.width, height: photo.height} : null);
     // Unknown or undersized files stay in their original framing, never enlarged to cover.
@@ -136,8 +135,7 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
     if (incoming === null || !root.current) return;
     const version = ++request.current;
     const incomingElements = [...root.current.querySelectorAll<HTMLImageElement>('.pg-photo-incoming')];
-    const outgoingElements = [...root.current.querySelectorAll<HTMLImageElement>('.pg-photo-current')];
-    let timeline: gsap.core.Timeline | undefined, cancelled = false;
+    let cancelled = false;
     Promise.all(incomingElements.map(image => decodePhoto(image))).then(() => {
       if (cancelled || version !== request.current) return;
       setLoading(false);
@@ -146,20 +144,13 @@ export default function PropertyGallery({images, title}: {images: Photograph[]; 
         setIndex(incoming); setIncoming(null); setInitialFailed(false); setInitialReady(true);
         busy.current = false; retry.current = null;
       };
-      if (reduced) {finish(); return;}
-      // Native-sized photos only dissolve; even a small scale tween would enlarge their pixels.
-      // Larger photographs retain a subtle directional move without additional zoom.
-      timeline = gsap.timeline({onComplete: finish, defaults: {ease: 'power2.out'}});
-      timeline.fromTo(incomingElements, {opacity: 0, x: (_position, element: HTMLImageElement) => element.closest('.pg-frame-original') ? 0 : direction.current * 5},
-        {opacity: 1, x: 0, duration: .28}, 0);
-      timeline.fromTo(outgoingElements, {x: 0},
-        {x: (_position, element: HTMLImageElement) => element.closest('.pg-frame-original') ? 0 : direction.current * -3, duration: .28}, 0);
+      finish();
     }).catch(() => {
       if (cancelled || version !== request.current) return;
       setLoading(false); setIncoming(null); setPlaying(false); busy.current = false;
       setError('Esta fotografia não carregou. A imagem anterior foi mantida.');
     });
-    return () => {cancelled = true; if (timeline) {timeline.kill(); gsap.set(outgoingElements, {clearProps: 'transform'});}};
+    return () => {cancelled = true;};
   }, [incoming, reduced]);
 
   useEffect(() => {

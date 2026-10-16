@@ -1,3 +1,5 @@
+import {useState} from 'react';
+import PropertyContact from './PropertyContact';
 import PropertyPresentation from './PropertyPresentation';
 import {
   ArrowLeft, ArrowRight, ArrowUpRight, Bath, BedDouble, CarFront,
@@ -21,6 +23,7 @@ export interface PropertyDetailsProps {
 export default function PropertyDetails({
   property, preview=false, favorite, onToggleFavorite, onBook, onDialog, onShare,
 }: PropertyDetailsProps) {
+  const [contact,setContact]=useState(false);
   const environment = environmentById(property.environment);
   const collectionName = property.environment === 'urbano' ? 'Urbana' : environment.name;
   const visitHref = `#/visita/${property.id}`;
@@ -143,14 +146,16 @@ export default function PropertyDetails({
           </div>
 
           <dl className="details-extra-facts">{[["Banheiros",property.bathrooms],["Área total (m²)",property.totalArea],["Ano de construção",property.yearBuilt]].filter(([,v])=>v!=null).map(([label,value])=><div key={String(label)}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+          <div className="details-advisor"><img src="/assets/team/douglas.webp" alt="Douglas Maraschin" width="48" height="48"/><span><strong>Douglas Maraschin</strong><small>Atendimento EME Select</small></span></div>
           <div className="details-cta-group">
             <button className="details-book" type="button" onClick={onBook}>
               <span>Agendar visita</span><ArrowRight size={23} strokeWidth={1.5} aria-hidden="true" />
             </button>
-            <button className="details-conversation" type="button" onClick={onBook}>Conversar sobre este imóvel <ArrowUpRight size={15} aria-hidden="true" /></button>
+            <button className="details-conversation" type="button" onClick={()=>setContact(true)}>Conversar sobre este imóvel <ArrowUpRight size={15} aria-hidden="true" /></button>
           </div>
         </aside>
       </div>
+      {contact&&<PropertyContact property={property} onClose={()=>setContact(false)}/>}
       <div className="details-bottomline"><span>Conheça cada detalhe. Imagine sua rotina.</span><span>EME Select</span></div>
     </main>
   );

@@ -31,11 +31,6 @@ export function hydrateLanding(root, properties, signal) {
         if (signal.aborted || ticket !== version) return;
         incoming.src = source; await incoming.decode();
         if (signal.aborted || ticket !== version) return;
-        if (delta && !matchMedia('(prefers-reduced-motion: reduce)').matches && incoming.animate) {
-          incoming.hidden = false;
-          animation = incoming.animate([{opacity:0},{opacity:1}],{duration:220,easing:'ease-out',fill:'forwards'});
-          await animation.finished.catch(() => undefined);
-        }
         if (signal.aborted || ticket !== version) return;
         image.src = source; image.alt = photos[next].caption || item.title;
         incoming.hidden = true; animation?.cancel(); index = next;
@@ -65,19 +60,6 @@ export function hydrateLanding(root, properties, signal) {
     $('.ef-property-price strong').textContent = Number.isFinite(item.price) && item.price > 0 ? item.price.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}) : 'Consulte a equipe';
     $('.ef-property-copy .ef-button').href = '#/imovel/'+encodeURIComponent(item.id);
   }
-  const people = $('.ef-people');
-  people.querySelectorAll('details').forEach(node => node.remove());
-  fetch('/api/public/people',{signal,cache:'no-store'}).then(r => {if(!r.ok)throw Error();return r.json();}).then(data => {
-    if(signal.aborted || !Array.isArray(data.people))return;
-    for(const person of data.people){
-      const details=document.createElement('details'),summary=document.createElement('summary'),info=document.createElement('span'),name=document.createElement('strong'),role=document.createElement('small'),plus=document.createElement('span'),bio=document.createElement('p');
-      name.textContent=person.name;role.textContent=person.role;plus.textContent='+';plus.setAttribute('aria-hidden','true');bio.textContent=person.bio || 'Converse com a equipe para conhecer mais.';
-      info.append(name,role);summary.append(info,plus);details.append(summary,bio);people.append(details);
-    }
-  }).catch(() => {
-    if(signal.aborted)return;
-    const link=document.createElement('a');link.href='#ef-contato';link.textContent='Converse com a equipe';people.append(link);
-  });
   root.addEventListener('click',event => {
     const link=event.target.closest('a[href^="#"]');
     const hash=link?.getAttribute('href');

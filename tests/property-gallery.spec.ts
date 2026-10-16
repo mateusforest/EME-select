@@ -45,10 +45,11 @@ test('percurso abre a tela inteira, navega por ambientes e restaura o foco', asy
 test('falha da próxima foto mantém a anterior e permite tentar novamente', async ({page}) => {
   let release!:()=>void; const gate=new Promise<void>(resolve=>{release=resolve;});
   await fixture(page,()=>page.route('**/__gallery/3.svg',async route=>{await gate;await route.fulfill({status:503,body:'unavailable'});}));
+  const retainedSource=await page.locator('.pg-photo-current').getAttribute('src');
   try {
     await page.getByRole('button',{name:/Ver foto 3:/}).click();
     await expect(page.locator('.pg-loading')).toContainText('Preparando próxima fotografia');
-    await expect(page.locator('.pg-photo-current')).toHaveAttribute('src','/__gallery/1.svg');
+    await expect(page.locator('.pg-photo-current')).toHaveAttribute('src',retainedSource!);
     await expect(page.locator('.pg-photo-current')).toHaveCSS('opacity','1');
     release(); await expect(page.getByRole('alert')).toContainText('A imagem anterior foi mantida');
     await expect(page.locator('.pg-caption')).toContainText('Entrada da sala');

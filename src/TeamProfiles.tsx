@@ -1,0 +1,20 @@
+import {useState} from 'react';
+import {ArrowUpRight,MessageCircle,MapPin} from 'lucide-react';
+import {Dialog} from './ui';
+import {whatsappUrl} from './data';
+
+// Public professional profiles supplied and approved by the founders.
+export const selectTeam = [
+ {id:'mateus',name:'Mateus Forest',role:'Cofundador · Tecnologia e Gestão',photo:'/assets/team/mateus.webp',phone:'',registration:'',specialties:['Inteligência artificial','Inovação','Gestão'],bio:'Une inteligência artificial, desenvolvimento de software e gestão de empresas para tornar a experiência imobiliária mais simples. Na EME Select, conduz a tecnologia, a inovação e a construção de soluções que aproximam pessoas e oportunidades.'},
+ {id:'douglas',name:'Douglas Maraschin',role:'Cofundador · Comercial e Operações',photo:'/assets/team/douglas.webp',phone:'5554984007919',registration:'',specialties:['Vendas','Atendimento','Gestão de equipe'],bio:'À frente da operação comercial da EME Select, conecta experiência em vendas, atendimento e gestão de equipes. Seu trabalho é acompanhar cada negociação com proximidade, clareza e atenção ao que importa para cada cliente.'},
+ {id:'fabricio',name:'Fabrício Foscarini',role:'Corretor de imóveis · Lançamentos',photo:'/assets/team/fabricio.webp',phone:'5554981037089',registration:'CRECI 87193 F · RS',specialties:['Lançamentos imobiliários','Negociação','Administração'],bio:'Corretor de imóveis e administrador de empresas, com atuação em Vacaria e Porto Alegre. Acompanha cada etapa da negociação de forma clara, honesta e próxima, buscando oportunidades para morar ou investir. Acredita que entender a história e o objetivo de cada cliente é o primeiro passo para construir confiança.'},
+];
+type TeamPerson=typeof selectTeam[number];
+export function teamContact(person:TeamPerson,message:string){return person.phone?'https://wa.me/'+person.phone+'?text='+encodeURIComponent(message):whatsappUrl(message);}
+export function TeamProfile({person,onClose}:{person:TeamPerson;onClose:()=>void}){
+ return <Dialog title="Conheça nossa equipe" onClose={onClose} wide className="select-profile-dialog"><div className="select-profile"><div className="select-profile-visual"><span className="select-overline">Pessoas que fazem a EME</span><img src={person.photo} alt={person.name}/><span>Proximidade em cada escolha.</span></div><div className="select-profile-story"><p className="select-overline">{person.role}</p><h3>{person.name}</h3>{person.registration&&<p className="select-registration">{person.registration}</p>}<p>{person.bio}</p><div className="select-specialties">{person.specialties.map(s=><span key={s}>{s}</span>)}</div><p className="select-profile-region"><MapPin size={16}/>{person.id==='fabricio'?'Vacaria e Porto Alegre · RS':'Vacaria · Rio Grande do Sul'}</p><a className="select-contact" href={teamContact(person,'Olá! Conheci seu perfil na EME Select e gostaria de conversar.')} target="_blank" rel="noopener noreferrer"><MessageCircle size={19}/>{person.phone?'Conversar pelo WhatsApp':'Conversar com a EME'}<ArrowUpRight size={18}/></a></div></div></Dialog>;
+}
+export default function TeamProfiles(){
+ const [person,setPerson]=useState<TeamPerson|null>(null);
+ return <><div className="select-team-heading"><p className="select-overline">Nossa equipe</p><h2>Visões que se completam.<br/>Pessoas que se aproximam.</h2><p>Tecnologia, experiência comercial e cuidado em cada etapa da sua escolha.</p></div><div className="select-team-grid">{selectTeam.map(p=><button className="select-team-card" key={p.id} onClick={()=>setPerson(p)} aria-haspopup="dialog" aria-label={'Conhecer '+p.name}><span className={'select-team-photo select-team-photo--'+p.id}><img src={p.photo} alt="" width="320" height="320" loading="lazy"/></span><span className="select-team-role">{p.role}</span><strong>{p.name}</strong><span className="select-team-summary">{p.specialties.join(' · ')}</span>{p.registration&&<small>{p.registration}</small>}<span className="select-team-open">Conheça o perfil <ArrowUpRight size={18}/></span></button>)}</div>{person&&<TeamProfile person={person} onClose={()=>setPerson(null)}/>}</>;
+}
