@@ -1,3 +1,4 @@
+import { validateOwnerPlan, OWNER_PLAN_DEFAULTS } from './owner-payment-plan.mjs';
 import {applyBrokerAgreement} from './broker.mjs';
 import { allocateWeighted, partnerCapitalReport } from './finance-partners.mjs';
 /** Manual management ledger. Amounts are BRL integer cents; percentages are basis points. */
@@ -330,6 +331,10 @@ export function applyFinanceCommand(input, command, rawContext) {
       put(state.partners, result); break
     }
     case 'settings.save': {
+      if (Object.hasOwn(data, 'ownerPlan')) {
+        if (!data.ownerPlan || validateOwnerPlan(data.ownerPlan).length) fail('Confira os valores e as datas do planejamento dos sócios.');
+        state.settings.ownerPlan = Object.fromEntries([...Object.keys(OWNER_PLAN_DEFAULTS), 'firstMonth'].map(key => [key, data.ownerPlan[key]]));
+      }
       for (const key of ['reserveBps', 'defaultCommissionBps', 'cashTargetCents', 'initialInvestmentCents', 'partnerRepaymentBps']) {
         if (!Object.hasOwn(data, key)) continue
         state.settings[key] = data[key] === null ? null : integer(data[key], 'Configuração', 0, key.endsWith('Bps') ? 10000 : LIMIT)

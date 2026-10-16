@@ -256,3 +256,48 @@ test('outlook calculates costs and quotas on real ledger forecasts and updates a
   expect(a.report().dre.combined.netProfitCents).toBe(0);
   await page.screenshot({path:'tmp/finance14-outlook-desktop.png',fullPage:true});
 });
+
+test('owner calendar defaults to 5k per partner day five in overview and entries, persists parameters without creating debt',async({page})=>{
+ const a=await app(page);
+ for(const name of ['Sócia Ana','Sócio Bruno'])a.seed({type:'partner.save',data:{name,shareBps:5000}});
+ await a.open();
+ const agenda=page.getByRole('region',{name:'Agenda de pagamentos dos sócios',exact:true});
+ await expect(agenda).toContainText('Pró-labore fixo no dia 5');
+ await expect(agenda).toContainText('R$ 10.000,00');
+ await expect(agenda).toContainText('-R$ 52.000,00');
+ const table=agenda.getByRole('table',{name:'Calendário simulado de pagamentos por sócio',exact:true});
+ await expect(table.getByRole('row')).toHaveCount(13);
+ await expect(table.getByRole('row').nth(1)).toContainText('Sócia Ana');
+ await expect(table.getByRole('row').nth(1)).toContainText('R$ 5.000,00');
+ await expect(table.getByRole('row').nth(1).getByRole('cell').first()).toHaveText(/^05\//);
+ expect(a.state().entries).toHaveLength(0);
+ await tab(page,'Lançamentos');await expect(agenda).toBeVisible();
+ await agenda.getByRole('button',{name:'Editar planejamento',exact:true}).click();
+ await agenda.getByLabel('Outras despesas mensais (R$)',{exact:true}).fill('6200');
+ await agenda.getByRole('button',{name:'Salvar planejamento',exact:true}).click();
+ await expect(agenda.getByRole('button',{name:'Editar planejamento',exact:true})).toBeVisible();
+ expect(a.state().settings.ownerPlan?.monthlyPayrollCents).toBe(500000);
+ expect(a.state().settings.ownerPlan?.payday).toBe(5);
+ expect(a.state().settings.ownerPlan?.monthlyFixedCents).toBe(620000);
+ expect(a.state().entries).toHaveLength(0);
+ await page.reload();await expect(agenda).toBeVisible();
+ await agenda.getByRole('button',{name:'Editar planejamento',exact:true}).click();
+ await expect(agenda.getByLabel('Dia fixo do pró-labore',{exact:true})).toHaveValue('5');
+ await agenda.getByRole('button',{name:'Fechar ajustes',exact:true}).click();
+ await agenda.screenshot({path:'tmp/finance15-agenda-desktop.png'});
+ await page.setViewportSize({width:390,height:844});
+ await agenda.screenshot({path:'tmp/finance15-agenda-mobile.png'});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();
+});
+
+test('owner agenda shows actual pending payroll and profit across accounting months with no automatic settlement',async({page})=>{
+ const a=await app(page);
+ a.seed({type:'partner.save',data:{name:'Sócia Ana',shareBps:10000}});
+ a.seed({type:'entry.save',data:{description:'Pró-labore registrado',category:'prolabore',partnerId:a.state().partners[0].id,amountCents:500000,recognition:'forecast',competenceDate:'2025-01-01',dueDate:'2025-01-05'}});
+ await a.open();
+ const agenda=page.getByRole('region',{name:'Agenda de pagamentos dos sócios',exact:true});
+ await expect(agenda.getByRole('row').filter({hasText:'Pró-labore registrado'})).toContainText('05/01/2025');
+ await agenda.getByRole('row').filter({hasText:'Pró-labore registrado'}).getByRole('button',{name:'Registrar pagamento',exact:true}).click();
+ await expect(page.getByRole('dialog')).toContainText('Cadastre a conta desta movimentação');
+ expect(a.state().entries[0].status).toBe('open');
+});

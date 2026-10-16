@@ -1,0 +1,13 @@
+# Financeiro 015 — agenda de sócios em simulação
+
+16/10/2026. Premissas solicitadas: R$ 50 mil de caixa inicial, uma venda com R$ 100 mil de honorários, pró-labore fixo de R$ 5 mil brutos por sócio, dia 5. Não foi estabelecido parcelamento de lucro nem autorizada conversão da simulação em dívida.
+
+A agenda aparece na Visão geral, Lançamentos e Sócios e regras. Os valores por sócio têm data e situação Previsto a pagar · simulação. Contas a pagar já registradas aparecem separadas e continuam exigindo confirmação de pagamento; nenhuma baixa é automática. A edição de premissas é restrita ao financeiro administrativo e Salvar planejamento grava apenas settings.ownerPlan, validado por lista de campos. Não cria receita, aporte, despesa ou obrigação. Os padrões são usados quando não houver planejamento salvo.
+
+O horizonte de seis meses é apenas análise, não seis parcelas contratadas. Pró-labore permanece separado de restituição de empréstimos e de lucro. A simulação usa as quotas ativas e os saldos de capital/emprestimos por sócio existentes, líquidos de devoluções programadas, sem acrescentá-los novamente ao caixa inicial. Sem sócios cadastrados, exibe duas pessoas ilustrativas de 50%, sem cadastrar essas pessoas. A restituição prioriza excesso reembolsável, respeita o teto mensal do planejamento (inicialmente a regra do financeiro ou 25%) e não devolve capital social como empréstimo.
+
+Para saídas variáveis, protege despesas dos meses restantes mais reserva final. Recebimento da única venda é suposto no começo do primeiro mês, antes do dia 5. Tributos de 12% e corretor de 50% após tributos são hipóteses editáveis. Demais despesas de R$ 6 mil excluem pró-labore. Encargos adicionais da empresa partem de zero e são sinalizados como não considerados; as retenções pessoais não são estimadas. Reserva usa a meta configurada; na ausência, R$ 48 mil (três meses de R$ 16 mil).
+
+Para dois sócios e as hipóteses padrão: tributos R$ 12 mil, corretor R$ 44 mil, parcela da empresa R$ 44 mil. Despesa mensal R$ 16 mil. Caixas finais: R$ 78 mil, R$ 62 mil, R$ 46 mil, R$ 30 mil, R$ 14 mil e -R$ 2 mil. Resultado acumulado -R$ 52 mil. Não há retirada variável sugerida. Para manter reserva de R$ 48 mil ao fim, necessidade adicional de R$ 50 mil neste cenário, antes de novas vendas. Alterar a meta modifica essa necessidade, não o resultado operacional.
+
+Verificação: 96 testes de cálculo, autorização, API e persistência; 17 cenários de navegador (2 novos e 15 regressões). TypeScript, produção e revisão visual desktop/mobile aprovados. Testes usam dados sintéticos. Nenhum registro financeiro real alterado pelo agente.
