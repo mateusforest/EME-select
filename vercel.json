@@ -4,7 +4,18 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/apresentar/:path*", "destination": "/index.html" },
+    {
+      "source": "/imovel/:id/capa.jpg",
+      "destination": "/api/propertyShare?id=:id&cover=1"
+    },
+    {
+      "source": "/imovel/:id",
+      "destination": "/api/propertyShare?id=:id"
+    },
+    {
+      "source": "/apresentar/:path*",
+      "destination": "/index.html"
+    },
     {
       "source": "/api/webhooks/whatsapp",
       "destination": "/api/whatsappWebhook"

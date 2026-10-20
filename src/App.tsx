@@ -143,7 +143,7 @@ export default function App() {
     catch { setToast('Não foi possível copiar. Você pode compartilhar o endereço desta página.'); }
   }
   async function share(p: Property) {
-    const url = `${window.location.origin}${window.location.pathname}#/imovel/${p.id}`;
+    const url = `${window.location.origin}/imovel/${encodeURIComponent(p.id)}`;
     try { await navigator.clipboard.writeText(url); setToast('Link do imóvel copiado.'); } catch { setToast('Copie o endereço desta página para compartilhar.'); }
   }
   const contact = () => setModal({ kind: 'booking', property });
