@@ -60,6 +60,20 @@ export function hydrateLanding(root, properties, signal) {
     $('.ef-property-price strong').textContent = Number.isFinite(item.price) && item.price > 0 ? item.price.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}) : 'Consulte a equipe';
     $('.ef-property-copy .ef-button').href = '#/imovel/'+encodeURIComponent(item.id);
   }
+  const additional = properties.filter(p => p.isIllustrative === false && p.id !== item?.id).slice(0, 2);
+  if (additional.length) {
+    const grid = document.createElement('div'); grid.className = 'ef-collection-more'; grid.setAttribute('aria-label','Mais imóveis da coleção');
+    for (const property of additional) {
+      const card = document.createElement('a'); card.className = 'ef-collection-card'; card.href = '#/imovel/' + encodeURIComponent(property.id);
+      const photo = document.createElement('img'); photo.src = property.image; photo.alt = property.title; photo.loading = 'lazy';
+      const body = document.createElement('div'), region = document.createElement('span'), title = document.createElement('h3'), facts = document.createElement('p'), price = document.createElement('strong');
+      region.textContent = property.location; title.textContent = property.title;
+      facts.textContent = [property.bedrooms ? property.bedrooms+' dormitórios' : '',property.area ? property.area.toLocaleString('pt-BR')+' m²' : '',property.parking ? property.parking+' vaga'+(property.parking>1?'s':'') : ''].filter(Boolean).join(' · ');
+      price.textContent = property.price ? property.price.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}) : 'Consulte a equipe';
+      body.append(region,title,facts,price); card.append(photo,body); grid.append(card);
+    }
+    propertyArticle.after(grid);
+  }
   root.addEventListener('click',event => {
     const link=event.target.closest('a[href^="#"]');
     const hash=link?.getAttribute('href');

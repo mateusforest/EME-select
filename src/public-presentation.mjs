@@ -6,6 +6,8 @@ const destinations = {
 };
 export const environmentHref = id => destinations[id] || '#/';
 export function resolvePublicRoute(hash) {
+  if (/^#\/empreendimentos\/(?:casa-m-veredas|moradas-da-serra|g400)(?:[/?]|$)/.test(hash)) return '#/colecao';
+  if (hash === '#ef-empreendimentos') return '#ef-colecao';
   const match = /^#\/ambientes\/([^/?]+)(?:\?.*)?$/.exec(hash);
   return match && Object.hasOwn(destinations, match[1]) ? destinations[match[1]] : hash;
 }

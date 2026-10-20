@@ -12,3 +12,30 @@
 
 .select-team-photo--douglas img{transform:scale(1.45);transform-origin:50% 24%}.select-team-open{margin-top:auto}.select-team-summary{margin-bottom:24px}.select-team-card small{margin-top:0;margin-bottom:20px}.select-team-open{padding-top:20px}.details-page .details-information{align-self:start}
 @media(max-width:780px){.details-page .details-layout{display:flex;flex-direction:column}.details-page .details-visual{display:contents}.details-page .property-gallery{order:0;width:100%}.details-page .details-information{order:1}.details-page .details-visual-links{order:2;width:100%}.details-page .details-story{order:3;width:100%;box-sizing:border-box}.details-page .details-support{order:4;box-sizing:border-box}.details-page .details-facts dd{font-size:18px}}
+
+/* Compact external tool: separate from the property catalog. */
+#eme-select-completa .ef-ecosystem{max-width:1280px;margin:0 auto;padding:30px 0;display:flex;align-items:center;justify-content:space-between;gap:28px;border-bottom:1px solid #dce1d5;color:#254f42;background:transparent}
+#eme-select-completa .ef-ecosystem>div{display:flex;gap:22px;align-items:center}
+#eme-select-completa .ef-ecosystem img{width:64px;height:64px;object-fit:contain}
+#eme-select-completa .ef-ecosystem h2{font:400 24px/1.2 Georgia,serif;margin:5px 0 8px}
+#eme-select-completa .ef-ecosystem p{font-size:12px;line-height:1.7;margin:0;color:#6b796f}
+#eme-select-completa .ef-ecosystem .ef-kicker{font-size:9px;letter-spacing:.15em}
+#eme-select-completa .ef-ecosystem>a{font-size:12px;white-space:nowrap;display:flex;gap:24px;align-items:center;padding:13px 18px;border:1px solid #d2ddcc;border-radius:10px;text-decoration:none}
+#eme-select-completa .ef-ecosystem>a:hover{background:#e8eee2}
+#eme-select-completa .ef-after-hero{border-bottom:1px solid #dee4d7}
+#eme-select-completa .ef-section{scroll-margin-top:24px}
+.footer-external-tool{max-width:200px;line-height:1.5}
+@media(max-width:1400px){#eme-select-completa .ef-ecosystem{margin:0 5.5%}}
+@media(max-width:640px){#eme-select-completa .ef-ecosystem{align-items:flex-start;flex-direction:column;padding:28px 0;gap:20px}#eme-select-completa .ef-ecosystem>div{gap:14px}#eme-select-completa .ef-ecosystem img{width:48px;height:48px}#eme-select-completa .ef-ecosystem>a{align-self:flex-start}}
+
+#eme-select-completa .ef-collection-more{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:28px}
+#eme-select-completa .ef-collection-card{display:grid;grid-template-columns:42% 1fr;border:1px solid #dce3d5;background:#fbfcf8;border-radius:18px;overflow:hidden;text-decoration:none;color:inherit}
+#eme-select-completa .ef-collection-card>img{width:100%;height:100%;min-height:215px;object-fit:cover}
+#eme-select-completa .ef-collection-card>div{padding:24px;align-self:center}
+#eme-select-completa .ef-collection-card span{font-size:10px;line-height:1.5;color:#72826e}
+#eme-select-completa .ef-collection-card h3{font:400 22px/1.25 Georgia,serif;margin:10px 0 12px}
+#eme-select-completa .ef-collection-card p{font-size:12px;color:#687867;line-height:1.8}
+#eme-select-completa .ef-collection-card strong{font:400 23px Georgia,serif;display:block;margin-top:18px}
+#eme-select-completa .ef-collection-card:hover{border-color:#8ca486;background:#f3f6ed}
+@media(max-width:1000px){#eme-select-completa .ef-collection-card{grid-template-columns:1fr}#eme-select-completa .ef-collection-card>img{aspect-ratio:16/10;height:auto;min-height:0}}
+@media(max-width:640px){#eme-select-completa .ef-collection-more{grid-template-columns:1fr}#eme-select-completa .ef-collection-card>div{padding:22px}}
