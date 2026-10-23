@@ -8,7 +8,7 @@ http.createServer(async(req,res)=>{
   if(req.method!=='GET'){res.writeHead(405,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Prévia: envio desativado.'}));return;}
   const url=new URL(req.url,'http://127.0.0.1:4194');
   if(url.pathname.startsWith('/api/')){
-   if(!/^\/api\/(?:public\/(?:properties|people)|(?:photos|people-images)\/[a-f0-9-]{36}|auth\/session)$/.test(url.pathname)){res.writeHead(404);res.end();return;}
+   if(!/^\/api\/(?:public\/(?:properties|people|site-content|chat)|(?:photos|people-images)\/[a-f0-9-]{36}|auth\/session)$/.test(url.pathname)){res.writeHead(404);res.end();return;}
    const upstream=await fetch('https://www.emeselect.com'+url.pathname,{signal:AbortSignal.timeout(15000)});
    res.writeHead(upstream.status,{'Content-Type':upstream.headers.get('content-type')||'application/json','Cache-Control':'no-store'});res.end(Buffer.from(await upstream.arrayBuffer()));return;
   }

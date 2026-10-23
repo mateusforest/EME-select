@@ -7,6 +7,7 @@ import './production.css';
 import './header.css';
 import './opportunities.css';
 import './chat.css';
+import './editorial.css';
 
 export async function startExperience(){
  const container=document.getElementById('root');

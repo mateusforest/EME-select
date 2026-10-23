@@ -8,7 +8,8 @@ test('legacy environment URLs lead to matching modern scenes',()=>{
  }
  assert.equal(resolvePublicRoute('#/ambientes/urbano'),'#/?ambiente=cidade');
  assert.match(resolvePublicRoute('#/ambientes/industrial'),/opcao=galpao/);
- for(const hash of ['#/colecao?tipo=Casa','#/imovel/123','#/empreendimentos/g400','#/ambientes/inexistente']) assert.equal(resolvePublicRoute(hash),hash);
+ for(const hash of ['#/colecao?tipo=Casa','#/imovel/123','#/ambientes/inexistente']) assert.equal(resolvePublicRoute(hash),hash);
+ for(const id of ['casa-m-veredas','moradas-da-serra','g400']) assert.equal(resolvePublicRoute(`#/empreendimentos/${id}`),'#/colecao');
 });
 test('public copy removes editorial directions without changing source records',()=>{
  const source={reasons:['Destacar a suíte com closet.','Valorizar editorialmente os pátios.','Mencionar painéis solares sem prometer economia.'],tags:['Suíte com closet','15 painéis solares informados']};

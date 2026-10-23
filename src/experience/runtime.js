@@ -532,7 +532,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     }).catch(() => {});
   }
   function activeProperties() {
-    return properties.filter(property => (!filterType || property.type === filterType) && (!favoritesOnly || savedIds.has(property.id)));
+    return properties.filter(property => property.opportunity && (!filterType || property.type === filterType) && (!favoritesOnly || savedIds.has(property.id)));
   }
   function animateIn(element,direction = 1) {
     if (!reducedMotion() && element.animate) element.animate([{opacity:.25,transform:`translateX(${direction*26}px)`},{opacity:1,transform:'translateX(0)'}],{duration:470,easing:'cubic-bezier(.22,.75,.18,1)'});
@@ -596,7 +596,8 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
       thumb.src = assets[item.cover];
       thumb.alt = '';
       const label = document.createElement('span');
-      label.textContent = item.short;
+      const place=item.title.match(/\b(loteamento\s+.+|jardim\s+.+)$/i)?.[0];
+      label.textContent = place ? place[0].toLocaleUpperCase('pt-BR')+place.slice(1) : item.short.split('|')[0].trim();
       const kind = document.createElement('small');
       kind.textContent = item.type;
       label.appendChild(kind);
