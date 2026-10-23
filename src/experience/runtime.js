@@ -1219,7 +1219,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   }
   function respond(text,reset=false){
     const clean=text.trim().slice(0,1500);if(!clean||chatBusy&&!reset)return;
-    if(reset){resetChatRequest();conversation=[];intent={};currentMatches=[];}
+    if(reset){resetChatRequest();conversation=[];intent={};currentMatches=[];updateChatHandoff();}
     conversation.push({from:'Você',text:clean});renderMessages();
     root.querySelector('.ex-chips').hidden=true;
     root.querySelector('.ex-results').hidden=true;
