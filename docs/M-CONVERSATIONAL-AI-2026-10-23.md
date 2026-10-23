@@ -26,5 +26,7 @@ O histórico fica na memória da página. Não é gravado no portal ou em localS
 - Regressão de inteligência, portal, leads, publicação, coleção e oportunidades.
 - TypeScript e build de produção.
 - Conferência visual do chat compacto, minimização, reinício e recuperação de erro.
+- Produção: conexão disponível e conversa real validada (OpenAI). Pedido por apartamento de três quartos até R$ 400 mil em Vacaria indicou o Moradas da Serra por R$ 370 mil. A continuação manteve o contexto, tratou suíte como informação não especificada e visita como solicitação sujeita a confirmação. Ao mudar para Praia de Palmas com o mesmo orçamento, informou a ausência de correspondências e não apresentou imóveis de outra região.
+- Busca do cabeçalho validada no navegador, com resposta real, card clicável e WhatsApp contendo resumo e link. Desktop e celular sem transbordamento. Respostas novas posicionadas pelo início do texto para leitura, com os cards logo abaixo.
 
 Referências oficiais: [Function calling](https://developers.openai.com/api/docs/guides/function-calling), [Structured outputs](https://developers.openai.com/api/docs/guides/structured-outputs), [Conversation state](https://developers.openai.com/api/docs/guides/conversation-state).

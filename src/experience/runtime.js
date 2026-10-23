@@ -1158,8 +1158,13 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     root.querySelector('.ex-results').hidden = true;
     root.querySelector('.ex-chips').hidden = false;
   }
-  function scrollChat() {
-    requestAnimationFrame(()=>{const stream=root.querySelector('.ex-chat-scroll');stream.scrollTop=stream.scrollHeight;});
+  function scrollChat(toReply=false) {
+    requestAnimationFrame(()=>{
+      const stream=root.querySelector('.ex-chat-scroll');
+      const reply=toReply?messageList.lastElementChild:null;
+      if(reply)stream.scrollTop+=reply.getBoundingClientRect().top-stream.getBoundingClientRect().top-8;
+      else stream.scrollTop=stream.scrollHeight;
+    });
   }
   function setChatBusy(busy) {
     chatBusy=busy;
@@ -1209,7 +1214,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
       root.querySelector('.ex-chat-error-copy').textContent=error.message;
       root.querySelector('.ex-chat-error').hidden=false;
     }finally{
-      if(version===chatVersion){setChatBusy(false);if(lastChatRequest)root.querySelector('.ex-chat-identity small').textContent='IA · conexão indisponível';if(chatMinimized)minimizedChat.querySelector('small').textContent=lastChatRequest?'Toque para tentar novamente':'Resposta recebida · continuar';scrollChat();}
+      if(version===chatVersion){setChatBusy(false);if(lastChatRequest)root.querySelector('.ex-chat-identity small').textContent='IA · conexão indisponível';if(chatMinimized)minimizedChat.querySelector('small').textContent=lastChatRequest?'Toque para tentar novamente':'Resposta recebida · continuar';scrollChat(!lastChatRequest);}
     }
   }
   function respond(text,reset=false){
