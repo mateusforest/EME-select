@@ -1,3 +1,5 @@
+import {mountEcosystem} from './ecosystem.js';
+import './ecosystem.css';
 import {mountSelectEntry} from './select-entry.js';
 import template from './template.html?raw';
 import assets from './assets.json';
@@ -35,6 +37,7 @@ export async function startExperience(){
  mountApprovedPeople(container,publicPeople?.people);
  mountExperience(properties,{...assets},siteContent);
  mountSelectEntry(container,siteContent);
+ mountEcosystem(container);
  if(failed){const notice=document.createElement('div');notice.className='experience-offline';notice.setAttribute('role','status');notice.append('Não foi possível atualizar os imóveis. ');const retry=document.createElement('button');retry.textContent='Tentar novamente';retry.onclick=()=>location.reload();notice.append(retry);container.append(notice);}
  container.querySelectorAll('img').forEach(img=>{img.decoding='async';if(!img.closest('.ec-scene,.ec-header'))img.loading='lazy';});
  addFooter(container);
