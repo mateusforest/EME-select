@@ -21,6 +21,13 @@ export async function startExperience(){
   const data=await response.json();if(!Array.isArray(data.properties))throw Error('Catálogo indisponível');properties=data.properties;
  }catch{failed=true;}
  container.innerHTML=template;
+ const gallery=container.querySelector('.ep-gallery');
+ const panel=document.createElement('div');panel.className='ep-detail-panel';
+ panel.append(container.querySelector('.ep-price-block'),container.querySelector('.ep-top-actions'),container.querySelector('.ep-scene-copy'));gallery.append(panel);
+ container.querySelector('.ep-photo-stage').append(container.querySelector('.ep-photo-count'));
+ const allPhotos=document.createElement('button');allPhotos.type='button';allPhotos.className='ep-all-photos ec-plain';allPhotos.textContent='Ver todas as fotos →';allPhotos.setAttribute('aria-expanded','false');
+ allPhotos.onclick=()=>{const expanded=allPhotos.getAttribute('aria-expanded')!=='true';allPhotos.setAttribute('aria-expanded',String(expanded));container.querySelector('.ep-chapters').classList.toggle('is-expanded',expanded);allPhotos.textContent=expanded?'Recolher fotos ↑':'Ver todas as fotos →';};
+ container.querySelector('.ep-chapter-heading span').replaceWith(allPhotos);
  mountBrandArtwork(container);
  [siteContent,publicPeople]=await Promise.all([contentRequest,peopleRequest]);
  mountApprovedPeople(container,publicPeople?.people);
