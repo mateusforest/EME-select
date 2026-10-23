@@ -6,6 +6,7 @@ import './experience.css';
 import './production.css';
 import './header.css';
 import './opportunities.css';
+import './chat.css';
 
 export async function startExperience(){
  const container=document.getElementById('root');
@@ -41,7 +42,7 @@ function dialog(title,paragraphs){
 function addFooter(container){
  const footer=container.querySelector('.ec-footer');
  const portal=document.createElement('a');portal.href='/portalselect';portal.textContent='Portal da equipe';
- const privacy=document.createElement('button');privacy.type='button';privacy.className='experience-privacy';privacy.textContent='Privacidade';privacy.onclick=()=>dialog('Privacidade',['Seus imóveis salvos e sua escolha de estado ficam apenas neste navegador. A conversa com o M permanece na memória da página durante a navegação.','Os pedidos de contato são enviados ao portal privado da EME somente quando você preenche os dados e autoriza o contato. Para solicitar informações ou exclusão de dados, fale com a equipe pelo canal de atendimento do site.','A busca por voz depende do serviço de reconhecimento do seu navegador e só inicia com sua ação e autorização de microfone. Confira a transcrição antes de buscar.','Ao abrir o WhatsApp ou outro serviço externo, aplicam-se também as regras desse serviço.']);
+ const privacy=document.createElement('button');privacy.type='button';privacy.className='experience-privacy';privacy.textContent='Privacidade';privacy.onclick=()=>dialog('Privacidade',['Seus imóveis salvos e sua escolha de estado ficam apenas neste navegador. O histórico do M fica na memória desta página e é apagado ao recarregar ou iniciar uma nova conversa. Ao enviar uma mensagem, o conteúdo e o contexto público dos imóveis são processados pela OpenAI para gerar a resposta. A EME não grava esse histórico no portal; a API é usada com armazenamento de respostas desativado. O provedor aplica suas próprias regras de tratamento e retenção. Evite enviar documentos ou dados sensíveis.','Os pedidos de contato são enviados ao portal privado da EME somente quando você preenche os dados e autoriza o contato. O resumo do interesse acompanha esse pedido. No WhatsApp, o resumo e os imóveis são preparados para você revisar e enviar. Para solicitar informações ou exclusão de dados, fale com a equipe pelo canal de atendimento do site.','A busca por voz depende do serviço de reconhecimento do seu navegador e só inicia com sua ação e autorização de microfone. Confira a transcrição antes de buscar.','Ao abrir o WhatsApp ou outro serviço externo, aplicam-se também as regras desse serviço.']);
  footer.insertBefore(privacy,footer.lastElementChild);footer.insertBefore(portal,footer.lastElementChild);
 }
 function mountApprovedPeople(container){

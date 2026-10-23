@@ -3,6 +3,7 @@ import {createIcons} from './icons.js';
 import {createCatalog} from './catalog-view.js';
 import {createOpportunities} from './opportunities-view.js';
 import {createHeroFocus} from './hero-motion.js';
+import {createChatTransport} from './chat-client.js';
 export function mountExperience(publishedProperties,assetMap){
 const lucide={createIcons};
 let routingReady=false;
@@ -858,7 +859,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     invitationDismissed = Boolean(incoming.invitationDismissed);
     if (['chat','search','voice'].includes(incoming.assistantMode)) {
       openAssistant(incoming.assistantMode,false);
-      renderResults(findProperties(intent),criteriaText());
+      renderResults([],criteriaText());
       conversation = [{from:'EME',text:criteriaText() ? 'Sua busca: '+criteriaText()+'. Como posso ajudar a continuar?' : welcomeText()}];renderMessages();
       if (!criteriaText()) root.querySelector('.ex-results').hidden = true;
       if (incoming.chatMinimized) minimizeChat(false);
@@ -1030,7 +1031,8 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   let invitationDismissed = false;
   let chatOpener = root.querySelector('.ex-chat-launch');
   let chatMinimized = false;
-  const norms = text => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const chatTransport=createChatTransport();
+  let chatBusy=false,chatVersion=0,lastChatRequest=null;
   const searchFacts = Object.fromEntries(properties.map(p=>[p.id,p.searchFacts]));
   function element(tag,className,text) {
     const node = document.createElement(tag);
@@ -1115,39 +1117,8 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if (returnFocus && chatOpener?.isConnected) chatOpener.focus({preventScroll:true});
   }
   function money(value) { return 'R$ '+Math.round(value).toLocaleString('pt-BR'); }
-  function parseIntent(text,previous = {}) {
-    const value = norms(text); const next = {...(view==='region' ? {city:norms(regionById(regionId).city)} : {}),...previous};
-    if (/\b(casa|casas)\b/.test(value)) next.type = 'Casa';
-    else if (/\b(apartamento|apartamentos|apto|ape)\b/.test(value)) next.type = 'Apartamento';
-    else if (/cobertura/.test(value)) next.type = 'Cobertura';
-    else if (/comercial|comerciais|escritorio|loja/.test(value)) next.type = 'Comercial';
-    else if (/terreno|lote/.test(value)) next.type = 'Terreno';
-    if (/qualquer tipo|todos os tipos/.test(value)) delete next.type;
-    const budget = value.match(/(?:ate|no maximo|menos de|limite de|orcamento de)\s*r?\$?\s*([\d.,]+)\s*(milhoes|milhao|mil|k)?/);
-    if (budget) {
-      let raw = budget[1];
-      if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(raw)) raw = raw.replace(/\./g,'');
-      const number = Number(raw.replace(',','.'));
-      const multiplier = /milhao|milhoes/.test(budget[2] || '') ? 1000000 : /mil|k/.test(budget[2] || '') ? 1000 : 1;
-      if (Number.isFinite(number) && number > 0) next.budget = number*multiplier;
-    }
-    if (/sem limite de (valor|preco)|qualquer valor/.test(value)) delete next.budget;
-    const beds = value.match(/(\d+|um|uma|dois|duas|tres|quatro|cinco)\s*(quartos?|dormitorios?)/);
-    if (beds) next.bedrooms = Number(beds[1]) || ({um:1,uma:1,dois:2,duas:2,tres:3,quatro:4,cinco:5}[beds[1]]);
-    const spots = value.match(/(\d+|uma|duas|tres)\s*vagas?/);
-    if (spots) next.parking = Number(spots[1]) || ({uma:1,duas:2,tres:3}[spots[1]]);
-    const city = ['governador celso ramos','vacaria','porto alegre','caxias do sul','gramado','canela','florianopolis','balneario camboriu'].find(name=>value.includes(name));
-    if (city) next.city = city;
-    if (/\bpalmas\b/.test(value)) next.city='governador celso ramos';
-    const featureNames = [['patio',/patio|quintal/],['lareira',/lareira/],['piso aquecido',/piso aquecido/],['churrasqueira',/churrasqueira/],['suite',/suite/],['piscina',/piscina/]];
-    const features = new Set(previous.features || []);
-    featureNames.forEach(([name,pattern])=>{ if (pattern.test(value)) features.add(name); });
-    if (features.size) next.features = [...features];
-    if (/alugar|aluguel|locacao/.test(value)) next.rent = true;
-    if (/comprar|compra|venda/.test(value)) next.rent = false;
-    return next;
-  }
   function criteriaText(criteria = intent) {
+    if(criteria.summary)return criteria.summary;
     const parts = [];
     if (criteria.type) parts.push(criteria.type);
     if (criteria.city) parts.push(criteria.city.replace(/\b\w/g,letter=>letter.toUpperCase()));
@@ -1158,15 +1129,10 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if (criteria.rent) parts.push('locação');
     return parts.join(' · ');
   }
-  function findProperties(criteria) {
-    return properties.filter(property=>{
-      const facts = searchFacts[property.id];
-      return (!criteria.type || (criteria.type === property.type || criteria.type === property.group)) && (!criteria.city || facts.city.includes(criteria.city)) && (!criteria.budget || facts.price <= criteria.budget) && (!criteria.bedrooms || facts.bedrooms >= criteria.bedrooms) && (!criteria.parking || facts.parking >= criteria.parking) && (!criteria.features || criteria.features.every(feature=>facts.features.includes(feature))) && (criteria.rent === undefined || criteria.rent === (property.operation === 'alugar'));
-    }).sort((a,b)=>searchFacts[a.id].price-searchFacts[b.id].price);
-  }
   function renderResults(items = currentMatches,summary = criteriaText()) {
     root.querySelector('.ex-results').hidden = false;
     currentMatches = items; resultList.replaceChildren();
+    root.querySelector('.ex-result-actions').hidden=false;
     root.querySelector('.ex-results-title').textContent = items.length ? `${items.length === 1 ? 'Uma possibilidade' : items.length+' possibilidades'} para conhecer.` : 'Vamos refinar sua busca.';
     root.querySelector('.ex-result-summary').textContent = summary || 'Imóveis da coleção atual. Conte o que procura para ajustar esta seleção.';
     if (!items.length) resultList.append(element('p','ex-result-summary','Não há correspondência com os critérios informados nesta seleção. Você pode ajustar o pedido ou conversar com a equipe.'));
@@ -1181,60 +1147,91 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   }
   function welcomeText() {
     return view === 'property'
-      ? 'Que bom receber você por aqui! Esse lugar despertou seu interesse? Posso contar mais sobre '+byId(selectedId).title+', ajudar a comparar ou orientar uma visita. Por onde você gostaria de começar?'
-      : 'Olá, que bom ter você por aqui! Vamos encontrar um lugar que combine com seus planos? Me conte, no seu tempo, o que você imagina para esse próximo passo.';
+      ? 'Que bom receber você por aqui! Sou o M, a IA da EME Select. Esse lugar despertou seu interesse? Posso contar mais sobre '+byId(selectedId).title+', ajudar a comparar ou orientar uma visita. Por onde você gostaria de começar?'
+      : 'Olá, que bom ter você por aqui! Sou o M, a IA da EME Select. Vamos encontrar um lugar que combine com seus planos? Me conte, no seu tempo, o que você imagina para esse próximo passo.';
   }
   function chatWelcome() {
     if (conversation.length) return;
-    conversation = [{from:'EME',text:welcomeText()}];
+    conversation = [{from:'M',text:welcomeText(),welcome:true}];
     intent = {}; renderMessages();
-    renderResults(view === 'property' ? [byId(selectedId)] : properties);
+    renderResults(view === 'property' ? [byId(selectedId)] : []);
     root.querySelector('.ex-results').hidden = true;
     root.querySelector('.ex-chips').hidden = false;
   }
-  function respond(text,reset = false) {
-    const clean = text.trim().slice(0,800); if (!clean) return;
-    const value = norms(clean);
-    if (reset) conversation = [];
-    conversation.push({from:'Você',text:clean});
-    let reply;
-    if (/vender meu|anunciar|sou proprietario|meu imovel|colocar.*venda/.test(value)) {
-      reply = 'Você pode apresentar seu imóvel à EME para venda ou locação. A equipe analisa suas características e informações antes de decidir sobre a entrada na coleção. Em “Para proprietários”, você encontra o formulário para começar.';
-      renderResults([], 'Apresentação de imóvel para análise da equipe.');
-      const ownerLink = element('a','ec-link','Apresentar meu imóvel ↗'); ownerLink.href='https://www.emeselect.com/enviar-imovel'; ownerLink.target='_blank'; ownerLink.rel='noopener'; resultList.append(ownerLink);
-    } else if (/visita|agendar|corretor|pessoa|atendimento humano/.test(value)) {
-      reply = 'A equipe pode conversar com você e combinar uma visita. Use “Solicitar contato” para deixar seu interesse ou fale diretamente pelo WhatsApp. O horário depende de confirmação.';
-      renderResults(view === 'property' ? [byId(selectedId)] : currentMatches);
-      const button = element('button','ec-action cursor-interaction','Solicitar contato ↗'); button.type='button'; button.dataset.lead='visit'; resultList.append(button);
-    } else if (view === 'property' && /esse|essa|este|esta|desse|dessa|imovel|documenta|iptu|condominio|planta|banheiro|construcao|garagem|solar|lareira|area/.test(value) && !/quero|procuro|busco|busca|outro|outra/.test(value)) {
-      const property = byId(selectedId);
-      if (/documenta|iptu|condominio|disponiv|negoci|desconto/.test(value)) reply = 'Essas condições precisam ser confirmadas com a equipe. Posso encaminhar seu interesse em '+property.title+' para que você tenha as informações corretas.';
-      else if (/planta/.test(value)) reply = 'A planta não está disponível nesta apresentação. Você pode solicitá-la com as medidas à equipe antes de decidir.';
-
-      else reply = 'As informações disponíveis são: '+property.summary+'. Para outros detalhes e condições, a equipe pode conferir o anúncio com você.';
-      renderResults([property],property.location);
-    } else {
-      intent = parseIntent(clean,reset ? {} : intent);
-      const criteria = criteriaText(); const found = findProperties(intent); renderResults(found,criteria);
-      if (!criteria) reply = 'Posso ajudar com a busca por imóveis. Me diga o tipo, a cidade e uma faixa de valor. Por exemplo: “apartamento até 400 mil em Vacaria”.';
-      else if (!found.length) reply = 'Entendi: '+criteria+'. Não encontrei um imóvel que reúna esses critérios na seleção disponível. Qual deles podemos flexibilizar?';
-      else reply = 'Entendi: '+criteria+'. '+(found.length === 1 ? 'Este imóvel tem características compatíveis com o pedido.' : 'Separei '+found.length+' possibilidades com características compatíveis.')+' Você pode abrir os detalhes ou me contar mais sobre sua preferência.';
-    }
-    conversation.push({from:'EME',text:reply}); renderMessages();
-    root.querySelector('.ex-chips').hidden = true;
-    composer.elements.message.value = '';
-    composer.elements.message.style.height = '48px';
-    requestAnimationFrame(() => { const stream = root.querySelector('.ex-chat-scroll'); stream.scrollTop = stream.scrollHeight; });
+  function scrollChat() {
+    requestAnimationFrame(()=>{const stream=root.querySelector('.ex-chat-scroll');stream.scrollTop=stream.scrollHeight;});
   }
+  function setChatBusy(busy) {
+    chatBusy=busy;
+    composer.querySelector('.ex-send').disabled=busy;
+    composer.setAttribute('aria-busy',String(busy));
+    root.querySelector('.ex-chat-thinking').hidden=!busy;
+    root.querySelector('.ex-chat-identity small').textContent=busy?'Consultando a coleção…':'IA · atendimento 24h';
+    minimizedChat.querySelector('small').textContent=busy?'M está respondendo…':'Continuar de onde parou';
+  }
+  function resetChatRequest(){
+    chatVersion++;chatTransport.cancel();setChatBusy(false);lastChatRequest=null;
+    root.querySelector('.ex-chat-error').hidden=true;
+  }
+  function updateChatHandoff(){
+    const parts=['Olá, equipe EME Select! Vim da conversa com o M.'];
+    if(criteriaText())parts.push('Meu interesse: '+criteriaText());
+    if(currentMatches.length)parts.push('Imóveis que conheci:',...currentMatches.slice(0,3).map(p=>p.title+' · '+p.price+' · '+location.origin+'/#/imovel/'+p.id));
+    parts.push('Podemos continuar o atendimento?');
+    root.querySelector('.ex-assistant-footer a').href='https://wa.me/5554991578029?text='+encodeURIComponent(parts.join('\n\n'));
+  }
+  async function sendChatRequest(request){
+    const version=++chatVersion;
+    lastChatRequest=request;
+    root.querySelector('.ex-chat-error').hidden=true;
+    setChatBusy(true);scrollChat();
+    try{
+      const data=await chatTransport.send(request.messages,request.context);
+      if(!data||version!==chatVersion)return;
+      const refreshed=mapProperties(data.properties,assets);
+      for(const p of refreshed){const old=byId(p.id);if(old)Object.assign(old,p);else properties.push(p);searchFacts[p.id]=p.searchFacts;}
+      intent={summary:data.searchSummary};
+      conversation.push({from:'M',text:data.reply});renderMessages();
+      renderResults(refreshed,criteriaText());
+      root.querySelector('.ex-result-actions').hidden=data.handoff!=='none';
+      root.querySelector('.ex-results').hidden=!refreshed.length&&data.handoff==='none';
+      if(!refreshed.length)resultList.replaceChildren();
+      if(data.handoff==='owner'){
+        root.querySelector('.ex-results-title').textContent='Seu imóvel na coleção.';
+        const link=element('a','ec-link','Apresentar meu imóvel ↗');link.href='/enviar-imovel';resultList.append(link);
+      }else if(['team','visit'].includes(data.handoff)){
+        root.querySelector('.ex-results-title').textContent=data.handoff==='visit'?'Vamos combinar uma visita?':'A equipe continua com você.';
+        const button=element('button','ec-link ec-plain',data.handoff==='visit'?'Solicitar uma visita ↗':'Solicitar contato ↗');button.type='button';button.dataset.lead=data.handoff==='visit'?'visit':'selection';resultList.append(button);
+      }
+      updateChatHandoff();lastChatRequest=null;save();
+    }catch(error){
+      if(version!==chatVersion)return;
+      root.querySelector('.ex-chat-error-copy').textContent=error.message;
+      root.querySelector('.ex-chat-error').hidden=false;
+    }finally{
+      if(version===chatVersion){setChatBusy(false);if(lastChatRequest)root.querySelector('.ex-chat-identity small').textContent='IA · conexão indisponível';if(chatMinimized)minimizedChat.querySelector('small').textContent=lastChatRequest?'Toque para tentar novamente':'Resposta recebida · continuar';scrollChat();}
+    }
+  }
+  function respond(text,reset=false){
+    const clean=text.trim().slice(0,1500);if(!clean||chatBusy&&!reset)return;
+    if(reset){resetChatRequest();conversation=[];intent={};currentMatches=[];}
+    conversation.push({from:'Você',text:clean});renderMessages();
+    root.querySelector('.ex-chips').hidden=true;
+    root.querySelector('.ex-results').hidden=true;
+    composer.elements.message.value='';composer.elements.message.style.height='48px';
+    void sendChatRequest({messages:conversation.map(message=>({...message})),context:{propertyId:view==='property'?selectedId:null,recentIds:currentMatches.slice(0,3).map(p=>p.id),regionId:view==='region'?regionId:null}});
+  }
+  root.querySelector('.ex-chat-retry').addEventListener('click',()=>{if(lastChatRequest&&!chatBusy)void sendChatRequest(lastChatRequest);});
   function newConversation() {
     if(leadSending)return;
+    resetChatRequest();
     if(voiceRecognition){voiceRecognition.onstart=voiceRecognition.onresult=voiceRecognition.onerror=voiceRecognition.onend=null;voiceRecognition.abort();voiceRecognition=null;}
-    conversation=[];intent={};currentMatches=[...properties];leadKind='selection';leadPropertyId=null;leadRequestId=crypto.randomUUID();
+    conversation=[];intent={};currentMatches=[];leadKind='selection';leadPropertyId=null;leadRequestId=crypto.randomUUID();
     headerSearch.value='';composer.reset();composer.elements.message.style.height='48px';
     root.querySelector('.ex-transcript').value='';root.querySelector('.ex-voice-state').textContent='';root.querySelector('.ex-voice-example').textContent='Gravar meu pedido';
     leadForm.reset();leadForm.hidden=false;root.querySelector('.ex-error').hidden=true;root.querySelector('.ex-success').hidden=true;
     resultList.replaceChildren();root.querySelector('.ex-result-summary').textContent='';
-    chatWelcome();openAssistant('chat');root.querySelector('.ex-chat-scroll').scrollTop=0;
+    chatWelcome();updateChatHandoff();openAssistant('chat');root.querySelector('.ex-chat-scroll').scrollTop=0;
     status.textContent='Nova conversa iniciada.';save();
   }
   root.querySelector('.ex-new-chat').addEventListener('click',newConversation);
@@ -1245,7 +1242,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   function openLead(kind) {
     leadKind = kind;
     const inConversation = Boolean(assistantMode);
-    const candidate = inConversation && currentMatches.length === 1 ? currentMatches[0] : view === 'property' ? byId(selectedId) : null;
+    const candidate = inConversation ? (currentMatches.length === 1 ? currentMatches[0] : null) : view === 'property' ? byId(selectedId) : null;
     leadPropertyId = kind === 'visit' ? candidate?.id ?? null : !inConversation && view === 'property' ? selectedId : null;
     openAssistant('lead');
     root.querySelector('.ex-lead-title').textContent = kind === 'visit' ? 'Vamos combinar uma visita?' : 'Uma seleção com o seu perfil.';

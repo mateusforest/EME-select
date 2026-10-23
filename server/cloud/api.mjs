@@ -1,4 +1,5 @@
 import {attachCloudLeads} from './leads.mjs';
+import {createPublicChat} from '../public-chat.mjs';
 import {createPeopleApi,peopleRecordId} from '../people.mjs';
 import {prepareEnlargement} from '../photo-preparation.mjs';
 import {createDevelopmentApi} from '../developments.mjs';
@@ -19,7 +20,7 @@ const safe=u=>({id:u.id,name:u.name,email:u.email,role:u.role,active:u.active,mu
 const email=v=>{const s=text(v,5,180).toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s))fail(400,'E-mail inválido.');return s;};
 const password=v=>{if(typeof v!=='string'||v.length<12||v.length>128)fail(400,'Use uma senha de 12 a 128 caracteres.');return v;};
 const syncDraft=(data,d)=>({...data,draft:d,title:d.title,city:d.city,type:d.type,owner:d.ownerName,operation:d.operation==='comprar'?'Venda':'Locação'});
-export function createCloudApi({env=process.env,client=createClient(env)}={}){
+export function createCloudApi({env=process.env,client=createClient(env),aiFetcher}={}){
  const {rest,rpc,request}=client;
  const members=()=>rest('eme_profiles?select=id,name,email,role,active,must_change&order=created_at');
  const tokenOf=req=>(String(req.headers.cookie||'').split(';').map(v=>v.trim()).find(v=>v.startsWith(cookieName+'='))||'').slice(cookieName.length+1);
@@ -39,7 +40,7 @@ export function createCloudApi({env=process.env,client=createClient(env)}={}){
   deleteImage:id=>request('/storage/v1/object/eme-property-photos',{method:'DELETE',body:{prefixes:['person-'+id+'.webp']}}),
  });
  const finance=attachCloudFinance({client,hashOf});
- const intelligence=attachCloudIntelligence({client,hashOf,caseFor,env});
+ const intelligence=attachCloudIntelligence({client,hashOf,caseFor,env,fetcher:aiFetcher});
  const spatial=attachCloudSpatial({client,hashOf,ai:intelligence});
  const operations=attachCloudOperations({client,hashOf});
  const whatsapp=attachCloudWhatsApp({client,env});
@@ -54,6 +55,16 @@ export function createCloudApi({env=process.env,client=createClient(env)}={}){
  async function deleteUnlinkedAuth(id){try{await request('/auth/v1/admin/users/'+id,{method:'DELETE'});}catch{console.error('Unlinked auth account requires administrator review');}}
  async function credentials(address,secret){return request('/auth/v1/token?grant_type=password',{method:'POST',publicKey:true,body:{email:address,password:secret}});}
  const rate=(key,max)=>rpc('eme_limit',{p_key:key,p_max:max});
+ const readChatCatalog=async()=>{
+  const entries=[];
+  for(let offset=0;offset<10000;offset+=500){
+   const rows=await rest('eme_cases?select=id,data->published&data->published=not.is.null&order=id&limit=500&offset='+offset);
+   entries.push(...rows.map(row=>row.published).filter(Boolean));
+   if(rows.length<500)return entries;
+  }
+  fail(503,'O catálogo está em atualização. Tente novamente em instantes.');
+ };
+ const publicChat=createPublicChat({ai:intelligence,readCatalog:readChatCatalog,rate});
  async function handle(req,res){
   const send=(status,value)=>{res.statusCode=status;res.setHeader('Content-Type','application/json; charset=utf-8');res.end(JSON.stringify(value));};
   res.setHeader('Cache-Control','private, no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('X-Frame-Options','DENY');
@@ -66,6 +77,7 @@ export function createCloudApi({env=process.env,client=createClient(env)}={}){
    if(await people.publicHandle(path,req,res,send))return;
    if(await developments.publicHandle(path,req,res,send))return;
    if(await leads.publicHandle(path,req,body,send))return;
+   if(await publicChat.handle(path,req,body,send))return;
    if(path==='/api/public/properties'&&req.method==='GET'){const rows=await rest('eme_cases?select=id,data->published&data->published=not.is.null');return send(200,{properties:rows.map(r=>r.published).filter(Boolean)});}
    if(path==='/api/public/submissions'&&req.method==='POST'){
     if(Buffer.byteLength(JSON.stringify(body))>16000)fail(413,'Reduza o tamanho das informações.');

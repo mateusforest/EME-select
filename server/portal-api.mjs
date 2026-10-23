@@ -1,4 +1,5 @@
 import {attachLocalLeads} from './leads-local.mjs';
+import {createPublicChat} from './public-chat.mjs';
 import {createPeopleApi} from './people.mjs';
 import {createDevelopmentApi} from './developments.mjs';
 import {types} from './cloud/domain.mjs';
@@ -49,7 +50,7 @@ async function json(req, limit = 32768) {
   for await (const chunk of req) { size += chunk.length; if (size > limit) fail(413, 'Solicitação muito grande.'); chunks.push(chunk); }
   try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { fail(400, 'Solicitação inválida.'); }
 }
-export function createPortalApi({ dbPath, now = () => Date.now() }) {
+export function createPortalApi({ dbPath, now = () => Date.now(), env=process.env, aiFetcher }) {
   if (dbPath !== ':memory:') mkdirSync(dirname(dbPath), { recursive: true, mode: 0o700 });
   const db = new DatabaseSync(dbPath, { timeout: 5000 });
   db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;');
@@ -142,7 +143,8 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
   });
   const listings = attachListings({db,fail,text,fields,caseFor,transaction,audit,stamp,requireAdmin,send,session});
   const finance = attachFinance({db,transaction,stamp,fail,send});
-  const intelligence = attachIntelligence({db,dbPath,transaction,stamp,caseFor,consume,send});
+  const intelligence = attachIntelligence({db,dbPath,transaction,stamp,caseFor,consume,send,env,fetcher:aiFetcher});
+  const publicChat=createPublicChat({ai:intelligence,rate:consume,readCatalog:async()=>db.prepare('SELECT published FROM listings WHERE published IS NOT NULL ORDER BY id').all().map(row=>JSON.parse(row.published))});
   const spatial=attachLocalSpatial({db,transaction,stamp,ai:intelligence});
   const operations = attachOperations({db,transaction,stamp,send});
   const whatsapp = attachWhatsApp({db,transaction,consume,send});
@@ -173,6 +175,7 @@ export function createPortalApi({ dbPath, now = () => Date.now() }) {
       if (isDocumentUpload) { const access=session(req); if(!access||access.must_change)fail(401,'Entre para registrar a operação.'); }
       const requestBody = req.method === 'GET' ? null : await json(req,isPhotoUpload?11300000:isDocumentUpload?3000000:(path.startsWith('/api/developments/')||path==='/api/people')?120000:32768);
       if(await leads.publicHandle(path,req,requestBody,(status,value)=>send(res,status,value)))return true;
+      if(await publicChat.handle(path,req,requestBody,(status,value)=>send(res,status,value)))return true;
       if(path==='/api/public/submissions'&&req.method==='POST'){
         consume('submission:'+digest(req.socket.remoteAddress||'unknown'),6);
         const entry=submission(requestBody),d=entry.data.draft,payloadHash=digest(JSON.stringify(entry.data));

@@ -4,6 +4,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:
 import { resolveAISettings, AI_TIMEOUT_MS } from './ai-config.mjs';
 import { readCuration } from './curation-policy.mjs';
 import {requestSpatialPlan,requestSpatialScene} from './spatial-ai.mjs';
+import {requestPublicChat} from './public-chat.mjs';
 
 export const aiFail = (status, message) => { throw Object.assign(new Error(message), { status }); };
 const fields = (value, allowed) => { if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !allowed.includes(key))) aiFail(400, 'Confira os campos enviados.'); };
@@ -115,7 +116,23 @@ export function createIntelligence({ store, encryptionKey, env = process.env, fe
     await store.finish(req, user, body.requestId, { status: 'completed', ...analysis });
     send(200, await snapshot(user)); return true;
   }
-  return { handle, studioStatus:status, async studioPlan(user,project,kind='plan'){
+  return { handle, studioStatus:status,
+    async publicChatAvailable(){
+      const settings=resolveAISettings(await store.settings(),env);
+      return env.EME_PUBLIC_CHAT_ENABLED!=='false'&&settings.enabled&&Boolean(settings.secret||env.OPENAI_API_KEY);
+    },
+    async publicConversation(input){
+      let settings,apiKey;
+      try{
+        settings=resolveAISettings(await store.settings(),env);
+        if(env.EME_PUBLIC_CHAT_ENABLED==='false'||!settings.enabled)throw Error('disabled');
+        apiKey=settings.secret?openKey(settings.secret,encryptionKey):env.OPENAI_API_KEY;
+        if(!apiKey)throw Error('unconfigured');
+      }catch{aiFail(503,'O M está temporariamente indisponível. Você pode continuar pelo catálogo ou falar com a equipe.');}
+      const model=/^[a-zA-Z0-9._:-]{3,100}$/.test(env.OPENAI_CHAT_MODEL||'')?env.OPENAI_CHAT_MODEL:settings.model;
+      return requestPublicChat({...input,apiKey,model,fetcher});
+    },
+    async studioPlan(user,project,kind='plan'){
     if(user.role!=='admin')aiFail(403,'Acesso reservado ao administrador.');
     const settings=resolveAISettings(await store.settings(),env);
     if(!settings.enabled)aiFail(503,'Ative a IA na Central de IA.');
