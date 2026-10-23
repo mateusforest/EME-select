@@ -38,4 +38,24 @@ export const portalNavigation: PortalNavigationItem[] = [
 ];
 
 export const portalPath = (id: string) => id === 'hoje' ? '/portalselect' : '/portalselect/' + id;
+
+// Both roles use the same shell and routes; only their working vocabulary changes.
+export function portalNavigationForRole(role: 'admin' | 'corretor'): PortalNavigationItem[] {
+  const available = portalNavigation.filter(item => (!item.adminOnly || role === 'admin') && (!item.brokerOnly || role === 'corretor'));
+  if (role === 'admin') return available;
+  const presentation: Record<string, Partial<PortalNavigationItem>> = {
+    hoje: {label:'Meu dia', title:'Sua carteira, em perspectiva.', description:'Seus imóveis, contatos e próximos passos, em um só lugar.'},
+    imoveis: {label:'Minha carteira', group:'Carteira', description:'Seus imóveis e captações. Prepare os materiais e acompanhe a revisão da imobiliária.'},
+    avaliacoes: {group:'Carteira'},
+    documentos: {group:'Carteira'},
+    locacoes: {group:'Carteira'},
+    leads: {label:'Meus leads', group:'Atendimento', description:'Contatos atribuídos a você, próximos retornos e histórico de atendimento.'},
+    relacionamento: {group:'Atendimento'},
+    conversas: {group:'Atendimento'},
+    comissoes: {group:'Resultados'},
+    padrao: {group:'Apoio'},
+    inteligencia: {label:'Ferramentas de IA', group:'Apoio', description:'Prepare materiais e análises dos seus imóveis, com revisão antes de usar.'},
+  };
+  return available.map(item => ({...item,...presentation[item.id]}));
+}
 export const portalPageFromPath = (path: string) => path.replace(/^\/portalselect\/?/, '').replace(/\/+$/, '') || 'hoje';

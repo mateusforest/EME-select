@@ -46,3 +46,47 @@
 @media(max-width:1100px){.pt-live .sh-clock,.pt-live .sh-market{display:none}.pt-live .ps-main{padding:28px 24px}.pa-content-intro{align-items:flex-start;flex-wrap:wrap}.pa-content-intro>.ps-button{margin-left:40px}.pa-document-row{flex-wrap:wrap}.pa-document-row>.pa-actions{width:100%;padding-left:42px}}
 @media(max-width:760px){.pt-live{--sh-header-height:64px;--sh-nav-width:0px}.pt-live .ps-sidebar{width:285px;border-radius:0 18px 0 0;padding:18px 14px 0}.pt-live .ps-main{padding:24px 18px 40px}.pt-live .sh-brand{padding:0;width:auto}.pt-live .sh-brand-mark{width:34px;height:40px}.pt-live .sh-brand img{width:34px;height:37px}.pt-live .pt-live-bar{padding:10px 18px}.pt-live .ps-sidebar nav a[aria-current=page]{margin:0 0 5px;border-radius:10px;padding:11px 12px}.pt-live .pt-portal-area-grid{grid-template-columns:1fr}.pa-opportunity-row{flex-wrap:wrap}.pa-opportunity-row>span:last-child{padding-left:36px;font-size:12px}.pa-assignment-row{display:grid;gap:10px}.pa-assignment-row select{max-width:100%;width:100%}.pa-save-bar,.pa-document-toolbar{flex-direction:column;align-items:stretch}.pa-document-toolbar input{min-width:0;width:100%}.pa-content-intro{gap:14px}.pa-content-intro>div{flex-basis:75%}.pt-live .pt-team-row{flex-wrap:wrap}.pt-live .pt-team-row>div{flex-basis:70%}.pt-live .sh-context .ps-breadcrumb>span{display:none}}
 @media(prefers-reduced-motion:reduce){.pt-live *{scroll-behavior:auto!important;transition:none!important}}
+
+/* One visual system for administration and the broker's assigned portfolio. */
+.pt-live .broker-overview-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+.pt-live .broker-overview-metrics small{font-size:12px;line-height:1.5;color:#61766b}
+.pt-live .broker-section-head h2{gap:9px;line-height:1.4}
+.pt-live .broker-section-head .ps-text-button{white-space:nowrap;min-height:40px}
+.pt-live .broker-property{border-color:#dfe5da;border-radius:12px;align-items:center;background:transparent;transition:background .15s,border-color .15s}
+.pt-live .broker-property:hover{background:#eef2e8;border-color:#a4b99b}
+.pt-live .broker-property img,.pt-live .broker-property-placeholder{width:78px;height:92px;flex:none;border-radius:9px}
+.pt-live .broker-property-placeholder{display:grid;place-items:center;background:#e8eee2;color:#6c876b}
+.pt-live .broker-property strong{font-size:14px;font-weight:500;line-height:1.5}
+.pt-live .broker-property .ps-tag{width:fit-content;font-size:11px}
+.pt-live .broker-empty-copy{padding:12px 0;color:#61766b;line-height:1.7}
+.pt-live .broker-empty-copy p{margin:0 0 6px;color:#244739;font-size:14px}
+.pt-live .broker-empty-copy small{display:block;font-size:12px}
+.pt-live .broker-empty-copy button{margin-top:14px}
+.pt-live .broker-support-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.pt-live .broker-support-link{display:flex;align-items:center;gap:16px;text-align:left;color:#244739;cursor:pointer;padding:22px}
+.pt-live .broker-support-link>svg{flex:none;color:#50745b}
+.pt-live .broker-support-link>span{flex:1;min-width:0}
+.pt-live .broker-support-link strong,.pt-live .broker-support-link small{display:block}
+.pt-live .broker-support-link strong{font-size:15px;font-weight:500}
+.pt-live .broker-support-link small{font-size:12px;line-height:1.6;color:#61766b;margin-top:5px}
+.pt-live .broker-support-link:hover{border-color:#8aaa79;background:#f3f6ed}
+.pt-live .broker-row{border-color:#dfe5da;padding:16px 0}
+.pt-live .broker-row strong{font-weight:500;font-size:14px}
+.pt-live .broker-row small{font-size:12px}
+.pt-live .broker-tabs{gap:8px}.pt-live .broker-tabs .ps-button{min-height:44px}
+@media(max-width:1100px){.pt-live .broker-overview-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+ .pt-live .broker-support-grid{grid-template-columns:1fr;gap:12px}
+ .pt-live .broker-overview-metrics{gap:12px}
+ .pt-live .broker-overview-metrics strong{font-size:28px}
+ .pt-live .broker-overview-metrics span{font-size:12px}
+ .pt-live .broker-overview-metrics small{font-size:11px}
+ .pt-live .broker-metrics:not(.broker-overview-metrics){grid-template-columns:1fr}
+ .pt-live .broker-metrics:not(.broker-overview-metrics) strong{font-size:28px}
+ .pt-live .broker-shortcuts .ps-button{min-height:48px;font-size:12px;gap:8px}
+ .pt-live .broker-section-head{align-items:flex-start;gap:8px}
+ .pt-live .broker-section-head h2{font-size:17px}
+ .pt-live .broker-property img,.pt-live .broker-property-placeholder{width:64px;height:82px}
+ .pt-live .broker-property{padding:12px;gap:12px}
+ .pt-live .broker-property strong{font-size:13px}
+}
