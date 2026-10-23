@@ -1,6 +1,7 @@
 import {mapProperties} from './properties.js';
 import {createIcons} from './icons.js';
 import {createCatalog} from './catalog-view.js';
+import {createHeroFocus} from './hero-motion.js';
 export function mountExperience(publishedProperties,assetMap){
 const lucide={createIcons};
 let routingReady=false;
@@ -12,20 +13,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   const hero = root.querySelector('.ec-hero');
   const viewport = root.querySelector('.ec-viewport');
   const world = root.querySelector('.ec-world');
-  const focusView=document.createElement('img');
-  focusView.className='ec-focus-view';focusView.alt='';focusView.decoding='async';focusView.setAttribute('aria-hidden','true');
-  viewport.append(focusView);
-  let focusVersion=0;
-  async function loadFocus(id) {
-    const version=++focusVersion;
-    root.classList.remove('has-focus-detail');
-    if(!id)return;
-    focusView.src='/assets/experience/hero-'+id+'-detail.webp';
-    try{await focusView.decode();}catch{return;}
-    if(version!==focusVersion||chosen!==id)return;
-    root.dataset.focus=id;
-    requestAnimationFrame(()=>{if(version===focusVersion)root.classList.add('has-focus-detail');});
-  }
+  const focusScenes=createHeroFocus({root,viewport,duration:1250});
   const portals = [...root.querySelectorAll('.ec-portal')];
   const detail = root.querySelector('.ec-detail');
   const options = root.querySelector('.ec-options');
@@ -107,6 +95,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
 
   function moveCamera(immediate = false) {
     root.dataset.focusChoice=String(choice??'');
+    focusScenes.selectChoice(choice,!immediate);
     const cat = categoryById(chosen);
     if (!cat) {
       camera = W <= 600
@@ -174,8 +163,9 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if (!cat) return;
     clearTimeout(arrivalTimer);
     clearTimeout(portalTimer);
+    const direction=Math.sign(categories.indexOf(cat)-focusIndex)||1;
     chosen = id;
-    loadFocus(id);
+    focusScenes.select(id,{direction,animated:animate});
     choice = null;
     focusIndex = categories.indexOf(cat);
     root.classList.add('is-exploring');
@@ -192,7 +182,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     clearTimeout(arrivalTimer);
     clearTimeout(portalTimer);
     chosen = null;
-    loadFocus(null);
+    focusScenes.overview(animate);
     choice = null;
     root.classList.remove('is-exploring');
     detail.hidden = true;
@@ -206,13 +196,15 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
 
   function resize() {
     if (!hero.clientWidth) return;
+    if(W===hero.clientWidth && H===hero.clientHeight)return;
+    const widthChanged=W!==hero.clientWidth;
     W = hero.clientWidth;
     H = hero.clientHeight;
     BW = W <= 600 ? 900 : Math.min(W*1.045,2172);
     BH = BW/3;
     world.style.width = BW+'px';
     world.style.height = BH+'px';
-    moveCamera(true);
+    moveCamera(widthChanged || !chosen);
     updateNavigation();
   }
 
@@ -253,6 +245,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if (Math.abs(dx) < 9) return;
     if (!drag.moved) { drag.moved = true; hero.setPointerCapture(event.pointerId); root.classList.add('is-dragging'); }
     world.style.transform = `translate(${camera.x+clamp(dx,-90,90)}px,${camera.y}px) scale(${camera.scale})`;
+    viewport.style.setProperty('--hero-drag',clamp(dx,-90,90)+'px');
   });
   function finishDrag(event) {
     if (!drag || event.pointerId !== drag.id) return;
@@ -260,6 +253,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     const moved = drag.moved;
     drag = null;
     root.classList.remove('is-dragging');
+    viewport.style.setProperty('--hero-drag','0px');
     if (hero.hasPointerCapture(event.pointerId)) hero.releasePointerCapture(event.pointerId);
     if (moved) {
       suppressUntil = Date.now()+200;

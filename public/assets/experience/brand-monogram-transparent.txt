@@ -1,0 +1,8 @@
+EME Select — monograma transparente
+
+Uso: símbolo do cabeçalho. A palavra SELECT é renderizada em texto para manter a leitura em tamanho pequeno.
+Origem: logo fornecido pelo cliente, codex-clipboard-f7a67279-cd9f-4bca-9bd7-6bedfeade058.png.
+Edição: ferramenta integrada image_gen, com saída transparente; exportação WebP com canal alfa, 360 × 281.
+
+Prompt da edição:
+Use-case: background-removal. Edit target: the supplied EME SELECT logo. Create a precise transparent cutout of ONLY the existing emerald green folded-ribbon M monogram. Remove the ivory background completely, including every shadow cast onto the background and the ivory area inside and underneath the M. Remove the SELECT lettering from this asset because that lettering will be rendered separately in the website. Preserve the exact silhouette, proportions, ribbon folds, deep emerald color, material texture and self-shading of the ORIGINAL M; do not redesign, reinterpret, add thickness, or change its geometry. Output a tightly framed standalone M on actual transparent alpha with a small clear margin. No background, no ground plane, no glow, no cast shadow, no text.

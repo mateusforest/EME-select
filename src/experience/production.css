@@ -27,12 +27,14 @@ html,body,#root{margin:0;width:100%;height:100%;background:#f1f0e8;color:#244739
 
 /* A dedicated source for each close-up avoids enlarging a small part of the panorama. */
 #eme-continuo .ec-hero{height:clamp(640px,49vw,850px)}
-#eme-continuo .ec-world{transition:transform var(--eme-duration) cubic-bezier(.22,.75,.18,1),opacity .3s;will-change:auto}
-#eme-continuo .ec-focus-view{position:absolute;left:auto;right:1%;top:auto;bottom:55px;width:min(64%,1100px);height:auto;aspect-ratio:3/2;mix-blend-mode:multiply;pointer-events:none;opacity:0;transform:translateX(70px) scale(.94);transition:opacity .65s .25s,transform 1.2s cubic-bezier(.22,.75,.18,1);mask-image:linear-gradient(0deg,transparent,#000 12%,#000 92%,transparent),linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-composite:intersect}
-#eme-continuo.has-focus-detail .ec-focus-view{opacity:1;transform:none}
+#eme-continuo .ec-world{transition:transform var(--eme-duration) cubic-bezier(.22,.75,.18,1),opacity .85s ease;will-change:auto}
+#eme-continuo .ec-focus-layer{position:absolute;right:1%;bottom:55px;width:min(64%,1100px);aspect-ratio:3/2;mix-blend-mode:multiply;pointer-events:none;transform-origin:50% 65%;translate:var(--hero-drag,0px) 0;transition:translate .4s cubic-bezier(.22,.75,.18,1)}
+#eme-continuo .ec-focus-view{display:block;width:100%;height:auto;aspect-ratio:3/2;transform-origin:50% 65%;transition:transform 1.25s cubic-bezier(.22,.75,.18,1);mask-image:linear-gradient(0deg,transparent,#000 12%,#000 92%,transparent),linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-composite:intersect}
 #eme-continuo.has-focus-detail .ec-world{opacity:0}
-#eme-continuo[data-focus="apartamentos"] .ec-focus-view{width:min(64%,1000px)}
-#eme-continuo.has-focus-detail[data-focus="apartamentos"][data-focus-choice="1"] .ec-focus-view{transform:translateY(9%) scale(1.12)}
+#eme-continuo .ec-focus-layer[data-category="apartamentos"]{width:min(64%,1000px)}
+#eme-continuo .ec-focus-layer[data-choice]:not([data-choice=""]) .ec-focus-view{transform:scale(1.025)}
+#eme-continuo .ec-focus-layer[data-category="apartamentos"][data-choice="1"] .ec-focus-view{transform:translateY(9%) scale(1.12)}
+#eme-continuo.is-dragging .ec-focus-layer{transition:none}
 #eme-continuo .ec-viewport{mask-image:linear-gradient(to bottom,#000 0%,#000 87%,transparent 100%)}
 
 /* Regional compositions stay balanced on wide monitors. */
@@ -120,5 +122,5 @@ html,body,#root{margin:0;width:100%;height:100%;background:#f1f0e8;color:#244739
  #eme-continuo .er-region[data-region="vacaria"] .er-hero::after{background:radial-gradient(ellipse at 50% 50%,#c6c3ab33,transparent 45%)}
  #eme-continuo .er-photo-note{padding:22px 24px 15px}#eme-continuo .er-selection{padding:24px 24px 45px}
 }
-@media(max-width:600px){#eme-continuo .ec-hero{height:590px}#eme-continuo.is-exploring .ec-hero{height:810px}#eme-continuo .ec-focus-view,#eme-continuo[data-focus="apartamentos"] .ec-focus-view{left:0;right:auto;top:auto;bottom:75px;width:100%;height:auto}#eme-continuo .el-grid{grid-template-columns:1fr}#eme-continuo .el-card h2{font-size:23px}}
-@media(prefers-reduced-motion:reduce){#eme-continuo .ec-focus-view,#eme-continuo .ec-world,#eme-continuo .el-card-photo img{transition:none}}
+@media(max-width:600px){#eme-continuo .ec-hero{height:590px}#eme-continuo.is-exploring .ec-hero{height:810px}#eme-continuo .ec-focus-layer,#eme-continuo .ec-focus-layer[data-category="apartamentos"]{left:0;right:auto;top:auto;bottom:75px;width:100%;height:auto}#eme-continuo .el-grid{grid-template-columns:1fr}#eme-continuo .el-card h2{font-size:23px}}
+@media(prefers-reduced-motion:reduce){#eme-continuo .ec-focus-view,#eme-continuo .ec-focus-layer,#eme-continuo .ec-world,#eme-continuo .el-card-photo img{transition:none}}
