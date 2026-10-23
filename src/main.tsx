@@ -10,6 +10,11 @@ const PortalApp = lazy(() => import('./portal/PortalEntry'));
 const SubmissionPage = lazy(() => import('./SubmissionPage'));
 const App = isPresentation ? Presentation : isPortal ? PortalApp : isSubmission ? SubmissionPage : PublicApp;
 
+const legacyPublic = /^#\/(?:empreendimentos|curadoria|comparar|equipe|pessoas|perfil)(?:\/|\?|$)/.test(window.location.hash);
+if (!isPresentation && !isPortal && !isSubmission && !legacyPublic) {
+  void import('./experience/bootstrap.js').then(module => module.startExperience());
+} else {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode><Suspense fallback={<div role="status" style={{ padding: 32, color: '#173c32', fontFamily: 'Arial, sans-serif' }}>Carregando EME Select…</div>}><App /></Suspense></React.StrictMode>,
 );
+}

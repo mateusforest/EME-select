@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500&display=swap');
+html,body,#root{margin:0;width:100%;height:100%;background:#f1f0e8;color:#244739;font-family:Manrope,Arial,sans-serif}
+*{box-sizing:border-box}button,input,textarea,select{font:inherit}button,a{-webkit-tap-highlight-color:transparent}button{cursor:pointer}a{color:inherit}button:disabled{cursor:default;opacity:.5}
+#eme-continuo{height:100dvh!important;min-height:0!important;max-height:none!important;width:100%;border:0;border-radius:0;isolation:isolate}
+#eme-continuo [hidden]{display:none!important}
+#eme-continuo .ec-page-scroll{height:100%;max-height:none}
+#eme-continuo .ec-header{z-index:40}
+#eme-continuo .ex-assistant{max-height:calc(100dvh - 92px)}
+#eme-continuo .er-nav-panel{max-height:calc(100dvh - 90px)}
+#eme-continuo .ec-featured-lead{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+#eme-continuo .ec-property-tab>span{max-width:220px;white-space:normal;line-height:1.35}
+#eme-continuo .ep-photo{image-rendering:auto}
+#eme-continuo .ep-chapters{grid-template-columns:repeat(var(--ep-photo-total,5),minmax(165px,1fr));overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:thin;padding-bottom:8px}
+#eme-continuo .ep-chapter{scroll-snap-align:start}
+#eme-continuo img{max-width:100%}
+#eme-continuo .ex-chat-note{font-size:10px}
+.experience-loading{padding:40px;font-size:15px}
+.experience-offline{position:fixed;bottom:12px;left:12px;z-index:90;background:#f1f0e8;border:1px solid #b5c4ac;border-radius:10px;padding:12px;font-size:12px;max-width:calc(100% - 24px)}
+.experience-offline button{border:0;background:transparent;color:#183e2e;text-decoration:underline}
+.experience-dialog{width:min(600px,calc(100vw - 32px));max-height:80dvh;overflow:auto;border:1px solid #c9d3c1;border-radius:18px;background:#f1f0e8;color:#244739;padding:28px;font:14px/1.8 Manrope,Arial,sans-serif}
+.experience-dialog::backdrop{background:#183e2e55;backdrop-filter:blur(6px)}
+.experience-dialog button{border:1px solid #aab99e;border-radius:8px;background:transparent;color:inherit;padding:9px 16px}
+.experience-dialog h2{font-weight:400;font-size:28px;line-height:1.25}
+#eme-continuo .ec-footer button.experience-privacy{border:0;background:transparent;font-size:11px;color:inherit;padding:0}
+#eme-continuo .ec-team-list button{border:0;background:transparent;padding:0;text-align:left;color:inherit}
+@media(max-width:650px){#eme-continuo .ex-assistant{max-height:calc(100dvh - 84px)}#eme-continuo .ec-property-tab>span{max-width:150px}}
