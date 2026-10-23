@@ -137,7 +137,7 @@ export default function OperationsWorkspace({ page, user }: { page: Page; user: 
     <div className="po-toolbar"><span className="ps-tag">Registros da operação</span><button className="ps-button" disabled={loading} onClick={() => void refresh()}><RefreshCw size={15}/>{loading ? 'Atualizando…' : 'Atualizar dados'}</button></div>
     {error && <div className="pt-error" role="alert">{error}</div>}{toast && <div className="po-toast" role="status"><Check size={16}/><span>{toast}</span><button aria-label="Fechar aviso" onClick={() => setToast('')}><X size={16}/></button></div>}
     {!state || !snapshot || !metrics ? <OperationEmpty title={loading ? 'Carregando a operação…' : 'Não foi possível carregar os registros.'} description={loading ? 'Buscando os dados que sua conta pode acessar.' : 'Use Atualizar dados para tentar novamente.'}/> : <>
-      {snapshot.properties.length === 0 && page !== 'qualidade' && <OperationNotice>Cadastre uma avaliação de imóvel para vincular os registros. <a className="ps-text-button" href="/portalselect/avaliacoes">Abrir avaliações <ArrowUpRight size={14}/></a></OperationNotice>}
+      {snapshot.properties.length === 0 && page !== 'qualidade' && <OperationNotice>Cadastre uma avaliação de imóvel para vincular os registros. <a className="ps-text-button" href="/acesso-select/equipe/avaliacoes">Abrir avaliações <ArrowUpRight size={14}/></a></OperationNotice>}
       {page === 'relacionamento' && <>
         {admin && <WhatsAppSetup/>}
         <OperationNotice>Atendimento com registro manual. O WhatsApp da EME ainda funciona no aplicativo; o portal não envia nem recebe mensagens automaticamente.</OperationNotice>

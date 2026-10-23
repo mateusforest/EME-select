@@ -47,16 +47,20 @@
  #eme-continuo .eco-title{font-size:30px;max-width:400px}
  #eme-continuo .eco-rule{width:calc(100% - 48px)}
  #eme-continuo .eco-products{grid-template-columns:1fr}
- #eme-continuo .eco-product{padding:24px 0 30px;min-height:310px}
+ #eme-continuo .eco-product{display:flex;flex-direction:column;gap:18px;padding:24px 0;min-height:0}
  #eme-continuo .eco-copy{padding-left:24px;padding-right:24px}
  #eme-continuo .eco-product+.eco-product:after{top:0;bottom:auto;left:24px;right:24px;width:auto;height:1px}
- #eme-continuo .eco-category{margin-bottom:20px}
- #eme-continuo .eco-product-title{font-size:28px;max-width:360px}
- #eme-continuo .eco-description{width:90%;font-size:14px;max-width:340px}
+ #eme-continuo .eco-category{margin-bottom:14px}
+ #eme-continuo .eco-product-title{font-size:26px;max-width:100%;margin-bottom:12px}
+ #eme-continuo .eco-description{width:100%;font-size:14px;max-width:460px}
  #eme-continuo .eco-brand{height:44px}
  #eme-continuo .eco-eme-mark{transform:scale(.9);transform-origin:left center;margin-right:-14px}
  #eme-continuo .eco-spatial-mark{width:40px;height:40px}
- #eme-continuo .eco-cta{margin-top:22px;font-size:14px}
- #eme-continuo .eco-scene video{left:20%}
+ #eme-continuo .eco-cta{margin-top:18px;font-size:14px}
+ /* Give the moving scene its own visible area instead of hiding it under the copy. */
+ #eme-continuo .eco-copy{order:1}
+ #eme-continuo .eco-scene{position:relative;inset:auto;order:2;z-index:0;margin:0 24px;aspect-ratio:16/9;border-radius:10px;background:var(--eco-sage)}
+ #eme-continuo .eco-scene video,#eme-continuo .eco-product-eme .eco-scene video{inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:1;filter:none}
+ #eme-continuo .eco-scene:after{background:linear-gradient(180deg,#dfe6d540,transparent 22%,transparent 82%,#dfe6d570);pointer-events:none}
 }
 @media(prefers-reduced-motion:reduce){#eme-continuo .eco-cta,#eme-continuo .eco-cta svg{transition:none}}

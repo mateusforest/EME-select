@@ -1,4 +1,5 @@
 import http from 'node:http';
+import {canonicalSelectPath} from '../shared/select-routes.mjs';
 import { createReadStream, existsSync } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { dirname, extname, resolve, sep } from 'node:path';
@@ -17,7 +18,8 @@ const server = http.createServer(async (req, res) => {
     if (await api.handle(req, res)) return;
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405, { Allow: 'GET, HEAD' }); res.end(); return; }
     const requested = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname);
-    const portalRoute = /^\/portalselect(?:\/[a-z0-9-]+){0,2}\/?$/.test(requested);
+    if(canonicalSelectPath(requested)!==requested){res.writeHead(308,{Location:canonicalSelectPath(requested)+new URL(req.url,'http://127.0.0.1').search});res.end();return;}
+    const portalRoute = /^\/acesso-select(?:\/[a-z0-9-]+){0,3}\/?$/.test(requested);
     const submissionRoute = /^\/(?:enviar-imovel|apresentar\/(?:g400|cenario))\/?$/.test(requested);
     const path = resolve(root, `.${requested === '/' || portalRoute || submissionRoute ? '/index.html' : requested}`);
     if (!path.startsWith(root + sep)) { res.writeHead(403); res.end(); return; }

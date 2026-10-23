@@ -31,6 +31,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   html #eme-continuo .ep-top-actions button{font-size:14px}
   html #eme-continuo .ep-chapters{grid-template-columns:repeat(var(--ep-photo-total,5),minmax(112px,1fr));gap:10px}
   html #eme-continuo .er-breadcrumb{flex-wrap:wrap;line-height:1.6}
+  html #eme-continuo .er-location-bar{flex-wrap:wrap;gap:0 12px}
+  html #eme-continuo .er-change{width:auto;min-width:100px;white-space:nowrap;justify-content:flex-start}
   html #eme-continuo .er-hero h1{font-size:clamp(40px,11vw,56px)}
   html #eme-continuo .er-region[data-region=vacaria] .er-hero h1{font-size:clamp(48px,14vw,64px)}
   html #eme-continuo .er-hero-intro p{font-size:15px;line-height:1.65}

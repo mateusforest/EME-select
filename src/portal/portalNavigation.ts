@@ -29,7 +29,7 @@ export const portalNavigation: PortalNavigationItem[] = [
   { id: 'inteligencia', label: 'M e ferramentas de IA', title: 'Inteligência para o seu trabalho.', description: 'M no site, conexão de IA e análises internas com revisão da equipe.', icon: Sparkles, group: 'Gestão', status: 'active' },
   { id: 'qualidade', label: 'Qualidade do atendimento', title: 'Um padrão que se constrói em equipe.', description: 'Evidências de atendimento para orientar e desenvolver a equipe.', icon: ShieldCheck, group: 'Equipe', status: 'active', adminOnly: true },
   { id: 'pessoas', label: 'Perfis no site', title: 'Nossa equipe.', description: 'Perfis, retratos e cargos apresentados na página inicial.', icon: Users, group: 'Site e conteúdo', status: 'active', adminOnly: true },
-  { id: 'equipe', label: 'Acessos', title: 'Pessoas certas. Responsabilidades claras.', description: 'Contas individuais e acesso conforme a função.', icon: Users, group: 'Equipe', status: 'active', adminOnly: true },
+  { id: 'equipe', label: 'Acessos', title: 'Pessoas certas. Responsabilidades claras.', description: 'Equipe, clientes e proprietários. Contas, permissões e vínculos confirmados.', icon: Users, group: 'Equipe', status: 'active', adminOnly: true },
   {id:'oportunidades',label:'Oportunidades',title:'O que merece destaque.',description:'Escolha os imóveis publicados que ganham destaque na experiência.',icon:Gem,group:'Site e conteúdo',status:'active',adminOnly:true},
   {id:'regioes',label:'Regiões',title:'Um olhar para cada lugar.',description:'Estados, destinos e vínculos com os imóveis da coleção.',icon:MapPinned,group:'Site e conteúdo',status:'active',adminOnly:true},
   {id:'empresa-documentos',label:'Documentos da empresa',title:'A empresa, bem organizada.',description:'Contratos e documentos internos em uma área privada da administração.',icon:FileText,group:'Gestão',status:'active',adminOnly:true},
@@ -37,7 +37,7 @@ export const portalNavigation: PortalNavigationItem[] = [
   { id: 'conta', label: 'Minha conta', title: 'Seu acesso, sob seu cuidado.', description: 'Informações da sua conta na EME Select.', icon: KeyRound, group: 'Sua conta', status: 'active' },
 ];
 
-export const portalPath = (id: string) => id === 'hoje' ? '/portalselect' : '/portalselect/' + id;
+export const portalPath = (id: string) => id === 'hoje' ? '/acesso-select/equipe' : '/acesso-select/equipe/' + id;
 
 // Both roles use the same shell and routes; only their working vocabulary changes.
 export function portalNavigationForRole(role: 'admin' | 'corretor'): PortalNavigationItem[] {
@@ -58,4 +58,4 @@ export function portalNavigationForRole(role: 'admin' | 'corretor'): PortalNavig
   };
   return available.map(item => ({...item,...presentation[item.id]}));
 }
-export const portalPageFromPath = (path: string) => path.replace(/^\/portalselect\/?/, '').replace(/\/+$/, '') || 'hoje';
+export const portalPageFromPath = (path: string) => path.replace(/^\/acesso-select\/equipe\/?/, '').replace(/\/+$/, '') || 'hoje';

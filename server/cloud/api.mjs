@@ -1,4 +1,4 @@
-import {createSelectAccess,publicAccess,canRead} from '../select-access.mjs';
+import {createSelectAccess,publicAccess,canRead,clearSelectCookie} from '../select-access.mjs';
 import {accessChange} from '../access-management.mjs';
 import {createPortalContent} from '../portal-content.mjs';
 import {internalKinds,propertyRecordsQuery} from '../../shared/portal-content.mjs';
@@ -65,7 +65,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
  async function deleteUnlinkedAuth(id){try{await request('/auth/v1/admin/users/'+id,{method:'DELETE'});}catch{console.error('Unlinked auth account requires administrator review');}}
  async function credentials(address,secret){return request('/auth/v1/token?grant_type=password',{method:'POST',publicKey:true,body:{email:address,password:secret}});}
  const rate=(key,max)=>rpc('eme_limit',{p_key:key,p_max:max});
- const selectAccess=createSelectAccess({client,rate,staffSession:session,openStaffSession:openSession,saveCase:save});
+ const selectAccess=createSelectAccess({client,rate,staffSession:session,openStaffSession:openSession,closeStaffSession:async(req,res)=>{await rest('eme_sessions?token_hash=eq.'+hashOf(req),'DELETE');setCookie(res,'',true);},saveCase:save});
  const readChatCatalog=async()=>{
   const entries=[];
   for(let offset=0;offset<10000;offset+=500){
@@ -115,7 +115,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
     const result=await credentials(address,body.password);const profile=(await rest('eme_profiles?id=eq.'+result.user.id))[0];if(!profile?.active)fail(401,'Conta sem acesso à equipe.');await openSession(req,res,profile.id);return send(200,{user:safe(profile)});
    }
    if(!user)fail(401,'Entre na sua conta.');
-   if(path==='/api/auth/logout'&&req.method==='POST'){await rest('eme_sessions?token_hash=eq.'+hashOf(req),'DELETE');setCookie(res,'',true);return send(200,{ok:true});}
+   if(path==='/api/auth/logout'&&req.method==='POST'){await rest('eme_sessions?token_hash=eq.'+hashOf(req),'DELETE');setCookie(res,'',true);clearSelectCookie(res);return send(200,{ok:true});}
    if(path==='/api/auth/password'&&req.method==='POST'){
     fields(body,['currentPassword','newPassword']);password(body.newPassword);await rate('password:'+user.id,8);await credentials(user.email,body.currentPassword);await request('/auth/v1/admin/users/'+user.id,{method:'PUT',body:{password:body.newPassword}});await rest('eme_profiles?id=eq.'+user.id,'PATCH',{must_change:false});await rest('eme_sessions?user_id=eq.'+user.id,'DELETE');await openSession(req,res,user.id);return send(200,{user:safe({...user,must_change:false})});
    }
