@@ -1,0 +1,195 @@
+/* Header approved by the client, using the original supplied artwork. */
+#eme-continuo .ec-header {
+  position: sticky;
+  top: 8px;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: 68px minmax(230px,1.05fr) minmax(420px,1.3fr) 62px 40px;
+  grid-template-rows: auto;
+  align-items: center;
+  gap: 24px;
+  width: calc(100% - 32px);
+  height: auto;
+  min-height: 80px;
+  margin: 8px 16px 0;
+  padding: 9px 24px;
+  border: 1px solid #dce4dc;
+  border-radius: 15px;
+  background: #fffefaed;
+  backdrop-filter: blur(16px);
+  box-shadow: none;
+}
+#eme-continuo .ec-header.is-scrolled { box-shadow: 0 6px 24px #183e2e0a; }
+#eme-continuo .ec-header .ec-brand {
+  grid-area: 1 / 1;
+  width: 64px;
+  height: 60px;
+  margin: 0;
+  padding: 0;
+}
+#eme-continuo .ec-header .ec-mark {
+  width: 64px;
+  height: 60px;
+  background: url('/assets/experience/brand-select-20261022.webp') 49.5% 57% / 170% auto no-repeat;
+  mix-blend-mode: multiply;
+  mask-image: linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent),linear-gradient(transparent,#000 5%,#000 95%,transparent);
+  mask-composite: intersect;
+  mask-size: 100% 100%;
+  mask-position: center;
+}
+#eme-continuo .ec-header .ex-search {
+  grid-area: 1 / 2;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  height: 46px;
+  margin: 0;
+  padding: 3px 4px 3px 20px;
+  gap: 7px;
+  border: 1px solid #e9ece3;
+  border-radius: 30px;
+  background: #f4f5ef;
+  box-shadow: inset 0 1px 4px #163f2f04;
+}
+#eme-continuo .ec-header .ex-search input { width: 100%; min-width: 0; font-size: clamp(13px,1.1vw,17px); color: #1b5745; }
+#eme-continuo .ec-header .ex-search input::placeholder { color: #336756; opacity: 1; }
+#eme-continuo .ec-header .ex-search .ex-microphone { width: 36px; height: 38px; min-height: 38px; flex-shrink: 0; position: relative; }
+#eme-continuo .ec-header .ex-microphone::after { content: ''; position: absolute; right: -3px; top: 8px; bottom: 8px; width: 1px; background: #dce4d9; }
+#eme-continuo .ec-header .ex-microphone svg { width: 19px; height: 22px; stroke-width: 1.6; }
+#eme-continuo .ec-header .ex-search .ex-search-submit { width: 36px; height: 36px; min-height: 36px; flex-shrink: 0; border-radius: 50%; background: #064b35; }
+#eme-continuo .ec-header .ex-search-submit svg { width: 23px; height: 23px; stroke-width: 1.5; }
+#eme-continuo .ec-header nav,
+#eme-continuo .ec-header.nav-open nav {
+  grid-area: 1 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-wrap: nowrap;
+  gap: 12px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+#eme-continuo .ec-header nav button,
+#eme-continuo .ec-header nav .er-collection-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  height: 48px;
+  padding: 0 3px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #24634f;
+  font-size: clamp(13px,1.12vw,18px);
+  font-weight: 500;
+  white-space: nowrap;
+}
+#eme-continuo .ec-header nav button:hover,
+#eme-continuo .ec-header nav button[aria-current="location"] { background: transparent; color: #104c37; }
+#eme-continuo .ec-header nav button::after {
+  content: '';
+  position: absolute;
+  width: 25px;
+  height: 3px;
+  bottom: 1px;
+  left: calc(50% - 12.5px);
+  border-radius: 3px;
+  background: #83a969;
+  opacity: 0;
+  transform: scaleX(.6);
+  transition: opacity .18s,transform .18s;
+}
+#eme-continuo .ec-header nav button[aria-current="location"]::after,
+#eme-continuo .ec-header nav button[aria-expanded="true"]::after { opacity: 1; transform: scaleX(1); }
+#eme-continuo .ec-header .ex-menu-toggle { display: none; }
+#eme-continuo .ec-header .ex-chat-launch {
+  grid-area: 1 / 4;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 54px;
+  min-height: 44px;
+  padding: 0 0 0 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#eme-continuo .ec-header .ex-chat-launch::before {
+  content: '';
+  position: absolute;
+  inset: 5px auto 5px 0;
+  width: 1px;
+  border-radius: 0;
+  background: #dce4dc;
+  box-shadow: none;
+}
+#eme-continuo .ex-chat-symbol,
+#eme-continuo .ex-chat-avatar .ex-chat-symbol,
+#eme-continuo .ex-chat-minimized .ex-chat-avatar .ex-chat-symbol,
+#eme-continuo .ec-header .ex-chat-launch > .ex-chat-symbol {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  mask: none;
+}
+#eme-continuo .ex-chat-symbol svg { display: block; width: 100%; height: 100%; }
+#eme-continuo .ex-chat-avatar { border: 0; background: transparent; }
+#eme-continuo .ex-chat-minimized .ex-chat-avatar { width: 36px; height: 36px; background: transparent; }
+#eme-continuo .ex-chat-launch > .ex-online-dot,
+#eme-continuo .ex-chat-avatar > .ex-online-dot { display: none; }
+#eme-continuo .ec-header .ex-chat-launch[aria-expanded="true"]::before { box-shadow: none; }
+#eme-continuo .ec-header .ex-chat-launch[aria-expanded="true"] .ex-chat-symbol { filter: drop-shadow(0 0 3px #8cac73); }
+#eme-continuo .ec-header .ec-favorites {
+  grid-area: 1 / 5;
+  position: relative;
+  display: flex;
+  width: 40px;
+  height: 48px;
+  min-height: 44px;
+  margin: 0;
+}
+#eme-continuo .ec-header .ec-favorites svg { width: 24px; height: 24px; stroke-width: 1.5; color: #1c5b46; }
+#eme-continuo .ec-header .ec-saved-count { position: absolute; right: -3px; top: 1px; }
+#eme-continuo .ec-header .er-nav-panel { top: calc(100% + 8px); right: 130px; }
+#eme-continuo .ec-header button:focus-visible { outline: 2px solid #7b9f68; outline-offset: 3px; border-radius: 7px; }
+
+@media (max-width: 1200px) {
+  #eme-continuo .ec-header { grid-template-columns: 58px minmax(220px,1fr) minmax(365px,1.45fr) 54px 36px; gap: 15px; padding: 8px 18px; min-height: 74px; }
+  #eme-continuo .ec-header .ec-brand,#eme-continuo .ec-header .ec-mark { width: 58px; height: 55px; }
+  #eme-continuo .ec-header nav,#eme-continuo .ec-header.nav-open nav { gap: 8px; }
+  #eme-continuo .ec-header .ex-chat-launch { width: 54px; height: 48px; padding-left: 10px; }
+  #eme-continuo .ec-header .ec-favorites { width: 36px; }
+}
+@media (max-width: 980px) {
+  #eme-continuo .ec-header { grid-template-columns: 58px minmax(190px,1fr) 70px 54px 40px; gap: 16px; }
+  #eme-continuo .ec-header .ex-menu-toggle { grid-area: 1 / 3; display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; margin: 0; }
+  #eme-continuo .ec-header nav { display: none; }
+  #eme-continuo .ec-header.nav-open nav { grid-area: 2 / 1 / auto / -1; display: flex; justify-content: space-evenly; gap: 12px; padding-top: 4px; border-top: 1px solid #e6e9df; }
+  #eme-continuo .ec-header nav button { font-size: 14px; }
+  #eme-continuo .ec-header .ex-search input { font-size: 16px; }
+  #eme-continuo .ec-header .er-nav-panel { right: 16px; }
+}
+@media (max-width: 620px) {
+  #eme-continuo .ec-header { top: 5px; width: calc(100% - 16px); margin: 5px 8px 0; padding: 7px 12px 10px; grid-template-columns: 54px minmax(68px,1fr) 48px 36px; gap: 6px 14px; border-radius: 13px; }
+  #eme-continuo .ec-header .ec-brand,#eme-continuo .ec-header .ec-mark { width: 54px; height: 51px; }
+  #eme-continuo .ec-header .ex-search { grid-area: 2 / 1 / auto / -1; height: 46px; width: 100%; margin: 0; padding-left: 16px; }
+  #eme-continuo .ec-header .ex-menu-toggle { grid-area: 1 / 2; justify-self: end; }
+  #eme-continuo .ec-header .ex-chat-launch { grid-area: 1 / 3; width: 48px; height: 48px; padding-left: 4px; }
+  #eme-continuo .ec-header .ex-chat-launch::before { display: none; }
+  #eme-continuo .ec-header .ec-favorites { grid-area: 1 / 4; width: 36px; }
+  #eme-continuo .ec-header.nav-open nav { grid-area: 3 / 1 / auto / -1; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 2px 10px; width: 100%; margin: 0; padding: 5px 0 0; }
+  #eme-continuo .ec-header nav button { min-height: 44px; height: 44px; }
+  #eme-continuo .ec-header .er-nav-panel { right: 7px; max-width: calc(100% - 14px); max-height: calc(100dvh - 250px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #eme-continuo .ec-header nav button::after { transition: none; }
+}

@@ -1365,6 +1365,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   });
   new ResizeObserver(() => {headerSearch.placeholder = root.clientWidth < 310 ? 'Buscar imóveis' : 'O que você procura?';}).observe(root);
   function syncRoute(){
+    updateHeaderNavigation();
     if(!routingReady)return;
     const hash=view==='property'?'#/imovel/'+selectedId:view==='region'?'#/regiao/'+regionId:view==='catalog'?catalog.hash():'#/';
     const navigation=view==='property'&&propertyOriginCatalog?{catalogReturn:catalog.hash(),catalogScroll:catalogReturnScroll}:null;
@@ -1383,6 +1384,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     else {showHome(null,false,true);if(['imovel','visita'].includes(parts[0]))status.textContent='Este imóvel não está disponível na coleção atual.';}
     document.title=(view==='property'?byId(selectedId)?.title:view==='region'?regionById(regionId).name:view==='catalog'?'Todos os imóveis':'Seu próximo lugar')+' — EME Select';
     routingReady=before;
+    updateHeaderNavigation();
   }
   window.addEventListener('popstate',applyRoute);
   window.addEventListener('hashchange',applyRoute);
@@ -1403,11 +1405,28 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
 
   const pageScroller = root.querySelector('.ec-page-scroll');
   const stickyHeader = root.querySelector('.ec-header');
+  function updateHeaderNavigation(){
+    const header=root.querySelector('.ec-header');
+    const readingLine=header.getBoundingClientRect().bottom+90;
+    let current='collection';
+    if(view==='home') {
+      for(const section of ['opportunities','team','owners']) {
+        if(root.querySelector('#eme-full-'+section).getBoundingClientRect().top<=readingLine)current=section;
+      }
+    } else if(view==='region' && regionPage.querySelector('.er-selection').getBoundingClientRect().top<=readingLine)current='opportunities';
+    header.querySelectorAll('nav button').forEach(button=>{
+      const section=button.dataset.section || 'collection';
+      if(section===current)button.setAttribute('aria-current','location');
+      else button.removeAttribute('aria-current');
+    });
+  }
   new ResizeObserver(() => {
-    pageScroller.style.setProperty('--eme-header-height',stickyHeader.offsetHeight+'px');
+    pageScroller.style.setProperty('--eme-header-height',(stickyHeader.offsetHeight+16)+'px');
+    updateHeaderNavigation();
   }).observe(stickyHeader);
   pageScroller.addEventListener('scroll',() => {
     stickyHeader.classList.toggle('is-scrolled',pageScroller.scrollTop > 16);
+    updateHeaderNavigation();
   },{passive:true});
   let photoGesture = null;
   const gallery = root.querySelector('.ep-gallery');
