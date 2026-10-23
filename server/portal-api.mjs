@@ -1,3 +1,5 @@
+import {accessChange} from './access-management.mjs';
+import {createPortalContent} from './portal-content.mjs';
 import {attachLocalLeads} from './leads-local.mjs';
 import {createPublicChat} from './public-chat.mjs';
 import {createPeopleApi} from './people.mjs';
@@ -141,6 +143,13 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
    getImage:async id=>{const row=db.prepare('SELECT data FROM people_images WHERE id=?').get(id);if(!row)fail(404,'Retrato não encontrado.');return row.data;},
    deleteImage:async id=>db.prepare('DELETE FROM people_images WHERE id=?').run(id),
   });
+  db.exec('CREATE TABLE IF NOT EXISTS portal_content(id TEXT PRIMARY KEY, version INTEGER NOT NULL, data TEXT NOT NULL)');
+  const content=createPortalContent({
+   read:async id=>{const row=db.prepare('SELECT * FROM portal_content WHERE id=?').get(id);return row?{...row,data:JSON.parse(row.data)}:null;},
+   write:async(req,id,row,data,user,action)=>transaction(()=>{const current=db.prepare('SELECT version FROM portal_content WHERE id=?').get(id);if((current?.version||0)!==(row?.version||0))fail(409,'O cadastro mudou. Recarregue.');const version=(row?.version||0)+1;db.prepare('INSERT INTO portal_content(id,version,data) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,data=excluded.data').run(id,version,JSON.stringify(data));audit(user.id,action,'Conteúdo administrativo revisado.');return {id,version,data};}),
+   listDocuments:async()=>db.prepare("SELECT id,version,json_extract(data,'$.document') AS document FROM portal_content WHERE json_extract(data,'$.kind')='company_document' ORDER BY rowid DESC").all().map(r=>({id:r.id,version:r.version,...JSON.parse(r.document)})),
+   catalog:async()=>db.prepare('SELECT published FROM listings WHERE published IS NOT NULL').all().map(r=>JSON.parse(r.published)),
+  });
   const listings = attachListings({db,fail,text,fields,caseFor,transaction,audit,stamp,requireAdmin,send,session});
   const finance = attachFinance({db,transaction,stamp,fail,send});
   const intelligence = attachIntelligence({db,dbPath,transaction,stamp,caseFor,consume,send,env,fetcher:aiFetcher});
@@ -166,6 +175,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
       if (req.method !== 'GET') {
         if (req.headers.origin !== host.origin || req.headers['sec-fetch-site'] === 'cross-site') fail(403, 'Origem não permitida.');
       }
+      if (await content.publicHandle(path,req,res,(status,value)=>send(res,status,value))) return true;
       if (await people.publicHandle(path,req,res,(status,value)=>send(res,status,value))) return true;
       if (await developments.publicHandle(path,req,res,(status,value)=>send(res,status,value))) return true;
       if (await listings.publicHandle(path,req,res)) return true;
@@ -257,6 +267,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
       if (await operations.handle(path,req,res,user,requestBody)) return true;
       if(await leads.handle(path,req,user,requestBody,(status,value)=>send(res,status,value)))return true;
       if (await whatsapp.handle(path,req,res,user,requestBody)) return true;
+      if (await content.handle(path,req,res,user,requestBody,(status,value)=>send(res,status,value))) return true;
       if (await people.handle(path,req,res,user,requestBody,(status,value)=>send(res,status,value))) return true;
       if (await developments.handle(path,req,res,user,requestBody,(status,value)=>send(res,status,value))) return true;
       if (await listings.handle(path,req,res,user,requestBody)) return true;
@@ -288,18 +299,16 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
       }
       const userMatch=path.match(/^\/api\/users\/([a-f0-9-]{36})$/);
       if (userMatch && req.method === 'PATCH') {
-        requireAdmin(user); const body=requestBody; fields(body,['active']);
-        if (typeof body.active !== 'boolean') fail(400,'Informe a situação de acesso.');
-        if (userMatch[1] === user.id) fail(400,'Você não pode desativar a própria conta.');
-        const member = db.prepare('SELECT * FROM users WHERE id=?').get(userMatch[1]);
-        if (!member) fail(404,'Pessoa não encontrada.');
-        transaction(() => {
-          if (!body.active && member.role === 'admin' && db.prepare("SELECT COUNT(*) AS count FROM users WHERE role='admin' AND active=1").get().count <= 1) fail(400,'Mantenha um administrador ativo.');
-          db.prepare('UPDATE users SET active=? WHERE id=?').run(Number(body.active),member.id);
-          if (!body.active) db.prepare('DELETE FROM sessions WHERE user_id=?').run(member.id);
-          audit(user.id,body.active ? 'Acesso reativado' : 'Acesso desativado',member.name);
+        requireAdmin(user);const body=requestBody;let updated;
+        transaction(()=>{
+          const actor=db.prepare('SELECT * FROM users WHERE id=?').get(user.id);if(!actor?.active||actor.role!=='admin')fail(403,'A permissão mudou.');
+          const raw=db.prepare('SELECT * FROM users WHERE id=?').get(userMatch[1]);const member=raw?{...raw,active:Boolean(raw.active)}:null;const next=accessChange(actor,member,body);
+          if(member.role==='admin'&&member.active&&(!next.active||next.role!=='admin')&&db.prepare("SELECT COUNT(*) AS count FROM users WHERE role='admin' AND active=1").get().count<=1)fail(400,'Mantenha um administrador ativo.');
+          db.prepare('UPDATE users SET name=?,role=?,active=? WHERE id=?').run(next.name,next.role,Number(next.active),member.id);
+          if(!next.active||next.role!==member.role)db.prepare('DELETE FROM sessions WHERE user_id=?').run(member.id);
+          audit(user.id,'Perfil de acesso atualizado',member.name+' · '+next.role+' · ativo='+next.active);updated={...raw,...next};
         });
-        send(res,200,{ ok:true }); return true;
+        send(res,200,{ok:true,user:safeUser(updated)});return true;
       }
       if (path === '/api/evaluations') {
         if (req.method === 'GET') {

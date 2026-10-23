@@ -1,10 +1,11 @@
+import {defaultSiteContent} from '../../shared/portal-content.mjs';
 import {mapProperties} from './properties.js';
 import {createIcons} from './icons.js';
 import {createCatalog} from './catalog-view.js';
 import {createOpportunities} from './opportunities-view.js';
 import {createHeroFocus} from './hero-motion.js';
 import {createChatTransport} from './chat-client.js';
-export function mountExperience(publishedProperties,assetMap){
+export function mountExperience(publishedProperties,assetMap,content=null){
 const lucide={createIcons};
 let routingReady=false;
 let remembered={};try{remembered=JSON.parse(localStorage.getItem('eme-experience-preferences')||'{}');}catch{}
@@ -318,26 +319,21 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   let lastSignature = '';
   let changingPage = false;
   // State, city and locality are separate so new destinations can share a state or city.
-  const regionStates = [{id:'rs',name:'Rio Grande do Sul'},{id:'sc',name:'Santa Catarina'}];
-  const regions = [
-    {id:'vacaria',stateId:'rs',city:'Vacaria',name:'Vacaria',context:'Rio Grande do Sul',asset:'region-vacaria',
-      intro:'Uma cidade para chamar de sua. Imóveis escolhidos com atenção ao espaço, à construção e à sua rotina.',
-      collectionTitle:'Seu próximo lugar em Vacaria.',postcard:'Catedral Nossa Senhora da Oliveira · Vacaria',
-      imageAlt:'Catedral Nossa Senhora da Oliveira, em Vacaria, na referência enviada.',
-      credit:'Ederson Pereira Boeira · 2005',license:'Domínio público',licenseUrl:'https://commons.wikimedia.org/wiki/File:Centrodevacaria-rs-brasil.JPG',source:'https://commons.wikimedia.org/wiki/File:Centrodevacaria-rs-brasil.JPG'},
-    {id:'praia-de-palmas',stateId:'sc',city:'Governador Celso Ramos',name:'Praia de Palmas',context:'Governador Celso Ramos · SC',asset:'region-palmas',
-      intro:'O mar como parte da paisagem. Um novo lugar para encontrar o espaço que combina com seus planos.',
-      collectionTitle:'Novas possibilidades em Palmas.',postcard:'Praia de Palmas · Governador Celso Ramos',
-      imageAlt:'Vista da orla da Praia de Palmas, com praia, mar e morros ao fundo. Registro de 2015.',
-      credit:'Otávio Nogueira · 2015',license:'CC BY 2.0',licenseUrl:'https://creativecommons.org/licenses/by/2.0/',source:'https://commons.wikimedia.org/wiki/File:Praia_de_Palmas_(19895533034).jpg'}
-  ];
+  const siteContent=content||defaultSiteContent();
+  const regions=siteContent.regions.filter(r=>r.enabled!==false);
+  const regionStates=[...new Map(regions.map(r=>[r.stateId,{id:r.stateId,name:r.stateName}])).values()];
+  for(const property of properties){
+    property.opportunity=siteContent.opportunityIds===null||siteContent.opportunityIds.includes(property.id);
+    const assigned=siteContent.regionAssignments[property.id];
+    if(assigned)property.regionId=assigned;
+  }
   const regionById = id => regions.find(region=>region.id === id);
   const regionState = region => regionStates.find(state=>state.id === region.stateId);
   const regionTypes = [{id:'',name:'Todos',icon:'layout-grid'},{id:'Casa',name:'Casas',icon:'house'},{id:'Apartamento',name:'Apartamentos',icon:'building-2'},{id:'Terreno',name:'Terrenos',icon:'land-plot'},{id:'Comercial',name:'Comercial',icon:'store'}];
   const regionPage = root.querySelector('.er-region');
   const regionPicker = root.querySelector('.er-nav-panel');
   const collectionToggle = root.querySelector('.er-collection-toggle');
-  let regionId = 'vacaria';
+  let regionId = regions[0]?.id||'';
   let regionType = '';
   let propertyOriginRegion = null;
   let propertyOriginCatalog = false;
@@ -346,7 +342,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   let catalogReturnScroll = 0;
   let regionReturnScroll = 0;
   let regionPickerOpener = collectionToggle;
-  let homeStateId='rs';
+  let homeStateId=regionStates[0]?.id||'rs';
   const catalog=createCatalog({root,properties,assets,regions,getSaved:()=>savedIds,
     onOpen:id=>openProperty(id),
     onSave:id=>{if(savedIds.has(id))savedIds.delete(id);else savedIds.add(id);updateFavorites();save();},
@@ -395,7 +391,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   function regionPlaceCard(region) {
     const button=regionButton('er-place-card');button.dataset.regionId=region.id;
     button.setAttribute('aria-label','Explorar '+region.name+', '+regionState(region).name);
-    const image=element('img');image.src=assets[region.asset];image.alt=region.imageAlt;image.loading='lazy';
+    const image=element('img');image.hidden=!assets[region.asset];if(assets[region.asset])image.src=assets[region.asset];image.alt=region.imageAlt;image.loading='lazy';
     const caption=element('span','er-place-caption'),copy=element('span');
     copy.append(element('small','',regionState(region).name),element('strong','',region.name));
     caption.append(copy,regionIcon('arrow-up-right'));button.append(image,caption);return button;
@@ -415,6 +411,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
         button.append(image,label,regionIcon('arrow-up-right'));group.append(button);
       });list.append(group);
     });
+    root.querySelector('.er-discovery')?.toggleAttribute('hidden',!regions.length);
     root.querySelector('.er-discovery-grid').replaceChildren(...regions.map(regionPlaceCard));
     icons();
   }
@@ -442,7 +439,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
       const card=element('article','er-property-card');card.setAttribute('aria-label',property.title);
       const photo=regionButton('er-property-image');photo.dataset.regionProperty=property.id;photo.setAttribute('aria-label','Conhecer '+property.title);
       const image=element('img');image.src=assets[property.cover];image.alt=property.photos[0].caption;image.loading='lazy';photo.append(image);
-      if(index===0) { const tag=element('span','er-opportunity-tag');tag.append(regionIcon('gem'),document.createTextNode('Oportunidade'));photo.append(tag); }
+      if(property.opportunity) { const tag=element('span','er-opportunity-tag');tag.append(regionIcon('gem'),document.createTextNode('Oportunidade'));photo.append(tag); }
       const arrow=element('span','er-card-arrow');arrow.append(regionIcon('arrow-up-right'));photo.append(arrow);
       const title=regionButton('er-property-title',property.title);title.dataset.regionProperty=property.id;
       const bottom=element('div','er-property-bottom'),saveButton=regionButton('er-save');
@@ -467,8 +464,8 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     regionPage.querySelector('#eme-region-title').textContent=region.name+'.';
     regionPage.querySelector('.er-municipality').textContent=region.id==='vacaria' ? 'A coleção EME Select na cidade' : region.context;
     const image=regionPage.querySelector('.er-landscape');image.src=assets[region.asset];image.alt=region.imageAlt;image.loading='eager';
-    if(region.id==='praia-de-palmas'){image.srcset='/assets/experience/palmas-1200.webp 1200w, /assets/experience/palmas-2400.webp 2400w';image.sizes='(max-width:760px) 100vw, 65vw';}else{image.removeAttribute('srcset');image.removeAttribute('sizes');}
-    regionPage.querySelector('.er-landmark').hidden=region.id!=='vacaria';
+    if(region.id==='praia-de-palmas'&&region.asset){image.srcset='/assets/experience/palmas-1200.webp 1200w, /assets/experience/palmas-2400.webp 2400w';image.sizes='(max-width:760px) 100vw, 65vw';}else{image.removeAttribute('srcset');image.removeAttribute('sizes');}
+    regionPage.querySelector('.er-landmark').hidden=region.id!=='vacaria'||!region.asset;
     regionPage.querySelector('.er-hero-intro p').textContent=region.intro;
     regionPage.querySelector('#eme-region-selection-title').textContent=region.collectionTitle;
     regionPage.querySelector('.er-postcard-label').textContent=region.postcard;
@@ -476,7 +473,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     const source=element('a','',region.credit);source.href=region.source;source.target='_blank';source.rel='noopener noreferrer';
     const license=element('a','',region.license);license.href=region.licenseUrl;license.target='_blank';license.rel='noopener noreferrer';
     if(region.id==='vacaria'){credit.textContent='Composição visual com IA a partir da referência enviada, com recorte da catedral e tratamento do fundo para esta apresentação.';}else credit.append(source,document.createTextNode(' · '),license,document.createTextNode('. Fotografia de acervo, recortada e otimizada para esta apresentação.'));
-    regionPage.querySelector('.er-photo-credits').open=false;
+    regionPage.querySelector('.er-photo-credits').open=false;regionPage.querySelector('.er-photo-credits').hidden=!region.asset;
     regionPage.querySelector('.er-contact-copy').textContent='Conte o que você procura em '+region.name+'. Nossa equipe ajuda a olhar os detalhes e entender as possibilidades para a sua escolha.';
     regionPage.querySelector('.er-other-regions').replaceChildren(...regions.filter(item=>item.id!==regionId).map(regionPlaceCard));
     regionPicker.querySelectorAll('[data-region-id]').forEach(button=>{if(button.dataset.regionId===regionId && view==='region')button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
@@ -841,12 +838,12 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     favoritesOnly = Boolean(incoming.favoritesOnly);
     savedIds = new Set((Array.isArray(incoming.savedIds) ? incoming.savedIds : []).filter(id=>byId(id)));
     if (incoming.hero?.version === 'eme-continuo-1') heroState = incoming.hero;
-    homeStateId=regionStates.some(state=>state.id===incoming.homeStateId) ? incoming.homeStateId : 'rs';
-    regionId=regionById(incoming.regionId) ? incoming.regionId : 'vacaria';
+    homeStateId=regionStates.some(state=>state.id===incoming.homeStateId) ? incoming.homeStateId : regionStates[0]?.id||'';
+    regionId=regionById(incoming.regionId) ? incoming.regionId : regions[0]?.id||'';
     regionType=regionTypes.some(type=>type.id===incoming.regionType) ? incoming.regionType : '';
     propertyOriginRegion=regionById(incoming.propertyOriginRegion) && byId(selectedId)?.regionId===incoming.propertyOriginRegion ? incoming.propertyOriginRegion : null;
     regionReturnScroll=Number.isFinite(incoming.regionReturnScroll) ? Math.max(0,incoming.regionReturnScroll) : 0;
-    view = incoming.view === 'property' && byId(selectedId) ? 'property' : incoming.view === 'region' ? 'region' : 'home';
+    view = incoming.view === 'property' && byId(selectedId) ? 'property' : incoming.view === 'region' && regions.length ? 'region' : 'home';
     regionPage.hidden=view!=='region';
     if(view==='region')renderRegion();
     root.dataset.page = view;
@@ -1059,7 +1056,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if (!heroState.chosen) return;
     const types = {casas:['Casa','Condomínio horizontal'],apartamentos:['Apartamento','Cobertura'],terrenos:['Terreno urbano','Lote em condomínio'],comercial:['Sala comercial','Loja','Edifício corporativo']};
     const type = types[heroState.chosen]?.[heroState.choice ?? 0];
-    const items = properties.filter(property=>property.type === type).slice(0,2);
+    const items = properties.filter(property=>property.opportunity && property.type === type).slice(0,2);
     const heading = element('p','ex-opportunities-title');
     const icon = element('i'); icon.setAttribute('data-lucide','sparkles'); icon.setAttribute('aria-hidden','true');
     heading.append(icon,document.createTextNode('Oportunidades'));

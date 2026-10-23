@@ -1,4 +1,4 @@
-import { ClipboardCheck, FileText, House, KeyRound, LayoutDashboard, MessageSquare, ShieldCheck, SlidersHorizontal, Sparkles, Users, Wallet, type LucideIcon } from 'lucide-react';
+import { ClipboardCheck, FileText, House, KeyRound, LayoutDashboard, MessageSquare, ShieldCheck, SlidersHorizontal, Sparkles, Users, Wallet, Globe2, Gem, MapPinned, type LucideIcon } from 'lucide-react';
 
 export interface PortalNavigationItem {
   id: string;
@@ -9,27 +9,31 @@ export interface PortalNavigationItem {
   group: string;
   status: 'active' | 'planned';
   adminOnly?: boolean;
+  brokerOnly?: boolean;
   secondary?: boolean;
 }
 
 export const portalNavigation: PortalNavigationItem[] = [
-  { id: 'hoje', label: 'Meu dia', title: 'Seu próximo passo começa aqui.', description: 'Acompanhe os imóveis, as publicações e os próximos passos.', icon: LayoutDashboard, group: 'Sua operação', status: 'active' },
-  { id: 'imoveis', label: 'Imóveis e captações', title: 'Da captação ao anúncio.', description: 'Uma ficha por imóvel. Materiais, cadastro e publicação.', icon: House, group: 'Sua operação', status: 'active' },
-  { id: 'empreendimentos', label: 'Empreendimentos', title: 'Uma experiência completa. Unidade por unidade.', description: 'Cenário DeVille, plantas, andares e disponibilidade.', icon: House, group: 'Sua operação', status: 'active', adminOnly: true },
-  { id: 'avaliacoes', secondary: true, label: 'Avaliações', title: 'Cada imóvel começa com uma boa leitura.', description: 'Cadastro, responsável, curadoria e histórico em um só lugar.', icon: ClipboardCheck, group: 'Sua operação', status: 'active' },
-  { id: 'leads', label: 'Leads e entrada', title: 'Cada interesse, acompanhado.', description: 'Entrada do site, distribuição e histórico dos contatos.', icon: MessageSquare, group: 'Sua operação', status: 'active' },
-  { id: 'relacionamento', label: 'Atendimento e visitas', title: 'Toda conversa merece continuidade.', description: 'Histórico de contatos, agenda de visitas e controle de chaves.', icon: MessageSquare, group: 'Sua operação', status: 'active' },
-  { id: 'locacoes', label: 'Locações', title: 'Cuidar também é acompanhar.', description: 'Contratos, manutenção e compromissos da administração mensal.', icon: KeyRound, group: 'Sua operação', status: 'active' },
-  { id: 'documentos', label: 'Documentos', title: 'Informação organizada. Acesso responsável.', description: 'Documentos privados, versões, validade e revisão da equipe.', icon: FileText, group: 'Sua operação', status: 'active' },
-  { id: 'comissoes', label: 'Minhas comissões', title: 'Clareza em cada conquista.', description: 'Participações, potencial e pagamentos individuais.', icon: Wallet, group: 'Sua operação', status: 'active' },
-  { id: 'conversas', label: 'Conversas da equipe', title: 'O contexto fica com o negócio.', description: 'Converse com a gestão e registre os próximos passos por imóvel.', icon: MessageSquare, group: 'Sua operação', status: 'active' },
-  { id: 'financeiro', label: 'Central financeira', title: 'Clareza para cuidar do crescimento.', description: 'Receitas, despesas, caixa e resultado da EME.', icon: Wallet, group: 'Gestão e inteligência', status: 'active', adminOnly: true },
-  { id: 'padrao', label: 'Padrão de curadoria', title: 'O que faz um imóvel ser EME.', description: 'Os critérios utilizados nas novas avaliações, por tipo de imóvel.', icon: SlidersHorizontal, group: 'Gestão e inteligência', status: 'active' },
-  { id: 'inteligencia', label: 'Assistente Select', title: 'Inteligência para o seu trabalho.', description: 'Conferência da régua e análises com revisão da equipe.', icon: Sparkles, group: 'Gestão e inteligência', status: 'active' },
-  { id: 'spatial', label: 'Spatial Studio', title: 'EME Spatial', description: 'Estúdio de espaços · projetos, orçamento e produção.', icon: Sparkles, group: 'Gestão e inteligência', status: 'active', adminOnly:true },
-  { id: 'qualidade', label: 'Qualidade da equipe', title: 'Um padrão que se constrói em equipe.', description: 'Evidências de atendimento para orientar e desenvolver a equipe.', icon: ShieldCheck, group: 'Gestão e inteligência', status: 'active', adminOnly: true },
-  { id: 'pessoas', label: 'Nossa equipe', title: 'Nossa equipe.', description: 'Perfis, retratos e cargos apresentados na página inicial.', icon: Users, group: 'Gestão e inteligência', status: 'active', adminOnly: true },
-  { id: 'equipe', label: 'Equipe e acessos', title: 'Pessoas certas. Responsabilidades claras.', description: 'Contas individuais e acesso conforme a função.', icon: Users, group: 'Gestão e inteligência', status: 'active', adminOnly: true },
+  { id: 'hoje', label: 'Visão geral', title: 'Sua operação, em perspectiva.', description: 'Acompanhe os imóveis, as publicações e os próximos passos.', icon: LayoutDashboard, group: 'Operação', status: 'active' },
+  { id: 'imoveis', label: 'Imóveis e captações', title: 'Da captação ao anúncio.', description: 'Uma ficha por imóvel. Materiais, cadastro e publicação.', icon: House, group: 'Operação', status: 'active' },
+  { id: 'empreendimentos', label: 'Empreendimentos', title: 'Uma experiência completa. Unidade por unidade.', description: 'Moradas da Serra / DeVille: plantas, unidades e disponibilidade publicada.', icon: House, group: 'Site e conteúdo', status: 'active', adminOnly: true },
+  { id: 'avaliacoes', secondary: true, label: 'Avaliações', title: 'Cada imóvel começa com uma boa leitura.', description: 'Cadastro, responsável, curadoria e histórico em um só lugar.', icon: ClipboardCheck, group: 'Operação', status: 'active' },
+  { id: 'leads', label: 'Leads e entrada', title: 'Cada interesse, acompanhado.', description: 'Entrada do site, distribuição e histórico dos contatos.', icon: MessageSquare, group: 'Operação', status: 'active' },
+  { id: 'relacionamento', label: 'Atendimento e visitas', title: 'Toda conversa merece continuidade.', description: 'Histórico de contatos, agenda de visitas e controle de chaves.', icon: MessageSquare, group: 'Operação', status: 'active' },
+  { id: 'locacoes', label: 'Locações', title: 'Cuidar também é acompanhar.', description: 'Contratos, manutenção e compromissos da administração mensal.', icon: KeyRound, group: 'Operação', status: 'active' },
+  { id: 'documentos', label: 'Documentos dos imóveis', title: 'Informação organizada. Acesso responsável.', description: 'Documentos privados, versões, validade e revisão da equipe.', icon: FileText, group: 'Operação', status: 'active' },
+  { id: 'comissoes', label: 'Minhas comissões', title: 'Clareza em cada conquista.', description: 'Participações, potencial e pagamentos individuais.', icon: Wallet, group: 'Operação', brokerOnly: true, status: 'active' },
+  { id: 'conversas', label: 'Conversas internas', title: 'O contexto fica com o negócio.', description: 'Registros internos por imóvel, compartilhados com a gestão e a carteira autorizada.', icon: MessageSquare, group: 'Equipe', status: 'active' },
+  { id: 'financeiro', label: 'Central financeira', title: 'Clareza para cuidar do crescimento.', description: 'Receitas, despesas, caixa e resultado da EME.', icon: Wallet, group: 'Gestão', status: 'active', adminOnly: true },
+  { id: 'padrao', label: 'Critérios de seleção', title: 'O que faz um imóvel ser EME.', description: 'Os critérios utilizados nas novas avaliações, por tipo de imóvel.', icon: SlidersHorizontal, group: 'Gestão', status: 'active' },
+  { id: 'inteligencia', label: 'M e ferramentas de IA', title: 'Inteligência para o seu trabalho.', description: 'M no site, conexão de IA e análises internas com revisão da equipe.', icon: Sparkles, group: 'Gestão', status: 'active' },
+  { id: 'qualidade', label: 'Qualidade do atendimento', title: 'Um padrão que se constrói em equipe.', description: 'Evidências de atendimento para orientar e desenvolver a equipe.', icon: ShieldCheck, group: 'Equipe', status: 'active', adminOnly: true },
+  { id: 'pessoas', label: 'Perfis no site', title: 'Nossa equipe.', description: 'Perfis, retratos e cargos apresentados na página inicial.', icon: Users, group: 'Site e conteúdo', status: 'active', adminOnly: true },
+  { id: 'equipe', label: 'Acessos', title: 'Pessoas certas. Responsabilidades claras.', description: 'Contas individuais e acesso conforme a função.', icon: Users, group: 'Equipe', status: 'active', adminOnly: true },
+  {id:'oportunidades',label:'Oportunidades',title:'O que merece destaque.',description:'Escolha os imóveis publicados que ganham destaque na experiência.',icon:Gem,group:'Site e conteúdo',status:'active',adminOnly:true},
+  {id:'regioes',label:'Regiões',title:'Um olhar para cada lugar.',description:'Estados, destinos e vínculos com os imóveis da coleção.',icon:MapPinned,group:'Site e conteúdo',status:'active',adminOnly:true},
+  {id:'empresa-documentos',label:'Documentos da empresa',title:'A empresa, bem organizada.',description:'Contratos e documentos internos em uma área privada da administração.',icon:FileText,group:'Gestão',status:'active',adminOnly:true},
+  {id:'site',label:'Visão do site',title:'A experiência pública, sob seu cuidado.',description:'Acompanhe os conteúdos que chegam ao cliente.',icon:Globe2,group:'Site e conteúdo',status:'active',adminOnly:true},
   { id: 'conta', label: 'Minha conta', title: 'Seu acesso, sob seu cuidado.', description: 'Informações da sua conta na EME Select.', icon: KeyRound, group: 'Sua conta', status: 'active' },
 ];
 

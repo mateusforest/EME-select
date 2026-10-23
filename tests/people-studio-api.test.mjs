@@ -27,7 +27,7 @@ for(const backend of ['local','cloud'])test(backend+': people drafts, portrait p
  const admin={cookie:backend==='cloud'?'eme_cloud_session='+tokens[0]:''},broker={cookie:backend==='cloud'?'eme_cloud_session='+tokens[1]:''},anon={};
  async function req(who,path,body,method=body?'POST':'GET'){const res=await fetch(origin+'/api'+path,{method,headers:{Origin:origin,Cookie:who.cookie||'','Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});if(res.headers.get('set-cookie'))who.cookie=res.headers.get('set-cookie').split(';')[0];return {status:res.status,body:res.headers.get('content-type')?.includes('application/json')?await res.json():Buffer.from(await res.arrayBuffer())};}
  if(backend==='local'){const password='People-test-only-2026!';await req(admin,'/auth/setup',{name:'Admin',email:'admin@example.test',password});await req(admin,'/users',{name:'Broker',email:'broker@example.test',password,role:'corretor'});await req(broker,'/auth/login',{email:'broker@example.test',password});await req(broker,'/auth/password',{currentPassword:password,newPassword:password+'2'});}
- assert.equal((await req(anon,'/people')).status,401);assert.equal((await req(broker,'/people')).status,403);assert.deepEqual((await req(anon,'/public/people')).body,{people:[]});
+ assert.equal((await req(anon,'/people')).status,401);assert.equal((await req(broker,'/people')).status,403);assert.deepEqual((await req(anon,'/public/people')).body.people.map(p=>p.name),['Mateus Forest','Douglas Maraschin','Fabrício Foscarini']);
  let record=(await req(admin,'/people')).body;const bytes=await sharp({create:{width:500,height:700,channels:3,background:'#456557'}}).jpeg().withMetadata().toBuffer();
  assert.equal((await req(admin,'/people/images',{version:0,content:'data:image/png;base64,ZmFrZQ=='})).status,400);
  const upload=await req(admin,'/people/images',{version:record.version,content:'data:image/jpeg;base64,'+bytes.toString('base64')});assert.equal(upload.status,201,JSON.stringify(upload.body));record=upload.body;
@@ -35,7 +35,7 @@ for(const backend of ['local','cloud'])test(backend+': people drafts, portrait p
  const stored=await req(admin,photoPath);assert.equal(stored.status,200);assert.equal((await sharp(stored.body).metadata()).exif,undefined);
  const people=[{id:randomUUID(),name:'Pessoa exemplo',role:'Consultor imobiliário',photoUrl:imageUrl,bio:'Atendimento e acompanhamento de imóveis.',registration:'CRECI de teste'},{id:randomUUID(),name:'Diretora exemplo',role:'Diretora',photoUrl:imageUrl,bio:'',registration:''}];
  const saved=await req(admin,'/people',{version:record.version,people},'PATCH');assert.equal(saved.status,200,JSON.stringify(saved.body));record=saved.body;
- assert.equal((await req(admin,'/people',{version:record.version-1,people},'PATCH')).status,409);assert.deepEqual((await req(anon,'/public/people')).body.people,[]);
+ assert.equal((await req(admin,'/people',{version:record.version-1,people},'PATCH')).status,409);assert.deepEqual((await req(anon,'/public/people')).body.people.map(p=>p.name),['Mateus Forest','Douglas Maraschin','Fabrício Foscarini']);
  assert.equal((await req(admin,'/people/publish',{version:record.version})).status,400);
  record=(await req(admin,'/people/publish',{version:record.version,confirmed:true})).body;
  assert.equal((await req(anon,photoPath)).status,200);assert.deepEqual((await req(anon,'/public/people')).body.people,people);

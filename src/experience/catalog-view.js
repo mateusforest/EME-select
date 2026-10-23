@@ -7,7 +7,7 @@ export function createCatalog({root,properties,assets,regions,getSaved,onOpen,on
   const icon=name=>{const el=node('i');el.dataset.lucide=name;el.setAttribute('aria-hidden','true');return el;};
   const option=(value,label)=>{const el=node('option','',label);el.value=value;return el;};
   const field=name=>form.elements.namedItem(name);
-  const states=[['rs','Rio Grande do Sul'],['sc','Santa Catarina']];
+  const states=[...new Map([['rs','Rio Grande do Sul'],['sc','Santa Catarina'],...regions.map(r=>[r.stateId,r.stateName])]).entries()];
   states.forEach(([value,label])=>field('state').append(option(value,label)));
   const types=[...new Set(['Casa','Apartamento','Terreno','Comercial',...properties.map(p=>p.type)])];
   types.forEach(type=>field('type').append(option(type,type)));

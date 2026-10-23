@@ -2,6 +2,9 @@ import sharp from 'sharp';
 import {randomUUID} from 'node:crypto';
 import {admin,fail,fields,text} from './cloud/domain.mjs';
 export const peopleRecordId='eae00000-0000-4000-8000-000000000001';
+import {selectTeam} from '../shared/team-profiles.mjs';
+const approvedPeople=selectTeam.map((p,i)=>({id:'eae00000-0000-4000-8000-00000000010'+i,name:p.name,role:p.role,bio:p.bio,registration:p.registration,photoUrl:p.photo}));
+const baseline=row=>row?.data.rosterVersion===2?row:{...row,id:row?.id||peopleRecordId,version:row?.version||0,data:{...(row?.data||{}),people:structuredClone(approvedPeople),live:structuredClone(approvedPeople),rosterVersion:2}};
 const route='/api/people';
 export function createPeopleApi({read,write,putImage,getImage,deleteImage}){
  const detail=row=>({version:row?.version||0,people:row?.data.people||[],published:!!row?.data.live,publishedAt:row?.data.publishedAt||null});
@@ -10,23 +13,23 @@ export function createPeopleApi({read,write,putImage,getImage,deleteImage}){
   const people=value.map(p=>{fields(p,['id','name','role','bio','photoUrl','registration']);
    if(!/^[a-f0-9-]{36}$/.test(p.id))fail(400,'Identificação inválida.');
    const photoUrl=text(p.photoUrl||'',0,100);
-   if(photoUrl&&(!/^\/api\/people-images\/[a-f0-9-]{36}$/.test(photoUrl)||!images.includes(photoUrl.split('/').pop())))fail(400,'A fotografia não pertence a este cadastro.');
+   if(photoUrl&&!approvedPeople.some(p=>p.photoUrl===photoUrl)&&(!/^\/api\/people-images\/[a-f0-9-]{36}$/.test(photoUrl)||!images.includes(photoUrl.split('/').pop())))fail(400,'A fotografia não pertence a este cadastro.');
    return {id:p.id,name:text(p.name,2,80),role:text(p.role,2,80),bio:text(p.bio||'',0,500),registration:text(p.registration||'',0,60),photoUrl};
   });
   if(new Set(people.map(p=>p.id)).size!==people.length)fail(400,'Há pessoas duplicadas.');return people;
  }
  async function publicHandle(path,req,res,send){
-  if(path==='/api/public/people'&&req.method==='GET'){const row=await read();send(200,{people:row?.data.live||[]});return true;}
+  if(path==='/api/public/people'&&req.method==='GET'){const row=baseline(await read());send(200,{people:row?.data.live||[]});return true;}
   const match=path.match(/^\/api\/people-images\/([a-f0-9-]{36})$/);
-  if(match&&req.method==='GET'){const row=await read();if(!row?.data.live?.some(p=>p.photoUrl===path))return false;res.setHeader('Content-Type','image/webp');res.end(await getImage(match[1]));return true;}return false;
+  if(match&&req.method==='GET'){const row=baseline(await read());if(!row?.data.live?.some(p=>p.photoUrl===path))return false;res.setHeader('Content-Type','image/webp');res.end(await getImage(match[1]));return true;}return false;
  }
  async function handle(path,req,res,user,body,send){
   if(path!==route&&!path.startsWith(route+'/')&&!path.startsWith('/api/people-images/'))return false;
-  admin(user);const row=await read();const match=path.match(/^\/api\/people-images\/([a-f0-9-]{36})$/);
+  admin(user);const row=baseline(await read());const match=path.match(/^\/api\/people-images\/([a-f0-9-]{36})$/);
   if(match&&req.method==='GET'){if(!row?.data.images?.includes(match[1]))fail(404,'Retrato não encontrado.');res.setHeader('Content-Type','image/webp');res.end(await getImage(match[1]));return true;}
   if(path===route&&req.method==='GET'){send(200,detail(row));return true;}
   if(body?.version!==(row?.version||0))fail(409,'O cadastro mudou. Recarregue antes de continuar.');
-  let data={kind:'directory',...(row?.data||{}),people:row?.data.people||[],images:row?.data.images||[]};let action='Perfis públicos atualizados';
+  let data={kind:'directory',rosterVersion:2,...(row?.data||{}),people:row?.data.people||[],images:row?.data.images||[]};let action='Perfis públicos atualizados';
   if(path===route&&req.method==='PATCH'){fields(body,['version','people']);data.people=validate(body.people,data.images);}
   else if(path===route+'/publish'&&req.method==='POST'){
    fields(body,['version','confirmed']);if(body.confirmed!==true)fail(400,'Confirme a autorização para divulgar os perfis.');data.live=validate(data.people,data.images);

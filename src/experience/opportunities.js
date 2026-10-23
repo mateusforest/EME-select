@@ -14,5 +14,5 @@ export function opportunitiesHash(filters){
 }
 export function selectOpportunities(properties,filters){
  // An editorial view of published inventory: never infer discounts or urgency from price.
- return selectCatalog(properties,{...catalogDefaults,...filters});
+ return selectCatalog(properties.filter(p=>p.opportunity!==false),{...catalogDefaults,...filters});
 }

@@ -25,6 +25,12 @@ test('empty or unmatched inventory never produces a substitute offer',()=>{
  assert.deepEqual(selectOpportunities([],opportunityDefaults),[]);
  assert.deepEqual(selectOpportunities(properties,{...opportunityDefaults,type:'Terreno'}),[]);
 });
+test('editorial selection excludes unselected properties without removing them from the catalog',()=>{
+ const catalog=properties.map(p=>({...p,opportunity:p.id==='apartment'}));
+ assert.deepEqual(selectOpportunities(catalog,opportunityDefaults).map(p=>p.id),['apartment']);
+ assert.equal(catalog.length,3);
+ assert.deepEqual(selectOpportunities(catalog,{...opportunityDefaults,type:'Casa'}),[]);
+});
 test('links omit defaults and cannot smuggle unrelated catalog filters into opportunities',()=>{
  assert.equal(opportunitiesHash(opportunityDefaults),'#/oportunidades');
  assert.deepEqual(opportunitiesFromQuery('min=999999999&salvos=1&ordem=unknown'),opportunityDefaults);
