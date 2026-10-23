@@ -1,9 +1,11 @@
 import template from './template.html?raw';
 import assets from './assets.json';
 import {mountExperience} from './runtime.js';
+import {selectTeam} from '../team-profiles';
 import './experience.css';
 import './production.css';
 import './header.css';
+import './opportunities.css';
 
 export async function startExperience(){
  const container=document.getElementById('root');
@@ -16,11 +18,11 @@ export async function startExperience(){
  }catch{failed=true;}
  container.innerHTML=template;
  mountBrandArtwork(container);
+ mountApprovedPeople(container);
  mountExperience(properties,{...assets});
  if(failed){const notice=document.createElement('div');notice.className='experience-offline';notice.setAttribute('role','status');notice.append('Não foi possível atualizar os imóveis. ');const retry=document.createElement('button');retry.textContent='Tentar novamente';retry.onclick=()=>location.reload();notice.append(retry);container.append(notice);}
  container.querySelectorAll('img').forEach(img=>{img.decoding='async';if(!img.closest('.ec-scene,.ec-header'))img.loading='lazy';});
  addFooter(container);
- void updatePeople(container);
 }
 
 function mountBrandArtwork(container){
@@ -42,11 +44,18 @@ function addFooter(container){
  const privacy=document.createElement('button');privacy.type='button';privacy.className='experience-privacy';privacy.textContent='Privacidade';privacy.onclick=()=>dialog('Privacidade',['Seus imóveis salvos e sua escolha de estado ficam apenas neste navegador. A conversa com o M permanece na memória da página durante a navegação.','Os pedidos de contato são enviados ao portal privado da EME somente quando você preenche os dados e autoriza o contato. Para solicitar informações ou exclusão de dados, fale com a equipe pelo canal de atendimento do site.','A busca por voz depende do serviço de reconhecimento do seu navegador e só inicia com sua ação e autorização de microfone. Confira a transcrição antes de buscar.','Ao abrir o WhatsApp ou outro serviço externo, aplicam-se também as regras desse serviço.']);
  footer.insertBefore(privacy,footer.lastElementChild);footer.insertBefore(portal,footer.lastElementChild);
 }
-async function updatePeople(container){
- try{
-  const response=await fetch('/api/public/people',{signal:AbortSignal.timeout(10000)});if(!response.ok)return;const data=await response.json();if(!Array.isArray(data.people))return;
-  const list=container.querySelector('.ec-team-list');list.replaceChildren();
-  for(const person of data.people){const article=document.createElement('article');if(/^\/api\/people-images\/[a-f0-9-]{36}$/.test(person.photoUrl)){const img=document.createElement('img');img.src=person.photoUrl;img.alt=person.name;img.loading='lazy';article.append(img);}const copy=document.createElement('div'),title=document.createElement('h3'),button=document.createElement('button'),role=document.createElement('p');button.textContent=person.name;button.type='button';button.setAttribute('aria-label','Conhecer '+person.name);button.onclick=()=>dialog(person.name,[person.role,person.bio,person.registration]);title.append(button);role.textContent=[person.role,person.registration].filter(Boolean).join(' · ');copy.append(title,role);article.append(copy);list.append(article);}
-  if(!data.people.length)list.textContent='Converse com a nossa equipe pelo atendimento EME Select.';
- }catch{/* A seleção e o atendimento continuam disponíveis. */}
+function mountApprovedPeople(container){
+ // The approved landing roster is editorial content, independent of the legacy portal directory.
+ const list=container.querySelector('.ec-team-list');list.replaceChildren();
+ for(const person of selectTeam){
+  const article=document.createElement('article');article.dataset.person=person.id;
+  const img=document.createElement('img');img.src=person.photo;img.alt=person.name;
+  img.width=76;img.height=76;img.loading='lazy';img.decoding='async';
+  const copy=document.createElement('div'),title=document.createElement('h3'),button=document.createElement('button'),role=document.createElement('p'),registration=document.createElement('small');
+  button.textContent=person.name;button.type='button';button.setAttribute('aria-label','Conhecer '+person.name);button.setAttribute('aria-haspopup','dialog');
+  button.onclick=()=>dialog(person.name,[person.role,person.bio,person.specialties.join(' · '),person.registration]);
+  const arrow=document.createElement('span');arrow.textContent='↗';arrow.setAttribute('aria-hidden','true');button.append(arrow);
+  title.append(button);role.textContent=person.role;registration.textContent=person.registration;
+  copy.append(title,role,registration);article.append(img,copy);list.append(article);
+ }
 }

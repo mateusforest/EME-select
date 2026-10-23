@@ -26,11 +26,6 @@
 
 
   <main class="ec-home">
-    <section class="er-home-locations" aria-label="Escolha o estado e depois a região">
-      <span class="er-home-label"><i data-lucide="map-pinned" aria-hidden="true"></i><span>Explore por região</span></span>
-      <div class="er-home-states" role="group" aria-label="Primeiro, escolha o estado"></div>
-      <div class="er-home-destinations" aria-label="Depois, escolha a região" aria-live="polite"></div>
-    </section>
     <section class="ec-hero" aria-label="Explore os espaços">
       <div class="ec-viewport">
         <div class="ec-world" role="img" aria-label="Arquitetura conceitual em pedra clara e vidro: terreno urbano, casa, edifício residencial e edifício comercial, em um espaço contínuo"></div>
@@ -71,7 +66,7 @@
     <section class="ec-collection-section ec-pad" id="eme-full-collection" aria-label="A coleção de imóveis">
       <div class="ec-section-top"><div><p class="ec-eyebrow">A COLEÇÃO EME SELECT</p><h2 class="ec-section-title">Da inspiração<br>ao endereço.</h2></div><div class="ec-collection-context"><a class="el-all-link ec-link" href="#/colecao" data-section="collection">Ver todos os imóveis ↗</a><p class="ec-collection-count">03 imóveis para conhecer</p><button type="button" class="ec-reset-collection ec-plain ec-link cursor-interaction" hidden>Ver a seleção completa ↗</button></div></div>
       <div class="ec-featured-wrap" id="eme-full-opportunities">
-        <p class="ex-opportunities-title"><i data-lucide="sparkles" aria-hidden="true"></i> Oportunidades</p>
+        <div class="eo-preview-heading"><p class="ex-opportunities-title"><i data-lucide="sparkles" aria-hidden="true"></i> Oportunidades</p><a href="#/oportunidades" data-section="opportunities">Explorar oportunidades <span aria-hidden="true">↗</span></a></div>
         <article class="ec-featured" aria-label="Oportunidade da coleção">
           <button type="button" class="ec-featured-photo ec-plain cursor-interaction" aria-label="Explorar esta oportunidade"><img class="ec-featured-img" alt=""><span class="ec-image-action">Explorar este lugar <span aria-hidden="true">↗</span></span></button>
           <div class="ec-featured-copy"><p class="ec-featured-location ec-eyebrow"></p><h3 class="ec-featured-title"></h3><p class="ec-featured-lead"></p><p class="ec-featured-facts"></p><p class="ec-price-label">À venda</p><p class="ec-featured-price"></p><button type="button" class="ec-open-property ec-action cursor-interaction">Conhecer o imóvel <span aria-hidden="true">↗</span></button></div>
@@ -88,15 +83,31 @@
     </section>
     <section class="ec-team ec-pad" id="eme-full-team" aria-label="Nossa equipe">
       <div><p class="ec-eyebrow">PESSOAS POR TRÁS DAS ESCOLHAS</p><h2 class="ec-section-title">Uma equipe próxima.<br>Um olhar em conjunto.</h2></div>
-      <div class="ec-team-list">
-        <article><img data-asset="mateus" alt="Mateus Forest" loading="lazy"><div><h3>Mateus Forest</h3><p>Tecnologia e gestão</p></div></article>
-        <article><img data-asset="douglas" alt="Douglas Maraschin" loading="lazy"><div><h3>Douglas Maraschin</h3><p>Comercial e operações · CRECI 90291 F / RS</p></div></article>
-        <article><img data-asset="fabricio" alt="Fabrício Foscarini" loading="lazy"><div><h3>Fabrício Foscarini</h3><p>Imóveis e lançamentos · CRECI 87193 F / RS</p></div></article>
-      </div>
+      <div class="ec-team-list"></div>
     </section>
     <section class="ec-owners ec-pad" id="eme-full-owners" aria-label="Para proprietários"><div><p class="ec-eyebrow">PARA PROPRIETÁRIOS</p><h2>Seu imóvel.<br>Um olhar à altura.</h2></div><div><p>Quer vender ou alugar? Apresente seu imóvel para uma análise da equipe. Conhecemos suas características e avaliamos sua entrada na coleção.</p><a class="ec-link" href="https://www.emeselect.com/enviar-imovel" target="_blank" rel="noopener">Apresentar meu imóvel <span aria-hidden="true">↗</span></a><button type="button" class="ec-text-button cursor-interaction" data-owner-chat>Tirar dúvidas com o assistente <span aria-hidden="true">↗</span></button></div></section>
     <section class="ec-contact-section ec-pad" id="eme-full-contact" aria-label="Converse com a EME"><p class="ec-eyebrow">A PRÓXIMA ESCOLHA COMEÇA AQUI</p><h2>Conte o que você<br>quer viver.</h2><p>Converse com o M ou fale diretamente com a nossa equipe.</p><div class="ex-contact-actions"><button type="button" class="ec-action cursor-interaction" data-assistant="chat">Conversar com M · 24 horas <span aria-hidden="true">↗</span></button><a class="ec-link" href="https://wa.me/5554991578029?text=Ol%C3%A1!%20Gostaria%20de%20conversar%20sobre%20o%20im%C3%B3vel%20que%20procuro." target="_blank" rel="noopener">Falar com a equipe no WhatsApp <span aria-hidden="true">↗</span></a></div></section>
   </main>
+<main class="eo-opportunities" aria-labelledby="eme-opportunities-title" hidden>
+  <div class="eo-breadcrumb"><button type="button" class="ec-link ec-plain eo-home">← Página inicial</button><span>A SELEÇÃO EME</span></div>
+  <section class="eo-hero">
+    <div class="eo-hero-copy">
+      <p class="eo-eyebrow"><i data-lucide="gem" aria-hidden="true"></i>OPORTUNIDADES</p>
+      <h1 id="eme-opportunities-title" tabindex="-1">Um olhar para o que<br> <em>vale conhecer.</em></h1>
+      <p>Espaços, detalhes e possibilidades. Conheça os imóveis da nossa seleção e descubra o que faz sentido para você.</p>
+      <button type="button" class="eo-explore">Explorar oportunidades<i data-lucide="arrow-down" aria-hidden="true"></i></button>
+      <span class="eo-signature">MENOS É MAIS. TAMBÉM NA ESCOLHA.</span>
+    </div>
+    <a class="eo-spotlight" hidden><img alt=""><span class="eo-spotlight-label"><i data-lucide="sparkles" aria-hidden="true"></i>UM LUGAR PARA CONHECER</span><div class="eo-spotlight-copy"><p></p><h2></h2><span class="eo-spotlight-price"></span><span class="eo-spotlight-arrow" aria-hidden="true">↗</span></div></a>
+  </section>
+  <section class="eo-selection" aria-labelledby="eme-opportunities-selection">
+    <div class="eo-selection-heading"><div><p class="eo-eyebrow">ESCOLHAS COM POTENCIAL</p><h2 id="eme-opportunities-selection" tabindex="-1">Encontre a sua possibilidade.</h2></div><p class="eo-count" role="status"></p></div>
+    <div class="eo-toolbar"><div class="eo-types" role="group" aria-label="Tipos de imóvel nas oportunidades"></div><div class="eo-selects"><label>Região<select class="eo-region"><option value="">Todas as regiões</option></select></label><label>Ordenar por<select class="eo-sort"><option value="selection">Seleção EME</option><option value="price-asc">Menor valor</option><option value="price-desc">Maior valor</option></select></label></div></div>
+    <div class="eo-grid"></div>
+    <div class="eo-empty" hidden><i data-lucide="scan-search" aria-hidden="true"></i><h3>Novas possibilidades começam com uma conversa.</h3><p>Ainda não há imóveis nesta combinação. Explore a seleção completa ou conte à equipe o que você procura.</p><button type="button" class="ec-action eo-clear">Ver todas as oportunidades<i data-lucide="arrow-up-right" aria-hidden="true"></i></button></div>
+  </section>
+  <section class="eo-contact"><i data-lucide="gem" aria-hidden="true"></i><div><h2>Uma oportunidade começa a fazer sentido<br> quando combina com você.</h2><p>Converse sobre os detalhes, as condições e os próximos passos.</p></div><button type="button" class="ec-link ec-plain" data-assistant="chat">Conversar com M<i data-lucide="arrow-up-right" aria-hidden="true"></i></button><a href="#/colecao" data-section="collection">Ver todos os imóveis ↗</a></section>
+</main>
 <main class="el-catalog" aria-labelledby="eme-catalog-title" hidden>
   <div class="el-heading"><button type="button" class="ec-link ec-plain el-home">← Página inicial</button><p class="ec-eyebrow">A COLEÇÃO EME SELECT</p><h1 id="eme-catalog-title" tabindex="-1">Todos os imóveis.<br><span>O seu próximo lugar.</span></h1><p>Explore a seleção no seu ritmo. Encontre o que combina com seus planos.</p></div>
   <div class="el-layout">

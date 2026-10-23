@@ -1000,15 +1000,6 @@
 
 
 
-#eme-continuo .er-home-locations { display:flex; align-items:center; flex-wrap:wrap; gap:16px; padding:10px 44px 4px; position:relative; z-index:6; }
-#eme-continuo .er-home-label { display:flex; align-items:center; gap:8px; color:var(--eme-secondary); font-size:11px; margin-right:5px; }
-#eme-continuo .er-home-label svg { width:15px; height:15px; }
-#eme-continuo .er-home-states { display:flex; align-items:center; gap:5px; }
-#eme-continuo .er-home-states button { background:transparent; border:1px solid transparent; padding:7px 12px; min-height:38px; border-radius:20px; font-size:12px; color:var(--eme-secondary); transition:background .2s; }
-#eme-continuo .er-home-states button[aria-pressed="true"] { background:#e4eadc; border-color:#d6dfcd; color:var(--eme-accent); }
-#eme-continuo .er-home-destinations { display:flex; align-items:center; gap:8px; padding-left:17px; border-left:1px solid #d6dfcd; }
-#eme-continuo .er-home-destinations button { display:inline-flex; align-items:center; gap:20px; border:0; background:transparent; padding:8px 3px; min-height:38px; font-size:12px; }
-#eme-continuo .er-home-destinations svg { width:16px; height:16px; }
 #eme-continuo .er-hero { height:480px; overflow:hidden; }
 #eme-continuo .er-hero-copy { top:66px; bottom:auto; left:44px; right:auto; width:38%; display:block; }
 #eme-continuo .er-hero h1 { font-size:clamp(48px,6.7cqw,82px); line-height:1.08; }
@@ -1024,18 +1015,10 @@
 #eme-continuo .er-hero-copy { z-index:2; }
 @media(min-width:1100px) { #eme-continuo .er-landmark { right:3%; width:50%; } }
 @media(max-width:850px) and (min-width:651px) {
-  #eme-continuo .er-home-locations { gap:8px; padding-left:24px; padding-right:24px; }
-  #eme-continuo .er-home-label span { display:none; }
   #eme-continuo .er-hero-copy { left:28px; width:40%; top:65px; }
   #eme-continuo .er-landmark { width:54%; right:-3%; }
 }
 @media(max-width:650px) {
-  #eme-continuo .er-home-locations { padding:10px 20px 0; gap:6px 10px; }
-  #eme-continuo .er-home-label { width:100%; margin:0; font-size:11px; }
-  #eme-continuo .er-home-states { width:100%; gap:6px; }
-  #eme-continuo .er-home-states button { flex:1; padding:6px 8px; font-size:11px; min-height:40px; }
-  #eme-continuo .er-home-destinations { width:100%; border-left:0; padding:0; }
-  #eme-continuo .er-home-destinations button { width:100%; justify-content:space-between; min-height:40px; border-bottom:1px solid #d6dfcd; padding:4px 10px; }
   #eme-continuo .er-hero { height:570px; }
   #eme-continuo .er-landscape { height:360px; width:100%; object-position:65% center; mask-image:linear-gradient(180deg,#000 35%,transparent 100%); }
   #eme-continuo .er-hero::after { background:linear-gradient(0deg,var(--eme-paper) 36%,#f1f0e800 85%); }
