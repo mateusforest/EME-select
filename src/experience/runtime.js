@@ -1417,7 +1417,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     } else if(view==='opportunities'||(view==='property'&&propertyOriginOpportunities))current='opportunities';
     header.querySelectorAll('nav button').forEach(button=>{
       const section=button.dataset.section || 'collection';
-      if(section===current)button.setAttribute('aria-current','location');
+      if(section&&section===current)button.setAttribute('aria-current','location');
       else button.removeAttribute('aria-current');
     });
   }
