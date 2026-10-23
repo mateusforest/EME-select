@@ -1,3 +1,6 @@
+import './mobile.css';
+import {setupMobileViewport} from './mobile-viewport';
+setupMobileViewport();
 import React, { lazy, Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 

@@ -20,7 +20,7 @@ export default function DevelopmentsWorkspace(){
  const numeric=(v:string)=>v===''?null:Number(v);
  if(!config||!record)return <div className="ps-card">{error?<><p role="alert">{error}</p><button onClick={()=>void load()}>Tentar novamente</button></>:<p role="status">Carregando empreendimento…</p>}</div>;
  return <div className="pl-workspace development-editor">
-  <div className="pl-intro"><div><h2>{config.name}</h2><p>Dados, plantas e estoque do cenário DeVille.</p></div><a className="ps-button" href="/#/empreendimentos/moradas-da-serra" target="_blank" rel="noreferrer">Abrir cenário público ↗</a></div>
+  <div className="pl-intro"><div><h2>{config.name}</h2><p>Dados, plantas e estoque do cenário DeVille.</p></div><a className="ps-button" href="/#/empreendimentos/moradas-da-serra" target="_blank" rel="noreferrer">Abrir cenário público ↗︎</a></div>
   {error&&<div className="pt-error" role="alert">{error}<button className="ps-text-button" onClick={async()=>{if(!dirty||await confirmAction('Descartar alterações e recarregar a última versão?'))void load();}}>Recarregar versão salva</button></div>}
   {message&&<p className="pc-success" role="status">{message}</p>}
   <form className="ps-form" onSubmit={e=>{e.preventDefault();void action('save');}}><fieldset className="pc-fieldset" disabled={busy}>

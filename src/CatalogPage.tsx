@@ -88,7 +88,7 @@ export default function CatalogPage({ state, favorites, comparison, onFavorite, 
       {collections.map(collection => <a key={collection.label}
         href={catalogHash({ ...state, type: collection.type })}
         aria-current={state.type === collection.type ? 'page' : undefined}>
-        {collection.label}<span aria-hidden="true">↗</span>
+        {collection.label}<span aria-hidden="true">↗︎</span>
       </a>)}
     </nav>
 

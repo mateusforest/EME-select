@@ -168,6 +168,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     clearTimeout(portalTimer);
     const direction=Math.sign(categories.indexOf(cat)-focusIndex)||1;
     chosen = id;
+    if(animate && window.matchMedia('(max-width:760px)').matches)root.querySelector('.ec-page-scroll').scrollTo({top:0,behavior:'auto'});
     focusScenes.select(id,{direction,animated:animate});
     choice = null;
     focusIndex = categories.indexOf(cat);
@@ -1048,7 +1049,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     copy.append(element(small ? 'span' : 'strong',small ? 'ex-mini-name' : '',property.title));
     if (!small) copy.append(element('small','',property.summary));
     copy.append(element('span',small ? 'ex-mini-price' : 'ex-result-price',property.price));
-    if (!small) copy.append(element('em','',reason || 'Conhecer o imóvel ↗'));
+    if (!small) copy.append(element('em','',reason || 'Conhecer o imóvel ↗︎'));
     button.append(image,copy); return button;
   }
   function renderHeroHighlights() {
@@ -1068,7 +1069,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
       container.append(grid);
     } else {
       container.append(element('p','ex-mini-empty','Ainda não há imóveis desta categoria na seleção. Podemos ajudar a encontrar.'));
-      const button = element('button','ec-text-button cursor-interaction','Conte ao assistente o que procura ↗');
+      const button = element('button','ec-text-button cursor-interaction','Conte ao assistente o que procura ↗︎');
       button.type = 'button'; button.dataset.categoryChat = type || ''; container.append(button);
     }
     icons();
@@ -1201,10 +1202,10 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
       if(!refreshed.length)resultList.replaceChildren();
       if(data.handoff==='owner'){
         root.querySelector('.ex-results-title').textContent='Seu imóvel na coleção.';
-        const link=element('a','ec-link','Apresentar meu imóvel ↗');link.href='/enviar-imovel';resultList.append(link);
+        const link=element('a','ec-link','Apresentar meu imóvel ↗︎');link.href='/enviar-imovel';resultList.append(link);
       }else if(['team','visit'].includes(data.handoff)){
         root.querySelector('.ex-results-title').textContent=data.handoff==='visit'?'Vamos combinar uma visita?':'A equipe continua com você.';
-        const button=element('button','ec-link ec-plain',data.handoff==='visit'?'Solicitar uma visita ↗':'Solicitar contato ↗');button.type='button';button.dataset.lead=data.handoff==='visit'?'visit':'selection';resultList.append(button);
+        const button=element('button','ec-link ec-plain',data.handoff==='visit'?'Solicitar uma visita ↗︎':'Solicitar contato ↗︎');button.type='button';button.dataset.lead=data.handoff==='visit'?'visit':'selection';resultList.append(button);
       }
       updateChatHandoff();lastChatRequest=null;save();
     }catch(error){
@@ -1264,7 +1265,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     const copy = element('div','ex-invitation-copy');
     copy.append(element('strong','',kind === 'property' ? 'Este lugar combina com você?' : 'Quer uma seleção com o seu perfil?'));
     copy.append(element('p','',kind === 'property' ? 'Receba informações e oportunidades semelhantes.' : 'A EME ajuda a encontrar o que faz sentido para sua busca.'));
-    const action = element('button','ec-link ec-plain cursor-interaction',kind === 'property' ? 'Quero receber opções ↗' : 'Montar minha seleção ↗'); action.type='button'; action.dataset.lead='selection';
+    const action = element('button','ec-link ec-plain cursor-interaction',kind === 'property' ? 'Quero receber opções ↗︎' : 'Montar minha seleção ↗︎'); action.type='button'; action.dataset.lead='selection';
     const close = element('button','ex-dismiss cursor-interaction','×'); close.type='button'; close.setAttribute('aria-label','Dispensar sugestão'); close.dataset.dismissInvitation='';
     inner.append(copy,action,close); node.replaceChildren(inner); node.hidden=false;
     if (!reducedMotion()) inner.animate([{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'translateY(0)'}],{duration:400,easing:'ease-out'});
@@ -1298,7 +1299,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
       root.querySelector('.ex-success-copy').textContent='Seu interesse: '+interest+'. Protocolo: '+String(data.reference).slice(0,8).toUpperCase()+'.';
       leadForm.reset();leadForm.hidden=true;root.querySelector('.ex-success').hidden=false;
     }catch(e){error.textContent=e.name==='TimeoutError'?'Não foi possível confirmar o envio. Tente novamente com este mesmo pedido.':e.message||'Confira sua conexão e tente novamente.';error.hidden=false;}
-    finally{leadSending=false;root.querySelector('.ex-new-chat').disabled=false;button.disabled=false;button.textContent='Solicitar contato ↗';}
+    finally{leadSending=false;root.querySelector('.ex-new-chat').disabled=false;button.disabled=false;button.textContent='Solicitar contato ↗︎';}
   }
 
   root.querySelectorAll('button[type="submit"]').forEach(button=>button.type='button');

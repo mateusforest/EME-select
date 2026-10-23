@@ -1,0 +1,69 @@
+/* Shared mobile rhythm; desktop composition remains unchanged. */
+.eme-direction-icon{width:18px;height:18px;flex:none;vertical-align:middle}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+@media(max-width:760px){
+  html #eme-continuo{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+  html #eme-continuo .ec-page-scroll{padding-bottom:env(safe-area-inset-bottom);scroll-padding-top:calc(var(--eme-header-height,116px) + 16px)}
+  html #eme-continuo .ec-header{top:6px;margin-top:6px}
+  html #eme-continuo .ec-home{padding-top:12px}
+  html #eme-continuo .ec-intro{top:24px;left:24px;right:24px}
+  html #eme-continuo .ec-intro h1{font-size:clamp(32px,8.7vw,40px);line-height:1.14}
+  html #eme-continuo .ec-intro p:last-child{font-size:14px;line-height:1.6}
+  html #eme-continuo .ec-eyebrow{line-height:1.6}
+  html #eme-continuo .ec-header .ex-search{height:48px}
+  html #eme-continuo .ec-header .ex-search button{width:40px;height:40px;min-width:40px}
+  html #eme-continuo .ec-header .ex-search .ex-search-submit{width:36px;height:36px;min-width:36px}
+  html #eme-continuo :is(input,select,textarea),.ms-app :is(input,select,textarea),.pt-live :is(input,select,textarea){font-size:16px!important;line-height:1.4}
+  html #eme-continuo :is(select,input:not([type=checkbox]):not([type=radio])),.ms-app :is(select,input:not([type=checkbox])){min-height:46px}
+  html #eme-continuo .ec-header .ex-search input{min-height:40px}
+  html #eme-continuo :is(.ec-link,.ec-text-button,.ep-all-photos,.ep-top-actions button,.er-change,.er-types button,.ex-new-chat){min-height:44px;align-items:center}
+  html #eme-continuo :is(.ec-portal-label,.el-card-facts,.ep-summary,.er-result-count){font-size:14px;line-height:1.6}
+  html #eme-continuo :is(.el-card-location,.ec-featured-location,.er-photo-note){font-size:12px;line-height:1.5}
+  html #eme-continuo :is(.el-heading h1,.eo-heading h1,.ep-title){font-size:clamp(30px,8vw,38px);line-height:1.18;overflow-wrap:anywhere}
+  html #eme-continuo .el-results-bar{flex-wrap:wrap}
+  html #eme-continuo .el-sort{width:160px;max-width:100%;font-size:14px!important}
+  html #eme-continuo .el-filter-panel>summary{min-height:48px;font-size:15px}
+  html #eme-continuo .el-filters{gap:16px 12px}
+  html #eme-continuo .el-filters label{font-size:13px}
+  html #eme-continuo .ep-photo-stage{height:clamp(240px,70vw,360px)}
+  html #eme-continuo .ep-detail-panel{padding:22px}
+  html #eme-continuo .ep-top-actions{gap:12px;flex-wrap:wrap}
+  html #eme-continuo .ep-top-actions button{font-size:14px}
+  html #eme-continuo .ep-chapters{grid-template-columns:repeat(var(--ep-photo-total,5),minmax(112px,1fr));gap:10px}
+  html #eme-continuo .er-breadcrumb{flex-wrap:wrap;line-height:1.6}
+  html #eme-continuo .er-hero h1{font-size:clamp(40px,11vw,56px)}
+  html #eme-continuo .er-region[data-region=vacaria] .er-hero h1{font-size:clamp(48px,14vw,64px)}
+  html #eme-continuo .er-hero-intro p{font-size:15px;line-height:1.65}
+  html #eme-continuo .ec-contact-section h2{font-size:36px}
+  html #eme-continuo .ex-contact-actions{gap:18px}
+  html #eme-continuo .ex-assistant{z-index:60;bottom:calc(12px + env(safe-area-inset-bottom) + var(--eme-keyboard-inset,0px));right:12px;width:calc(100% - 24px);max-width:400px;height:540px;max-height:calc(var(--eme-visible-height,100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px)}
+  html #eme-continuo .ex-chat-window-controls button,html #eme-continuo .ex-chat-window-controls .ex-assistant-back{width:44px;min-width:44px;height:44px}
+  html #eme-continuo .ex-chat-bubble{font-size:14px;line-height:1.65}
+  html #eme-continuo .ex-chat-minimized{bottom:calc(12px + env(safe-area-inset-bottom));max-width:calc(100% - 24px)}
+  html #eme-continuo .ex-composer{flex-shrink:0}
+  html #eme-continuo .ef-dialog{width:calc(100% - 24px);max-height:calc(var(--eme-visible-height,100dvh) - 24px);padding:22px;overflow:auto}
+  html #eme-continuo .ef-heading h2{font-size:28px}
+  html #eme-continuo .ef-fields{grid-template-columns:1fr;gap:16px}
+  html #eme-continuo .ef-close{min-width:44px;min-height:44px}
+  html #eme-continuo .es-selection select:focus-visible{outline:2px solid #819b6c;outline-offset:3px}
+  .ms-app{padding:calc(12px + env(safe-area-inset-top)) 12px calc(24px + env(safe-area-inset-bottom))}
+  .ms-app .ms-layout nav{gap:4px;scroll-snap-type:x proximity;padding-bottom:8px}
+  .ms-app .ms-layout nav button{min-height:46px;scroll-snap-align:start;font-size:14px}
+  .ms-app .ms-layout main{padding:24px 8px}
+  .ms-app :is(section,.ms-benefit){padding:20px}
+  .ms-app h1{font-size:32px}.ms-app h2{font-size:25px}.ms-app h3{font-size:22px;overflow-wrap:anywhere}
+  .ms-app .ms-actions{gap:12px}.ms-app button{min-height:44px}
+  .ms-app .ms-property img{height:auto;aspect-ratio:4/3}
+  .ms-app .ms-detail{inset:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));padding:20px}
+  .ms-app .ms-login section{padding:24px;max-width:100%}
+  .pt-live .ps-main{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+  .pt-live .ps-form{min-width:0}.pt-live .ps-form :is(input,select,textarea){max-width:100%}
+  .pt-live .ps-button{min-height:44px}
+}
+@media(max-width:360px){html #eme-continuo .ec-header{gap:4px 8px;padding-inline:10px}html #eme-continuo .el-filters{grid-template-columns:1fr}html #eme-continuo .ex-chat-title{font-size:13px}html #eme-continuo .ex-assistant-top{gap:5px}}
+@media(max-width:760px){
+ html .eme-public :is(input,select,textarea){font-size:16px!important;min-height:46px}
+ html .submission-page{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+ html .pt-live{--sh-header-height:calc(70px + env(safe-area-inset-top))}
+ html .pt-live .sh-header{padding-top:env(safe-area-inset-top)}
+}

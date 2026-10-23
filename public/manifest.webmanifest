@@ -1,0 +1,12 @@
+{
+  "id": "/",
+  "name": "EME Select",
+  "short_name": "EME Select",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f1f0e8",
+  "theme_color": "#f1f0e8",
+  "icons": [{"src":"/assets/select-favicon-v2.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]
+}

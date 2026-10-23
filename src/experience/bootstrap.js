@@ -9,6 +9,7 @@ import './header.css';
 import './opportunities.css';
 import './chat.css';
 import './editorial.css';
+import '../mobile.css';
 
 export async function startExperience(){
  const container=document.getElementById('root');
@@ -69,7 +70,7 @@ function mountApprovedPeople(container,publishedPeople){
   const copy=document.createElement('div'),title=document.createElement('h3'),button=document.createElement('button'),role=document.createElement('p'),registration=document.createElement('small');
   button.textContent=person.name;button.type='button';button.setAttribute('aria-label','Conhecer '+person.name);button.setAttribute('aria-haspopup','dialog');
   button.onclick=()=>dialog(person.name,[person.role,person.bio,person.specialties.join(' · '),person.registration]);
-  const arrow=document.createElement('span');arrow.textContent='↗';arrow.setAttribute('aria-hidden','true');button.append(arrow);
+  const arrow=document.createElement('span');arrow.textContent='↗︎';arrow.setAttribute('aria-hidden','true');button.append(arrow);
   title.append(button);role.textContent=person.role;registration.textContent=person.registration;
   copy.append(title,role,registration);article.append(img,copy);list.append(article);
  }
