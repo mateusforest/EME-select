@@ -7,12 +7,13 @@ http.createServer(async(req,res)=>{
  try{
   if(req.method!=='GET'){res.writeHead(405,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Prévia: envio desativado.'}));return;}
   const url=new URL(req.url,'http://127.0.0.1:4194');
+  if(url.pathname==='/api/select/session'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({user:null}));return;}
   if(url.pathname.startsWith('/api/')){
    if(!/^\/api\/(?:public\/(?:properties|people|site-content|chat)|(?:photos|people-images)\/[a-f0-9-]{36}|auth\/session)$/.test(url.pathname)){res.writeHead(404);res.end();return;}
    const upstream=await fetch('https://www.emeselect.com'+url.pathname,{signal:AbortSignal.timeout(15000)});
    res.writeHead(upstream.status,{'Content-Type':upstream.headers.get('content-type')||'application/json','Cache-Control':'no-store'});res.end(Buffer.from(await upstream.arrayBuffer()));return;
   }
-  const file=resolve(root,'.'+(url.pathname==='/'||/^\/(?:enviar-imovel|portalselect)(?:\/|$)/.test(url.pathname)?'/index.html':decodeURIComponent(url.pathname)));
+  const file=resolve(root,'.'+(url.pathname==='/'||/^\/(?:enviar-imovel|portalselect|acesso-select)(?:\/|$)/.test(url.pathname)?'/index.html':decodeURIComponent(url.pathname)));
   if(!file.startsWith(root+sep)||(await stat(file)).isDirectory())throw Error();
   res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(await readFile(file));
  }catch{res.writeHead(404);res.end('Não encontrado');}

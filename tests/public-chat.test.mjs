@@ -112,7 +112,7 @@ test('cloud anonymous endpoint reads only ordered public snapshots, uses databas
  const api=createCloudApi({env,client,aiFetcher:async()=>{modelCalls++;return modelCalls===1?tool('search_catalog',{...filters,location:'Praia de Palmas'}):final({...answer,reply:'Não há opções publicadas em Praia de Palmas. Quer conversar com a equipe?',propertyIds:[],handoff:'team'});}});
  const {origin,post}=await serve(t,api);env.EME_TEST_HOST=new URL(origin).host;
  const response=await post();assert.equal(response.status,200);const data=await response.json();assert.deepEqual(data.properties,[]);assert.equal(data.handoff,'team');assert.equal(limits.length,2);
- assert.ok(queries.filter(q=>q.startsWith('eme_cases')).every(q=>q.includes('data->published&data->published=not.is.null&order=id')));
+ assert.ok(queries.filter(q=>q.startsWith('eme_cases')).every(q=>q.includes('data->published,data->access&data->published=not.is.null&order=id')));
  assert.ok(!queries.some(q=>q.includes('eme_sessions')||q.includes('eme_profiles')));
 });
 test('browser history is bounded; cancellation ignores a late answer and retry preserves exactly one user message',async()=>{

@@ -3,7 +3,7 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "rewrites": [
+  "rewrites": [{"source":"/acesso-select/:path*","destination":"/index.html"},
     {
       "source": "/imovel/:id/capa.jpg",
       "destination": "/api/propertyShare?id=:id&cover=1"

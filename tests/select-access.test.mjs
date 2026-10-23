@@ -1,0 +1,27 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {publicAccess,canRead,createSelectAccess} from '../server/select-access.mjs';
+const make=access=>({id:'11111111-1111-4111-8111-111111111111',data:{published:{title:'Casa'},access}});
+test('public inventory excludes reserved and individually granted properties until the scheduled time',()=>{const now=Date.parse('2026-10-23T12:00:00Z');assert.equal(publicAccess(make()),true);assert.equal(publicAccess(make({visibility:'reserved'})),false);assert.equal(publicAccess(make({visibility:'individual',publicAt:'2026-10-24T12:00:00Z'}),now),false);assert.equal(publicAccess(make({visibility:'reserved',publicAt:'2026-10-23T11:00:00Z'}),now),true);assert.equal(publicAccess(make({visibility:'unknown'})),false);});
+test('individual grants and ownership never cross between accounts',()=>{const row=make({visibility:'individual',allowed:['client-a'],owners:['owner-a']});for(const id of ['client-a','owner-a'])assert.equal(canRead(row,id),true);for(const id of [null,'client-b','owner-b'])assert.equal(canRead(row,id),false);assert.equal(canRead(make({visibility:'reserved'}),null),false);});
+function harness(){let identity=null,staff=null;const calls=[];const client={rest:async path=>{calls.push(path);if(path.includes('id=eq.client-a'))return [{id:'client-a',version:1,data:{kind:'select_account',name:'Cliente',events:[],favorites:[],search:{}}}];if(path.includes('published'))return [make({visibility:'individual',owners:['owner-b']})];return [];},request:async path=>{calls.push(path);if(path==='/auth/v1/user'){if(!identity)throw Error('Unauthorized');return identity;}throw Error('Unexpected request');}};const service=createSelectAccess({client,rate:async()=>{},staffSession:async()=>staff,openStaffSession:async()=>{},saveCase:async()=>{throw Error('Unexpected mutation');}});return {service,calls,identify:u=>identity=u,setStaff:u=>staff=u};}
+test('anonymous visitors and unverified accounts cannot read the customer space',async()=>{const h=harness(),req={method:'GET',headers:{cookie:'eme_select_token=token'}},res={};await assert.rejects(h.service.handle('/api/select/me',req,res,null,()=>{}),{status:401});h.identify({id:'client-a'});await assert.rejects(h.service.handle('/api/select/me',req,res,null,()=>{}),{status:403});});
+test('foreign documents are denied before storage is read',async()=>{const h=harness();h.identify({id:'client-a',email_confirmed_at:'2026-10-23'});await assert.rejects(h.service.handle('/api/select/documents/11111111-1111-4111-8111-111111111111',{method:'GET',headers:{cookie:'eme_select_token=token'}},{},null,()=>{}),{status:404});assert.equal(h.calls.some(p=>p.includes('/storage/')),false);});
+test('customers cannot use administrative access endpoints',async()=>{const h=harness();h.identify({id:'client-a',email_confirmed_at:'2026-10-23'});await assert.rejects(h.service.handle('/api/select/admin',{method:'POST',headers:{cookie:'eme_select_token=token'}},{},{action:'access'},()=>{}),{status:404});});
+
+test('profile writes preserve grants, record WhatsApp revocation, reject stale writes and require alert consent',async()=>{
+ let row={id:'client-a',version:1,data:{kind:'select_account',name:'Cliente',events:[],favorites:[],search:{},whatsapp:true,consentHistory:[]}};
+ const service=createSelectAccess({client:{request:async()=>({id:'client-a',email_confirmed_at:'today'}),rest:async(path,method,body)=>{if(path.startsWith('eme_cases?id=')){if(method==='PATCH'){assert.ok(path.endsWith('version=eq.'+row.version));row={...row,...body};}return [row];}if(path.includes('published'))return [make({visibility:'individual',allowed:['other']})];return [];}},rate:async()=>{},staffSession:async()=>null,openStaffSession:async()=>assert.fail(),saveCase:async()=>assert.fail()});
+ const call=(path,body)=>service.handle(path,{method:'POST',headers:{cookie:'eme_select_token=test'}},{},body,()=>{});
+ await service.handle('/api/select/me',{method:'PATCH',headers:{cookie:'eme_select_token=test'}},{},{version:1,whatsapp:false,phone:'',role:'admin',owners:['client-a']},()=>{});
+ assert.equal(row.data.whatsapp,false);assert.equal(row.data.consentHistory[0].enabled,false);assert.equal(row.data.role,undefined);assert.equal(row.data.owners,undefined);
+ await assert.rejects(service.handle('/api/select/me',{method:'PATCH',headers:{cookie:'eme_select_token=test'}},{},{version:1,search:{}},()=>{}),{status:409});
+ await assert.rejects(call('/api/select/requests',{type:'alert',text:'Meu alerta',authorized:false}),{status:400});
+ await assert.rejects(call('/api/select/requests',{type:'visit',propertyId:make().id,text:'Amanhã'}),{status:404});
+ await call('/api/select/requests',{type:'alert',text:'Procuro uma casa',authorized:true});assert.equal(row.data.events[0].authorized,true);assert.equal(row.data.events[0].status,'Recebido pela equipe');
+});
+
+test('registration sends no role or ownership metadata to the identity provider',async()=>{
+ let payload;const service=createSelectAccess({client:{request:async(path,args)=>{assert.equal(path,'/auth/v1/signup');payload=args.body;return {};},rest:async()=>assert.fail()},rate:async()=>{},staffSession:async()=>null});let result;
+ await service.handle('/api/select/register',{method:'POST',headers:{}},{},{name:'Cliente',email:'CLIENTE@example.com',password:'test-password-long',role:'admin',owners:['all']},(_,r)=>result=r);
+ assert.deepEqual(payload.data,{name:'Cliente'});assert.equal(payload.email,'cliente@example.com');assert.equal(result.authenticated,false);
+});

@@ -1,3 +1,4 @@
+import {createSelectAccess,publicAccess,canRead} from '../select-access.mjs';
 import {accessChange} from '../access-management.mjs';
 import {createPortalContent} from '../portal-content.mjs';
 import {internalKinds,propertyRecordsQuery} from '../../shared/portal-content.mjs';
@@ -46,7 +47,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
   read:async id=>(await rest('eme_cases?id=eq.'+id))[0]||null,
   write:(req,id,row,data,user,action)=>save(req,row||{id,version:0,assignee_id:user.id},data,action,'Revisão administrativa registrada.',user.id),
   listDocuments:async()=>(await rest('eme_cases?data->>kind=eq.company_document&select=id,version,data->document&order=created_at.desc')).map(r=>({id:r.id,version:r.version,...r.document})),
-  catalog:async()=>(await rest('eme_cases?select=id,data->published&data->published=not.is.null'+propertyRecordsQuery)).map(r=>r.published).filter(Boolean),
+  catalog:async()=>(await rest('eme_cases?select=id,data->published,data->access&data->published=not.is.null'+propertyRecordsQuery)).filter(r=>publicAccess({data:r})).map(r=>r.published).filter(Boolean),
  });
  const finance=attachCloudFinance({client,hashOf});
  const intelligence=attachCloudIntelligence({client,hashOf,caseFor,env,fetcher:aiFetcher});
@@ -64,11 +65,12 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
  async function deleteUnlinkedAuth(id){try{await request('/auth/v1/admin/users/'+id,{method:'DELETE'});}catch{console.error('Unlinked auth account requires administrator review');}}
  async function credentials(address,secret){return request('/auth/v1/token?grant_type=password',{method:'POST',publicKey:true,body:{email:address,password:secret}});}
  const rate=(key,max)=>rpc('eme_limit',{p_key:key,p_max:max});
+ const selectAccess=createSelectAccess({client,rate,staffSession:session,openStaffSession:openSession,saveCase:save});
  const readChatCatalog=async()=>{
   const entries=[];
   for(let offset=0;offset<10000;offset+=500){
-   const rows=await rest('eme_cases?select=id,data->published&data->published=not.is.null&order=id&limit=500&offset='+offset);
-   entries.push(...rows.map(row=>row.published).filter(Boolean));
+   const rows=await rest('eme_cases?select=id,data->published,data->access&data->published=not.is.null&order=id&limit=500&offset='+offset);
+   entries.push(...rows.filter(row=>publicAccess({data:row})).map(row=>row.published).filter(Boolean));
    if(rows.length<500)return entries;
   }
   fail(503,'O catálogo está em atualização. Tente novamente em instantes.');
@@ -83,12 +85,13 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    if(!allowed.includes(req.headers.host))fail(403,'Host não permitido.');if(!['GET','POST','PATCH'].includes(req.method))fail(405,'Método não permitido.');
    if(req.method!=='GET'&&(![`https://${req.headers.host}`,...(env.EME_TEST_HOST===req.headers.host?[`http://${req.headers.host}`]:[])].includes(req.headers.origin)||req.headers['sec-fetch-site']==='cross-site'))fail(403,'Origem não permitida.');
    let body=null;if(req.method!=='GET'){if(!String(req.headers['content-type']).startsWith('application/json'))fail(415,'Envie JSON.');if(req.body!==undefined){body=typeof req.body==='string'?JSON.parse(req.body):req.body;if(Buffer.byteLength(JSON.stringify(body))>3000000)fail(413,'Arquivo grande demais.');}else{let size=0;const chunks=[];for await(const part of req){size+=part.length;if(size>3000000)fail(413,'Arquivo grande demais.');chunks.push(part);}try{body=JSON.parse(Buffer.concat(chunks));}catch{fail(400,'Solicitação inválida.');}}}
+   if(await selectAccess.handle(path,req,res,body,send))return;
    if(await content.publicHandle(path,req,res,send))return;
    if(await people.publicHandle(path,req,res,send))return;
    if(await developments.publicHandle(path,req,res,send))return;
    if(await leads.publicHandle(path,req,body,send))return;
    if(await publicChat.handle(path,req,body,send))return;
-   if(path==='/api/public/properties'&&req.method==='GET'){const rows=await rest('eme_cases?select=id,data->published&data->published=not.is.null');return send(200,{properties:rows.map(r=>r.published).filter(Boolean)});}
+   if(path==='/api/public/properties'&&req.method==='GET'){const rows=await rest('eme_cases?select=id,data->published,data->access&data->published=not.is.null');return send(200,{properties:rows.filter(r=>publicAccess({data:r})).map(r=>r.published).filter(Boolean)});}
    if(path==='/api/public/submissions'&&req.method==='POST'){
     if(Buffer.byteLength(JSON.stringify(body))>16000)fail(413,'Reduza o tamanho das informações.');
     await rate('submission-ip:'+digest(String(req.headers['x-forwarded-for']||'unknown').split(',')[0]),6);await rate('submission-total',100);
@@ -98,7 +101,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    let user=await session(req);
    const photoMatch=path.match(/^\/api\/photos\/([a-f0-9-]{36})$/);
    if(photoMatch&&req.method==='GET'){
-    let rows=await rest('eme_cases?data->photos=cs.'+encodeURIComponent(JSON.stringify([{id:photoMatch[1]}])));if(!rows.length)rows=await rest('eme_cases?data->published->images=cs.'+encodeURIComponent(JSON.stringify([{url:'/api/photos/'+photoMatch[1]}])));const row=rows[0];if(!row)fail(404,'Foto não encontrada.');const originalRequested=new URL(req.url,'https://eme.local').searchParams.get('original')==='1';const isPublic=!originalRequested&&row.data.published?.images.some(p=>p.url==='/api/photos/'+photoMatch[1]);if(!isPublic&&(!user||user.must_change||user.role!=='admin'&&user.id!==row.assignee_id))fail(404,'Foto não encontrada.');
+    let rows=await rest('eme_cases?data->photos=cs.'+encodeURIComponent(JSON.stringify([{id:photoMatch[1]}])));if(!rows.length)rows=await rest('eme_cases?data->published->images=cs.'+encodeURIComponent(JSON.stringify([{url:'/api/photos/'+photoMatch[1]}])));const row=rows[0];if(!row)fail(404,'Foto não encontrada.');const originalRequested=new URL(req.url,'https://eme.local').searchParams.get('original')==='1';const isPublic=!originalRequested&&publicAccess(row)&&row.data.published?.images.some(p=>p.url==='/api/photos/'+photoMatch[1]);if(!isPublic&&(!user||user.must_change||user.role!=='admin'&&user.id!==row.assignee_id)){const customer=!originalRequested?await selectAccess.identity(req):null;if(!customer?.email_confirmed_at||!canRead(row,customer.id)||!row.data.published?.images.some(p=>p.url==='/api/photos/'+photoMatch[1]))fail(404,'Foto não encontrada.');}
     const response=await request('/storage/v1/object/authenticated/eme-property-photos/'+(originalRequested?(row.data.photos.find(p=>p.id===photoMatch[1])?.originalId||photoMatch[1]):photoMatch[1])+'.webp',{raw:true});const bytes=Buffer.from(await response.arrayBuffer());res.setHeader('Content-Type','image/webp');res.end(bytes);return;
    }
    if(path==='/api/auth/session'&&req.method==='GET'){const exists=await rest('eme_profiles?select=id&limit=1');return send(200,{user:user?safe(user):null,needsSetup:exists.length===0,cloud:true,requiresActivation:true});}
