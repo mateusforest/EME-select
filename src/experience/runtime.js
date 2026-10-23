@@ -1,5 +1,6 @@
 import {mapProperties} from './properties.js';
 import {createIcons} from './icons.js';
+import {createCatalog} from './catalog-view.js';
 export function mountExperience(publishedProperties,assetMap){
 const lucide={createIcons};
 let routingReady=false;
@@ -11,6 +12,20 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   const hero = root.querySelector('.ec-hero');
   const viewport = root.querySelector('.ec-viewport');
   const world = root.querySelector('.ec-world');
+  const focusView=document.createElement('img');
+  focusView.className='ec-focus-view';focusView.alt='';focusView.decoding='async';focusView.setAttribute('aria-hidden','true');
+  viewport.append(focusView);
+  let focusVersion=0;
+  async function loadFocus(id) {
+    const version=++focusVersion;
+    root.classList.remove('has-focus-detail');
+    if(!id)return;
+    focusView.src='/assets/experience/hero-'+id+'-detail.webp';
+    try{await focusView.decode();}catch{return;}
+    if(version!==focusVersion||chosen!==id)return;
+    root.dataset.focus=id;
+    requestAnimationFrame(()=>{if(version===focusVersion)root.classList.add('has-focus-detail');});
+  }
   const portals = [...root.querySelectorAll('.ec-portal')];
   const detail = root.querySelector('.ec-detail');
   const options = root.querySelector('.ec-options');
@@ -83,15 +98,15 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     const width = Math.min(cat.id === 'comercial' ? 360 : 290,availableWidth);
     spaceFilters.style.width = width+'px';
     const center = camera.x + cat.x*BW*camera.scale;
-    const roof = camera.y + cat.box[1]*BH*camera.scale;
     const minBottom = mobile ? detail.offsetTop+detail.offsetHeight+spaceFilters.offsetHeight+34 : spaceFilters.offsetHeight+25;
     const x = clamp(center,leftEdge+width/2,W-width/2-20);
-    const y = clamp(roof-22,minBottom,H-150);
+    const y = mobile ? clamp(detail.offsetTop+detail.offsetHeight+65,minBottom,H-330) : Math.max(100,H*.15);
     spaceFilters.style.left = x+'px';
     spaceFilters.style.top = y+'px';
   }
 
   function moveCamera(immediate = false) {
+    root.dataset.focusChoice=String(choice??'');
     const cat = categoryById(chosen);
     if (!cat) {
       camera = W <= 600
@@ -160,6 +175,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     clearTimeout(arrivalTimer);
     clearTimeout(portalTimer);
     chosen = id;
+    loadFocus(id);
     choice = null;
     focusIndex = categories.indexOf(cat);
     root.classList.add('is-exploring');
@@ -176,6 +192,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     clearTimeout(arrivalTimer);
     clearTimeout(portalTimer);
     chosen = null;
+    loadFocus(null);
     choice = null;
     root.classList.remove('is-exploring');
     detail.hidden = true;
@@ -191,7 +208,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if (!hero.clientWidth) return;
     W = hero.clientWidth;
     H = hero.clientHeight;
-    BW = W <= 600 ? 900 : W*1.045;
+    BW = W <= 600 ? 900 : Math.min(W*1.045,2172);
     BH = BW/3;
     world.style.width = BW+'px';
     world.style.height = BH+'px';
@@ -327,9 +344,27 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   let regionId = 'vacaria';
   let regionType = '';
   let propertyOriginRegion = null;
+  let propertyOriginCatalog = false;
+  let catalogReturnScroll = 0;
   let regionReturnScroll = 0;
   let regionPickerOpener = collectionToggle;
   let homeStateId='rs';
+  const catalog=createCatalog({root,properties,assets,regions,getSaved:()=>savedIds,
+    onOpen:id=>openProperty(id),
+    onSave:id=>{if(savedIds.has(id))savedIds.delete(id);else savedIds.add(id);updateFavorites();save();},
+    onChange:()=>save(),onHome:()=>{showHome(null,true);save();}
+  });
+  function showCatalog(query,{returning=false,persist=true}={}) {
+    if(assistantMode&&!chatMinimized)minimizeChat(false);
+    view='catalog';root.dataset.page=view;home.hidden=true;propertyPage.hidden=true;regionPage.hidden=true;
+    propertyOriginRegion=null;propertyOriginCatalog=false;setRegionPicker(false);
+    root.querySelector('.ec-header').classList.remove('nav-open');root.querySelector('.ex-menu-toggle').setAttribute('aria-expanded','false');
+    catalog.show(query);
+    root.querySelector('.ec-page-scroll').scrollTop=returning?catalogReturnScroll:0;
+    if(returning)catalog.page.querySelector('[data-catalog-property="'+selectedId+'"]')?.focus({preventScroll:true});
+    else catalog.page.querySelector('h1').focus({preventScroll:true});
+    if(persist)save();
+  }
   function renderHomeRegions() {
     const stateList=root.querySelector('.er-home-states');
     stateList.replaceChildren();
@@ -407,7 +442,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     const filters=regionPage.querySelector('.er-types');filters.replaceChildren();
     regionTypes.forEach(type=>{
       const button=regionButton('');button.dataset.regionType=type.id;button.setAttribute('aria-pressed',String(regionType===type.id));
-      const count=type.id ? all.filter(property=>property.type===type.id).length : all.length;
+      const count=type.id ? all.filter(property=>property.type===type.id||property.group===type.id).length : all.length;
       button.append(regionIcon(type.icon),element('span','',type.name),element('small','',String(count)));
       button.setAttribute('aria-label',type.name+' · '+count+' '+(count===1 ? 'imóvel' : 'imóveis'));filters.append(button);
     });
@@ -441,7 +476,8 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     regionPage.querySelector('.er-state-label').textContent=state.name;
     regionPage.querySelector('#eme-region-title').textContent=region.name+'.';
     regionPage.querySelector('.er-municipality').textContent=region.id==='vacaria' ? 'A coleção EME Select na cidade' : region.context;
-    const image=regionPage.querySelector('.er-landscape');image.src=assets[region.asset];image.alt=region.imageAlt;
+    const image=regionPage.querySelector('.er-landscape');image.src=assets[region.asset];image.alt=region.imageAlt;image.loading='eager';
+    if(region.id==='praia-de-palmas'){image.srcset='/assets/experience/palmas-1200.webp 1200w, /assets/experience/palmas-2400.webp 2400w';image.sizes='(max-width:760px) 100vw, 65vw';}else{image.removeAttribute('srcset');image.removeAttribute('sizes');}
     regionPage.querySelector('.er-landmark').hidden=region.id!=='vacaria';
     regionPage.querySelector('.er-hero-intro p').textContent=region.intro;
     regionPage.querySelector('#eme-region-selection-title').textContent=region.collectionTitle;
@@ -461,6 +497,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if(assistantMode && !chatMinimized)minimizeChat(false);
     if(reset || id!==regionId)regionType='';
     homeStateId=regionById(id).stateId;renderHomeRegions();
+    catalog.page.hidden=true;propertyOriginCatalog=false;
     regionId=id;view='region';propertyOriginRegion=null;root.dataset.page='region';home.hidden=true;propertyPage.hidden=true;regionPage.hidden=false;
     root.querySelector('.ec-header').classList.remove('nav-open');root.querySelector('.ex-menu-toggle').setAttribute('aria-expanded','false');
     setRegionPicker(false);renderRegion();
@@ -596,6 +633,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   }
 
   function showHome(section = null,resetFilter = false,scroll = true) {
+    catalog.page.hidden=true;propertyOriginCatalog=false;
     regionPage.hidden=true;propertyOriginRegion=null;setRegionPicker(false);
     if (assistantMode && !chatMinimized) minimizeChat(false);
     root.querySelector('.ec-header').classList.remove('nav-open');
@@ -721,13 +759,14 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
 
   function openProperty(id,animate = true,originRegion = null) {
     if (!byId(id) || changingPage) return;
+    if(view==='catalog'){propertyOriginCatalog=true;catalogReturnScroll=root.querySelector('.ec-page-scroll').scrollTop;}else if(view!=='property')propertyOriginCatalog=false;
     if (assistantMode && !chatMinimized) minimizeChat(false);
     propertyOriginRegion=originRegion && byId(id).regionId===originRegion ? originRegion : null;
     setRegionPicker(false);
     selectedId = id;
     photoIndex = 0;
     const update = () => {
-      regionPage.hidden=true;
+      catalog.page.hidden=true;regionPage.hidden=true;
       view = 'property';
       root.dataset.page = 'property';
       home.hidden = true;
@@ -750,21 +789,18 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   root.addEventListener('click',event=>{
     const target = event.target;
     const sectionButton = target.closest('[data-section]');
-    if (sectionButton) { if((view==='region' || (view==='property' && propertyOriginRegion)) && sectionButton.dataset.section==='opportunities'){if(view==='property')showRegion(propertyOriginRegion,{reset:false,persist:false});setRegionPicker(false);scrollToElement(regionPage.querySelector('.er-selection'));}else showHome(sectionButton.dataset.section,['collection','opportunities'].includes(sectionButton.dataset.section)); save(); return; }
+    if (sectionButton) { event.preventDefault();if(sectionButton.dataset.section==='collection'){showCatalog('');return;} if((view==='region' || (view==='property' && propertyOriginRegion)) && sectionButton.dataset.section==='opportunities'){if(view==='property')showRegion(propertyOriginRegion,{reset:false,persist:false});setRegionPicker(false);scrollToElement(regionPage.querySelector('.er-selection'));}else showHome(sectionButton.dataset.section,['collection','opportunities'].includes(sectionButton.dataset.section)); save(); return; }
     if (target.closest('.ec-brand')) { showHome(null,true); save(); return; }
     const categoryLink = target.closest('.ec-collection');
     if (categoryLink) {
       event.preventDefault();
       const hash = new URL(categoryLink.href).hash;
       const query = hash.includes('?') ? hash.split('?')[1] : '';
-      filterType = new URLSearchParams(query).get('tipo');
-      favoritesOnly = false;
-      showHome('collection');
-      save();
+      showCatalog(query);
       return;
     }
     if (target.closest('.ec-reset-collection')) { showHome('collection',true); save(); return; }
-    if (target.closest('.ec-favorites')) { filterType = null; favoritesOnly = true; showHome('collection'); save(); return; }
+    if (target.closest('.ec-favorites')) { showCatalog({saved:true});return; }
     const selector = target.closest('[data-property-select]');
     if (selector) {
       selectFeatured(selector.dataset.propertySelect);
@@ -779,7 +815,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
       return;
     }
     if (target.closest('.ec-featured-photo,.ec-open-property')) { openProperty(featuredId); return; }
-    if (target.closest('.ep-back')) { if(propertyOriginRegion){showRegion(propertyOriginRegion,{reset:false,returning:true});}else{showHome('collection');root.querySelector('.ec-open-property').focus({preventScroll:true});save();} return; }
+    if (target.closest('.ep-back')) { if(propertyOriginRegion){showRegion(propertyOriginRegion,{reset:false,returning:true});}else{showCatalog(propertyOriginCatalog?undefined:'',{returning:propertyOriginCatalog});} return; }
     const chapter = target.closest('[data-chapter]');
     if (chapter) { setPhoto(Number(chapter.dataset.chapter)); scrollToElement(root.querySelector('.ep-gallery')); save(); return; }
     if (target.closest('.ep-prev,.ex-photo-prev')) { setPhoto(photoIndex-1); save(); return; }
@@ -1192,6 +1228,18 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     composer.elements.message.style.height = '48px';
     requestAnimationFrame(() => { const stream = root.querySelector('.ex-chat-scroll'); stream.scrollTop = stream.scrollHeight; });
   }
+  function newConversation() {
+    if(leadSending)return;
+    if(voiceRecognition){voiceRecognition.onstart=voiceRecognition.onresult=voiceRecognition.onerror=voiceRecognition.onend=null;voiceRecognition.abort();voiceRecognition=null;}
+    conversation=[];intent={};currentMatches=[...properties];leadKind='selection';leadPropertyId=null;leadRequestId=crypto.randomUUID();
+    headerSearch.value='';composer.reset();composer.elements.message.style.height='48px';
+    root.querySelector('.ex-transcript').value='';root.querySelector('.ex-voice-state').textContent='';root.querySelector('.ex-voice-example').textContent='Gravar meu pedido';
+    leadForm.reset();leadForm.hidden=false;root.querySelector('.ex-error').hidden=true;root.querySelector('.ex-success').hidden=true;
+    resultList.replaceChildren();root.querySelector('.ex-result-summary').textContent='';
+    chatWelcome();openAssistant('chat');root.querySelector('.ex-chat-scroll').scrollTop=0;
+    status.textContent='Nova conversa iniciada.';save();
+  }
+  root.querySelector('.ex-new-chat').addEventListener('click',newConversation);
   function runSearch(text,reset = true) {
     if (!text.trim()) { headerSearch.focus(); return; }
     openAssistant('search'); respond(text,reset); save();
@@ -1244,7 +1292,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     const interest=leadPropertyId?byId(leadPropertyId).full:criteriaText()||'Quero conhecer a coleção EME Select';
     const q=new URLSearchParams(location.search);
     const body={requestId:leadRequestId,name:leadForm.elements.name.value.trim(),phone,consent:true,propertyId:leadPropertyId,interest:interest.slice(0,400),message:criteriaText().slice(0,1500),intent:leadKind==='visit'?'visit':'contact',source:{page:(location.pathname+location.hash.split('?')[0]).slice(0,300),origin:(q.get('utm_source')||'').slice(0,100),medium:(q.get('utm_medium')||'').slice(0,100),campaign:(q.get('utm_campaign')||'').slice(0,150)}};
-    leadSending=true;button.disabled=true;button.textContent='Enviando…';
+    leadSending=true;root.querySelector('.ex-new-chat').disabled=true;button.disabled=true;button.textContent='Enviando…';
     try{
       const response=await fetch('/api/public/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(15000)});
       const data=await response.json();
@@ -1252,7 +1300,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
       root.querySelector('.ex-success-copy').textContent='Seu interesse: '+interest+'. Protocolo: '+String(data.reference).slice(0,8).toUpperCase()+'.';
       leadForm.reset();leadForm.hidden=true;root.querySelector('.ex-success').hidden=false;
     }catch(e){error.textContent=e.name==='TimeoutError'?'Não foi possível confirmar o envio. Tente novamente com este mesmo pedido.':e.message||'Confira sua conexão e tente novamente.';error.hidden=false;}
-    finally{leadSending=false;button.disabled=false;button.textContent='Solicitar contato ↗';}
+    finally{leadSending=false;root.querySelector('.ex-new-chat').disabled=false;button.disabled=false;button.textContent='Solicitar contato ↗';}
   }
 
   root.querySelectorAll('button[type="submit"]').forEach(button=>button.type='button');
@@ -1318,17 +1366,22 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   new ResizeObserver(() => {headerSearch.placeholder = root.clientWidth < 310 ? 'Buscar imóveis' : 'O que você procura?';}).observe(root);
   function syncRoute(){
     if(!routingReady)return;
-    const hash=view==='property'?'#/imovel/'+selectedId:view==='region'?'#/regiao/'+regionId:filterType?'#/colecao?tipo='+encodeURIComponent(filterType):'#/';
-    if(location.hash!==hash)history.pushState(null,'',hash);
-    document.title=(view==='property'?byId(selectedId)?.title:view==='region'?regionById(regionId).name:'Seu próximo lugar')+' — EME Select';
+    const hash=view==='property'?'#/imovel/'+selectedId:view==='region'?'#/regiao/'+regionId:view==='catalog'?catalog.hash():'#/';
+    const navigation=view==='property'&&propertyOriginCatalog?{catalogReturn:catalog.hash(),catalogScroll:catalogReturnScroll}:null;
+    if(location.hash!==hash)history.pushState(navigation,'',hash);
+    document.title=(view==='property'?byId(selectedId)?.title:view==='region'?regionById(regionId).name:view==='catalog'?'Todos os imóveis':'Seu próximo lugar')+' — EME Select';
   }
   function applyRoute(){
     const before=routingReady;routingReady=false;
     const parts=location.hash.split('?')[0].replace(/^#\/?/,'').split('/');
-    if(parts[0]==='colecao'){filterType=new URLSearchParams(location.hash.split('?')[1]||'').get('tipo');favoritesOnly=false;}
-    if(['imovel','visita'].includes(parts[0])&&byId(parts[1]))openProperty(parts[1],false);
+    if(['imovel','visita'].includes(parts[0])&&byId(parts[1])) {
+      openProperty(parts[1],false);
+      if(history.state?.catalogReturn){catalog.show(history.state.catalogReturn.split('?')[1]||'');catalog.page.hidden=true;propertyOriginCatalog=true;catalogReturnScroll=history.state.catalogScroll||0;}
+    }
     else if(parts[0]==='regiao'&&regionById(parts[1]))showRegion(parts[1],{persist:false});
-    else {showHome(parts[0]==='colecao'?'collection':null,false,true);if(['imovel','visita'].includes(parts[0]))status.textContent='Este imóvel não está disponível na coleção atual.';}
+    else if(parts[0]==='colecao')showCatalog(location.hash.split('?')[1]||'',{persist:false});
+    else {showHome(null,false,true);if(['imovel','visita'].includes(parts[0]))status.textContent='Este imóvel não está disponível na coleção atual.';}
+    document.title=(view==='property'?byId(selectedId)?.title:view==='region'?regionById(regionId).name:view==='catalog'?'Todos os imóveis':'Seu próximo lugar')+' — EME Select';
     routingReady=before;
   }
   window.addEventListener('popstate',applyRoute);

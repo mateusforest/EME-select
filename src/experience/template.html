@@ -64,7 +64,7 @@
       <div class="ec-continuation-copy"><p>Um olhar atento à arquitetura, à qualidade e ao potencial de cada imóvel. Espaço para o que faz sentido para você.</p><button type="button" class="ec-link ec-plain cursor-interaction" data-section="curation"><span>Como selecionamos os imóveis</span><span aria-hidden="true">↗</span></button></div>
     </section>
     <section class="ec-collection-section ec-pad" id="eme-full-collection" aria-label="A coleção de imóveis">
-      <div class="ec-section-top"><div><p class="ec-eyebrow">A COLEÇÃO EME SELECT</p><h2 class="ec-section-title">Da inspiração<br>ao endereço.</h2></div><div class="ec-collection-context"><p class="ec-collection-count">03 imóveis para conhecer</p><button type="button" class="ec-reset-collection ec-plain ec-link cursor-interaction" hidden>Ver a seleção completa ↗</button></div></div>
+      <div class="ec-section-top"><div><p class="ec-eyebrow">A COLEÇÃO EME SELECT</p><h2 class="ec-section-title">Da inspiração<br>ao endereço.</h2></div><div class="ec-collection-context"><a class="el-all-link ec-link" href="#/colecao" data-section="collection">Ver todos os imóveis ↗</a><p class="ec-collection-count">03 imóveis para conhecer</p><button type="button" class="ec-reset-collection ec-plain ec-link cursor-interaction" hidden>Ver a seleção completa ↗</button></div></div>
       <div class="ec-featured-wrap" id="eme-full-opportunities">
         <p class="ex-opportunities-title"><i data-lucide="sparkles" aria-hidden="true"></i> Oportunidades</p>
         <article class="ec-featured" aria-label="Oportunidade da coleção">
@@ -92,6 +92,27 @@
     <section class="ec-owners ec-pad" id="eme-full-owners" aria-label="Para proprietários"><div><p class="ec-eyebrow">PARA PROPRIETÁRIOS</p><h2>Seu imóvel.<br>Um olhar à altura.</h2></div><div><p>Quer vender ou alugar? Apresente seu imóvel para uma análise da equipe. Conhecemos suas características e avaliamos sua entrada na coleção.</p><a class="ec-link" href="https://www.emeselect.com/enviar-imovel" target="_blank" rel="noopener">Apresentar meu imóvel <span aria-hidden="true">↗</span></a><button type="button" class="ec-text-button cursor-interaction" data-owner-chat>Tirar dúvidas com o assistente <span aria-hidden="true">↗</span></button></div></section>
     <section class="ec-contact-section ec-pad" id="eme-full-contact" aria-label="Converse com a EME"><p class="ec-eyebrow">A PRÓXIMA ESCOLHA COMEÇA AQUI</p><h2>Conte o que você<br>quer viver.</h2><p>Converse com o M ou fale diretamente com a nossa equipe.</p><div class="ex-contact-actions"><button type="button" class="ec-action cursor-interaction" data-assistant="chat">Conversar com M · 24 horas <span aria-hidden="true">↗</span></button><a class="ec-link" href="https://wa.me/5554991578029?text=Ol%C3%A1!%20Gostaria%20de%20conversar%20sobre%20o%20im%C3%B3vel%20que%20procuro." target="_blank" rel="noopener">Falar com a equipe no WhatsApp <span aria-hidden="true">↗</span></a></div></section>
   </main>
+<main class="el-catalog" aria-labelledby="eme-catalog-title" hidden>
+  <div class="el-heading"><button type="button" class="ec-link ec-plain el-home">← Página inicial</button><p class="ec-eyebrow">A COLEÇÃO EME SELECT</p><h1 id="eme-catalog-title" tabindex="-1">Todos os imóveis.<br><span>O seu próximo lugar.</span></h1><p>Explore a seleção no seu ritmo. Encontre o que combina com seus planos.</p></div>
+  <div class="el-layout">
+    <details class="el-filter-panel" open><summary><i data-lucide="sliders-horizontal" aria-hidden="true"></i>Refinar a coleção<i data-lucide="chevron-down" aria-hidden="true"></i></summary>
+      <form class="el-filters" aria-label="Filtros da coleção">
+        <label>O que você procura?<input name="q" type="search" placeholder="Bairro, lareira, jardim…" maxlength="180"></label>
+        <label>Finalidade<select name="operation"><option value="">Comprar ou alugar</option><option value="comprar">Comprar</option><option value="alugar">Alugar</option></select></label>
+        <label>Estado<select name="state"><option value="">Todos os estados</option></select></label>
+        <label>Cidade ou região<select name="region"><option value="">Todas as regiões</option></select></label>
+        <label>Tipo de imóvel<select name="type"><option value="">Todos os tipos</option></select></label>
+        <fieldset><legend>Valor · R$</legend><div class="el-field-pair"><label><span>Mínimo</span><input name="min" type="number" min="0" step="any" inputmode="decimal" placeholder="Sem mínimo"></label><label><span>Máximo</span><input name="max" type="number" min="0" step="any" inputmode="decimal" placeholder="Sem máximo"></label></div></fieldset>
+        <label>Área mínima · m²<input name="area" type="number" min="0" step="any" inputmode="decimal" placeholder="Qualquer área"></label>
+        <div class="el-field-pair"><label>Quartos<select name="beds"><option value="">Todos</option><option value="1">1 ou mais</option><option value="2">2 ou mais</option><option value="3">3 ou mais</option><option value="4">4 ou mais</option></select></label><label>Vagas<select name="parking"><option value="">Todas</option><option value="1">1 ou mais</option><option value="2">2 ou mais</option><option value="3">3 ou mais</option></select></label></div>
+        <label class="el-saved-filter"><input name="saved" type="checkbox">Somente imóveis salvos</label>
+        <p class="el-filter-error" role="alert" hidden></p>
+        <button type="button" class="ec-action el-apply">Ver imóveis<i data-lucide="arrow-up-right" aria-hidden="true"></i></button><button type="button" class="el-clear">Limpar filtros</button>
+      </form>
+    </details>
+    <section class="el-results" aria-label="Imóveis da coleção"><div class="el-results-bar"><p class="el-count" role="status"></p><label>Ordenar por<select class="el-sort"><option value="selection">Seleção EME</option><option value="price-asc">Menor valor</option><option value="price-desc">Maior valor</option><option value="area-desc">Maior área</option></select></label></div><div class="el-active-filters" aria-label="Filtros aplicados"></div><div class="el-grid"></div><div class="el-empty" hidden><i data-lucide="scan-search" aria-hidden="true"></i><h2>Vamos ampliar as possibilidades?</h2><p>Nenhum imóvel reúne esses critérios na coleção atual. Ajuste os filtros ou conte à EME o que você procura.</p><button type="button" class="ec-action el-clear">Ver toda a coleção<i data-lucide="arrow-up-right" aria-hidden="true"></i></button><button type="button" class="ec-link ec-plain" data-assistant="chat">Conversar com M · 24 horas ↗</button></div></section>
+  </div>
+</main>
 <main class="er-region" aria-label="Imóveis por região" hidden>
   <div class="er-location-bar">
     <div class="er-breadcrumb" aria-label="Localização na coleção"><button type="button" data-section="collection" class="cursor-interaction">A coleção</button><i data-lucide="chevron-right" aria-hidden="true"></i><button type="button" class="er-state-link cursor-interaction" data-region-picker></button><i data-lucide="chevron-right" aria-hidden="true"></i><span class="er-breadcrumb-city"></span></div>
@@ -186,6 +207,7 @@
   </dialog>
   <section class="ex-assistant" id="eme-chat" role="dialog" aria-modal="false" aria-label="Conversa com a EME" hidden>
     <div class="ex-assistant-top"><span class="ex-chat-avatar" aria-hidden="true"><span class="ex-chat-symbol"></span></span><div class="ex-chat-identity"><strong>EME Select</strong><small>Online · busca assistida</small></div><div class="ex-chat-window-controls"><button type="button" class="ex-minimize-chat cursor-interaction" aria-label="Minimizar conversa" data-tooltip="Minimizar"><i data-lucide="minus" aria-hidden="true"></i></button><button type="button" class="ex-assistant-back cursor-interaction" aria-label="Fechar chat"><i data-lucide="x" aria-hidden="true"></i></button></div></div>
+    <div class="ex-chat-tools"><span>Um novo começo, quando quiser.</span><button type="button" class="ex-new-chat"><i data-lucide="square-pen" aria-hidden="true"></i>Nova conversa</button></div>
     <button type="button" class="ex-chat-return cursor-interaction" hidden>← Voltar à conversa</button>
     <div class="ex-assistant-layout">
       <div class="ex-conversation"><div class="ex-chat-scroll">

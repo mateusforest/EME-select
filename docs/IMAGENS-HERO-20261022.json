@@ -1,0 +1,27 @@
+{
+  "mode": "Built-in image_gen; edit with local reference, opaque background",
+  "reference": "C:/Users/EME/.codex/generated_images/01a16533-4cb8-7b82-bb1f-95e50498ce5b/exec-2c24a6d0-cfd8-4a0e-927a-9bb3941bc814.png",
+  "assets": [
+    {
+      "path": "C:/Users/EME/Documents/ChatGPT/EME SELECT/site/public/assets/experience/hero-casas-detail.webp",
+      "dimensions": "1536x1024",
+      "prompt": "Use case: precise-object-edit. Edit target: the attached conceptual architectural panorama. Produce a CLOSE-UP of ONLY the specified object, for its dedicated zoomed-in website view. Keep exactly that object's design, materials, number of floors, proportions, camera direction and ivory warm light. Show the whole object completely, no clipping, on the same seamless warm ivory ground and backdrop. The object should fill about 85% of width, with minimal margins and enough floor for natural contact shadows. Render in crisp high-definition detail with finely resolved stone joints, slender frames and glass, no haze. Landscape 3:2 composition. No other buildings or objects, no text, logos or people. Subject: The two-storey limestone house, second object from left. Keep the front and left side visible exactly as in the original."
+    },
+    {
+      "path": "C:/Users/EME/Documents/ChatGPT/EME SELECT/site/public/assets/experience/hero-apartamentos-detail.webp",
+      "dimensions": "1536x1024",
+      "prompt": "Use case: precise-object-edit. Edit target: the attached conceptual architectural panorama. Produce a CLOSE-UP of ONLY the specified object, for its dedicated zoomed-in website view. Keep exactly that object's design, materials, number of floors, proportions, camera direction and ivory warm light. Show the whole object completely, no clipping, on the same seamless warm ivory ground and backdrop. The object should fill about 85% of width, with minimal margins and enough floor for natural contact shadows. Render in crisp high-definition detail with finely resolved stone joints, slender frames and glass, no haze. Landscape 3:2 composition. No other buildings or objects, no text, logos or people. Subject: The apartment tower, third object from left. Keep the whole tower and penthouse, preserving every floor and balcony."
+    },
+    {
+      "path": "C:/Users/EME/Documents/ChatGPT/EME SELECT/site/public/assets/experience/hero-terrenos-detail.webp",
+      "dimensions": "1536x1024",
+      "prompt": "Use case: precise-object-edit. Edit target: the attached conceptual architectural panorama. Produce a CLOSE-UP of ONLY the specified object, for its dedicated zoomed-in website view. Keep exactly that object's design, materials, number of floors, proportions, camera direction and ivory warm light. Show the whole object completely, no clipping, on the same seamless warm ivory ground and backdrop. The object should fill about 85% of width, with minimal margins and enough floor for natural contact shadows. Render in crisp high-definition detail with finely resolved stone joints, slender frames and glass, no haze. Landscape 3:2 composition. No other buildings or objects, no text, logos or people. Subject: The low rectangular empty land plot bounded by limestone, the first object on the left. Preserve the empty sand and stone plot, do not add a house."
+    },
+    {
+      "path": "C:/Users/EME/Documents/ChatGPT/EME SELECT/site/public/assets/experience/hero-comercial-detail.webp",
+      "dimensions": "1536x1024",
+      "prompt": "Use case: precise-object-edit. Edit target: the attached conceptual architectural panorama. Produce a CLOSE-UP of ONLY the specified object, for its dedicated zoomed-in website view. Keep exactly that object's design, materials, number of floors, proportions, camera direction and ivory warm light. Show the whole object completely, no clipping, on the same seamless warm ivory ground and backdrop. The object should fill about 85% of width, with minimal margins and enough floor for natural contact shadows. Render in crisp high-definition detail with finely resolved stone joints, slender frames and glass, no haze. Landscape 3:2 composition. No other buildings or objects, no text, logos or people. Subject: The three-storey commercial building at the far right. Preserve its glass ground-floor shops and all upper floors."
+    }
+  ],
+  "notes": "Conceptual architecture only. No listing photography was changed. WebP encoding quality 93; the close-up is loaded on demand. Original panorama retained for overview and motion. Cathedral uses previous 1024x1536 transparent master, WebP q95. Palmas uses original 6000x4000 photograph encoded to responsive 1200/2400px WebP q88; attribution and license retained."
+}
