@@ -1411,7 +1411,8 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     let current='collection';
     if(view==='home') {
       for(const section of ['opportunities','team','owners']) {
-        if(root.querySelector('#eme-full-'+section).getBoundingClientRect().top<=readingLine)current=section;
+        const target=root.querySelector('#eme-full-'+section);
+        if(target.getClientRects().length && target.getBoundingClientRect().top<=readingLine)current=section;
       }
     } else if(view==='region' && regionPage.querySelector('.er-selection').getBoundingClientRect().top<=readingLine)current='opportunities';
     header.querySelectorAll('nav button').forEach(button=>{

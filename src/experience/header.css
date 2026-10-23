@@ -28,14 +28,35 @@
   padding: 0;
 }
 #eme-continuo .ec-header .ec-mark {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 64px;
   height: 60px;
-  background: url('/assets/experience/brand-select-20261022.webp') 49.5% 57% / 170% auto no-repeat;
+  background: none;
+  mask: none;
+}
+#eme-continuo .ec-header .ec-mark::before {
+  content: '';
+  width: 100%;
+  height: calc(100% - 13px);
+  flex-shrink: 0;
+  background: url('/assets/experience/brand-select-20261022.webp') 49.5% 48% / 170% auto no-repeat;
   mix-blend-mode: multiply;
   mask-image: linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent),linear-gradient(transparent,#000 5%,#000 95%,transparent);
   mask-composite: intersect;
   mask-size: 100% 100%;
   mask-position: center;
+}
+#eme-continuo .ec-header .ec-mark::after {
+  content: 'SELECT';
+  display: block;
+  margin-top: 3px;
+  padding-left: 4.2px;
+  color: #15513c;
+  font: 600 6px/10px 'Manrope',Arial,sans-serif;
+  letter-spacing: 4.2px;
 }
 #eme-continuo .ec-header .ex-search {
   grid-area: 1 / 2;
