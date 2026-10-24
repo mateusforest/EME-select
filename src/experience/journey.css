@@ -1,0 +1,101 @@
+/* Final cascade for the landing journey: consistent spacing and contained actions. */
+html #eme-continuo .ec-hero{overflow-anchor:none}
+html #eme-continuo .ex-hero-highlights[hidden]{display:none}
+html #eme-continuo .ec-continuation{max-width:1408px;width:calc(100% - 12.5vw);margin:0 auto;padding:52px 0;gap:48px;align-items:center;border-bottom:1px solid #24473920}
+html #eme-continuo .ec-continuation h2{font-size:clamp(32px,3.1vw,46px)}
+html #eme-continuo .ec-continuation-copy{max-width:440px}
+html #eme-continuo .ec-continuation p{font-size:clamp(17px,1.4vw,21px);line-height:1.65;margin:0 0 14px;color:#526b5c}
+html #eme-continuo .ec-continuation .ec-link{font-size:12px;gap:14px}
+
+html #eme-continuo .er-discovery{width:calc(100% - 12.5vw);max-width:1408px;padding:0;margin:0 auto 64px}
+html #eme-continuo .es-benefits{display:flex;align-items:center;gap:32px;margin:0 0 64px;padding:36px 40px;border-radius:18px;background:radial-gradient(ellipse at 0 0,#2a5644,transparent 70%),#153e2e;color:#e5cc8b}
+html #eme-continuo .es-benefits p{color:#d6bd80;font-size:10px;letter-spacing:.2em;margin:0 0 14px}
+html #eme-continuo .es-benefits h2{color:#f0da9e;font-size:clamp(29px,3vw,42px);line-height:1.2;margin:0 0 24px}
+html #eme-continuo .es-benefits ul{display:flex;gap:20px;color:#e9d8ad;line-height:1.5;font-size:14px;margin:0;padding:0;list-style:none}
+html #eme-continuo .es-benefits li+li{padding-left:20px;border-left:1px solid #e5cc8b45}
+html #eme-continuo .es-benefits a{display:inline-flex;align-items:center;justify-content:space-between;gap:20px;color:#f2dca3;min-height:48px;padding:12px 0;border-bottom:1px solid #d9c28c;text-decoration:none;white-space:normal;flex:none;font-size:14px}
+html #eme-continuo .es-selection svg{width:19px;height:19px;flex:none}
+html #eme-continuo .es-search-panel{padding:0 0 32px}
+html #eme-continuo .es-eyebrow{font-size:10px;color:#657867;letter-spacing:.18em;margin:0 0 12px}
+html #eme-continuo .es-search-panel h2{font-size:clamp(30px,3vw,42px);margin:0 0 16px;line-height:1.2}
+html #eme-continuo .es-search-intro{font-size:16px;color:#627568;max-width:580px;line-height:1.7;margin:0}
+html #eme-continuo .es-selection form{margin-top:28px;gap:18px;grid-template-columns:repeat(3,minmax(0,1fr)) auto}
+html #eme-continuo .es-selection label{font-size:13px;gap:8px}
+html #eme-continuo .es-selection select{height:54px;padding:12px 14px;font-size:15px;background:#fffdf780;border:1px solid #bfc9b7;border-radius:10px}
+html #eme-continuo .es-selection form button{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:54px;padding:14px 22px;border-radius:10px;color:#fffdf5;font-size:15px}
+html #eme-continuo .es-region{display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:100%;min-height:44px;margin:20px 0 0 auto;font-size:13px;border:0}
+
+html #eme-continuo .ec-header .es-invite{width:340px;max-width:calc(100vw - 32px);padding:32px 30px 28px;top:calc(100% + 16px);border-radius:32px 70px 30px 44px;background:#153e2e;color:#e5cc8b;max-height:calc(100svh - var(--eme-header-height,120px) - 40px)}
+html #eme-continuo .es-invite:before{top:-14px;width:24px;height:24px;transform:translateX(-50%) rotate(45deg);border:0;border-radius:5px 0 0;background:#153e2e}
+html #eme-continuo .es-invite h2{font-size:28px;line-height:1.2;color:#f0da9e;margin:0 22px 20px 0}
+html #eme-continuo .es-invite ul{font-size:14px;line-height:1.65;color:#e9d8ad;margin:0 0 22px}
+html #eme-continuo .es-invite li+li{margin-top:6px}
+html #eme-continuo .ec-header .es-invite a{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;max-width:100%;min-height:44px;margin:0;padding:8px 0;font-size:16px;white-space:normal;text-decoration:none;border-bottom:1px solid #e5cc8b77;color:#f0da9e}
+html #eme-continuo .es-invite a svg{width:18px;height:18px;flex:0 0 18px}
+html #eme-continuo .ec-header .es-invite a.es-enter{font-size:13px;margin:8px 0 0;border:0;justify-content:flex-start}
+html #eme-continuo .ec-header .es-invite .es-dismiss{top:18px;right:16px;width:44px;height:44px;min-height:44px;font-size:24px}
+
+/* Poster covers Safari's native play overlay until actual playback starts. */
+html #eme-continuo .eco-scene .eco-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:1;transition:opacity .25s;pointer-events:none}
+html #eme-continuo .eco-is-playing .eco-poster{opacity:0}
+html #eme-continuo .eco-scene video::-webkit-media-controls{display:none!important}
+html #eme-continuo .eco-scene video::-webkit-media-controls-start-playback-button{display:none!important;-webkit-appearance:none}
+@media(min-width:761px){
+ html #eme-continuo .eco-scene .eco-poster{left:12%;filter:saturate(.76);opacity:.96}
+ html #eme-continuo .eco-product-eme .eco-scene .eco-poster{left:7%;object-position:38% center}
+ html #eme-continuo .eco-is-playing .eco-scene .eco-poster{opacity:0}
+}
+@media(max-width:1050px){html #eme-continuo .es-benefits{display:block}html #eme-continuo .es-benefits a{margin-top:24px}html #eme-continuo .es-selection form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+ html #eme-continuo .ec-page-scroll{overflow-anchor:none}
+ html #eme-continuo .ec-hero,html #eme-continuo.is-exploring .ec-hero{height:720px}
+ html #eme-continuo .ec-detail{top:20px;left:24px;right:24px;width:auto}
+ html #eme-continuo .ec-detail h2{font-size:32px;margin:8px 0}
+ html #eme-continuo .ec-description{font-size:14px;line-height:1.55;max-width:320px;margin:0 0 10px}
+ html #eme-continuo .ex-hero-highlights{max-width:100%;margin-top:14px}
+ html #eme-continuo .ex-mini-grid{grid-template-columns:1fr;gap:8px;max-width:340px}
+ html #eme-continuo .ex-mini{display:grid;grid-template-columns:70px minmax(0,1fr);gap:12px;align-items:center;background:#fffdf785;border:1px solid #24473912;border-radius:10px;padding:6px}
+ html #eme-continuo .ex-mini img{width:70px;height:54px;aspect-ratio:auto;border-radius:5px}
+ html #eme-continuo .ex-mini-name{font-size:12px;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4}
+ html #eme-continuo .ex-mini-price{font-size:12px;margin-top:3px;color:#244739}
+ html #eme-continuo .ec-space-filters .ec-option{min-height:40px;font-size:11px;padding:5px 12px}
+ html #eme-continuo .ec-bottom{bottom:12px;left:24px;right:24px}
+ html #eme-continuo .ec-continuation{width:calc(100% - 48px);display:block;padding:32px 0 36px}
+ html #eme-continuo .ec-continuation h2{font-size:34px;margin:0 0 16px}
+ html #eme-continuo .ec-continuation p{font-size:18px;line-height:1.6;margin-bottom:16px}
+ html #eme-continuo .ec-collection-section{padding:38px 0 48px}
+ html #eme-continuo .eo-preview-heading{margin-bottom:22px;gap:12px}
+ html #eme-continuo .ec-featured{border:1px solid #24473917;border-radius:14px;overflow:hidden;background:#fffdf780}
+ html #eme-continuo .ec-featured-photo{border-radius:0}
+ html #eme-continuo .ec-featured-img{aspect-ratio:4/3}
+ html #eme-continuo .ec-featured-copy{padding:24px 20px}
+ html #eme-continuo .ec-featured-location{margin-bottom:12px;font-size:12px}
+ html #eme-continuo .ec-featured-title{font-size:27px;line-height:1.25;margin-bottom:14px}
+ html #eme-continuo .ec-featured-lead{font-size:14px;line-height:1.6;margin-bottom:16px}
+ html #eme-continuo .ec-featured-facts{font-size:13px;line-height:1.65;margin-bottom:18px;padding-bottom:18px}
+ html #eme-continuo .ec-price-label{font-size:12px}
+ html #eme-continuo .ec-featured-price{font-size:29px;margin:4px 0 20px}
+ html #eme-continuo .ec-open-property{width:100%;justify-content:space-between;border:0;border-radius:8px;background:#173f30;color:#fffdf5;padding:12px 16px;font-size:14px;min-height:48px}
+ html #eme-continuo .er-discovery{width:calc(100% - 48px);padding:0;margin:0 auto 48px}
+ html #eme-continuo .es-benefits{padding:28px 24px;margin-bottom:44px;border-radius:16px}
+ html #eme-continuo .es-benefits h2{font-size:30px;max-width:260px;margin:0 0 24px}
+ html #eme-continuo .es-benefits ul{display:grid;gap:12px;font-size:14px}
+ html #eme-continuo .es-benefits li+li{border:0;padding:0;margin:0}
+ html #eme-continuo .es-benefits li{display:flex;gap:12px;align-items:center}
+ html #eme-continuo .es-benefits li:before{content:'';width:5px;height:5px;flex:none;border-radius:50%;background:#e5cc8b}
+ html #eme-continuo .es-benefits a{width:100%;margin-top:24px;padding:14px 0 8px;font-size:14px}
+ html #eme-continuo .es-search-panel{padding:0}
+ html #eme-continuo .es-search-panel h2{font-size:30px;margin-bottom:14px}
+ html #eme-continuo .es-search-intro{font-size:15px;line-height:1.7}
+ html #eme-continuo .es-selection form{grid-template-columns:1fr;margin-top:24px;gap:20px}
+ html #eme-continuo .es-selection label{font-size:13px;gap:8px}
+ html #eme-continuo .es-selection form button{margin-top:4px;width:100%}
+ html #eme-continuo .es-region{margin-top:16px;width:100%;font-size:13px;text-align:left}
+ html #eme-continuo .eme-ecosystem{margin-top:0;padding-top:32px}
+ html #eme-continuo .eco-product{gap:22px;padding-bottom:32px}
+ html #eme-continuo .eco-scene{border:1px solid #24473918;box-shadow:0 8px 24px #173e3010}
+ html #eme-continuo .eco-scene:after{background:none}
+ html #eme-continuo .ec-header .es-invite{right:4px;width:min(340px,calc(100vw - 36px));padding:28px 26px 22px;border-radius:28px 54px 28px 36px}
+ html #eme-continuo .es-invite h2{font-size:27px}
+}
+@media(prefers-reduced-motion:reduce){html #eme-continuo .eco-scene .eco-poster{transition:none}}

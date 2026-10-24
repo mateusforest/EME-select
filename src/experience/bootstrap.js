@@ -12,6 +12,7 @@ import './opportunities.css';
 import './chat.css';
 import './editorial.css';
 import '../mobile.css';
+import './journey.css';
 
 export async function startExperience(){
  const container=document.getElementById('root');

@@ -168,7 +168,6 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     clearTimeout(portalTimer);
     const direction=Math.sign(categories.indexOf(cat)-focusIndex)||1;
     chosen = id;
-    if(animate && window.matchMedia('(max-width:760px)').matches)root.querySelector('.ec-page-scroll').scrollTo({top:0,behavior:'auto'});
     focusScenes.select(id,{direction,animated:animate});
     choice = null;
     focusIndex = categories.indexOf(cat);
@@ -1059,6 +1058,8 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     const types = {casas:['Casa','Condomínio horizontal'],apartamentos:['Apartamento','Cobertura'],terrenos:['Terreno urbano','Lote em condomínio'],comercial:['Sala comercial','Loja','Edifício corporativo']};
     const type = types[heroState.chosen]?.[heroState.choice ?? 0];
     const items = properties.filter(property=>property.opportunity && property.type === type).slice(0,2);
+    container.hidden = !items.length;
+    if (!items.length) { root.dispatchEvent(new Event('eme-highlights-layout')); return; }
     const heading = element('p','ex-opportunities-title');
     const icon = element('i'); icon.setAttribute('data-lucide','sparkles'); icon.setAttribute('aria-hidden','true');
     heading.append(icon,document.createTextNode('Oportunidades'));
@@ -1067,10 +1068,6 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
       const grid = element('div','ex-mini-grid');
       items.forEach(property=>grid.append(propertyButton(property,true)));
       container.append(grid);
-    } else {
-      container.append(element('p','ex-mini-empty','Ainda não há imóveis desta categoria na seleção. Podemos ajudar a encontrar.'));
-      const button = element('button','ec-text-button cursor-interaction','Conte ao assistente o que procura ↗︎');
-      button.type = 'button'; button.dataset.categoryChat = type || ''; container.append(button);
     }
     icons();
     root.dispatchEvent(new Event('eme-highlights-layout'));
