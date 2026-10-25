@@ -25,3 +25,9 @@
 
 #eme-continuo #eme-full-opportunities .ec-featured-lead{display:block;overflow:visible;-webkit-line-clamp:unset;max-height:none}
 #eme-continuo #eme-full-opportunities .ec-open-property,#eme-continuo #eme-full-opportunities .ec-open-property:hover{background:linear-gradient(120deg,#245443,#073b2c);color:#fff;border:0}
+
+@media(min-width:901px){
+ #eme-continuo #eme-full-opportunities .ec-featured{align-items:stretch}
+ #eme-continuo #eme-full-opportunities .ec-featured-photo{min-height:390px;margin:12px 0;align-self:stretch}
+ #eme-continuo #eme-full-opportunities .ec-featured-img{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;object-fit:cover}
+}

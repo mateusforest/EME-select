@@ -587,7 +587,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     root.querySelector('.ec-featured-location').textContent = property.location+'   |   '+property.type;
     root.querySelector('.ec-featured-title').textContent = property.title;
     const lead=root.querySelector('.ec-featured-lead');lead.replaceChildren();const description=property.description||property.lead;const excerpt=element('span','',description.length>200?description.slice(0,197).trim()+'… ':description);lead.append(excerpt);if(description.length>200){const more=element('button','eme-read-more','Ver mais');more.type='button';more.setAttribute('aria-expanded','false');more.onclick=()=>{const expanded=more.getAttribute('aria-expanded')!=='true';more.setAttribute('aria-expanded',String(expanded));excerpt.textContent=expanded?description+' ':description.slice(0,197).trim()+'… ';more.textContent=expanded?'Ver menos':'Ver mais';};lead.append(more);}
-    root.querySelector('.ec-featured-facts').textContent = property.summary;
+    root.querySelector('.ec-featured-facts').textContent = property.summary;root.querySelector('.ec-featured-facts').hidden=property.summary===property.type;
     renderPrice(root.querySelector('.ec-featured-price'),property);
     markOpportunity(root.querySelector('.ec-featured-photo'),property);
     const before=Number(String(property.originalPrice||'').replace(/[^\d,]/g,'').replace(',','.')),after=property.searchFacts.price;
