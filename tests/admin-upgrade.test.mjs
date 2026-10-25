@@ -55,6 +55,23 @@ for(const backend of ['local','cloud'])test(backend+': administrative documents 
  const injected={...site.config,regions:[{...initialRegions[0],source:'javascript:alert(1)'}]};assert.equal((await req(admin,'/site-content',{version:saved.body.version,config:injected},'PATCH')).status,400);
  const cleared=await req(admin,'/site-content',{version:saved.body.version,config:{...site.config,regions:[],regionAssignments:{}}},'PATCH');
  assert.equal(cleared.status,200);assert.deepEqual((await req(anon,'/public/site-content')).body.regions,[]);
+ const display={mode:'fixed',personId:'eae00000-0000-4000-8000-000000000102'};
+ assert.equal((await req(broker,'/site-consultants',{version:cleared.body.version,consultantDisplay:display},'PATCH')).status,403);
+ assert.equal((await req(admin,'/site-consultants',{version:cleared.body.version,consultantDisplay:{mode:'fixed',personId:'eae00000-0000-4000-8000-000000000100'}},'PATCH')).status,400,'non-consultant cannot be selected');
+ const contact=await req(admin,'/site-consultants',{version:cleared.body.version,consultantDisplay:display},'PATCH');assert.equal(contact.status,200,JSON.stringify(contact.body));
+ assert.deepEqual((await req(anon,'/public/site-content')).body.consultantDisplay,display);assert.deepEqual(contact.body.config.regions,[],'contact-only changes preserve removed regions');
+ assert.equal((await req(admin,'/site-consultants',{version:cleared.body.version,consultantDisplay:display},'PATCH')).status,409);
+ const createdListing=await req(admin,'/listings',{draft:{title:'Excluir no teste',city:'Vacaria',type:'Casa',environment:'urbano',locationProfile:'',condominium:'',operation:'comprar'}});assert.equal(createdListing.status,201,JSON.stringify(createdListing.body));
+ const listing=createdListing.body,deletePath='/listings/'+listing.id+'/delete';
+ assert.ok([403,404].includes((await req(broker,deletePath,{version:listing.version,confirmed:true})).status));
+ assert.equal((await req(admin,deletePath,{version:listing.version,confirmed:false})).status,400);
+ assert.equal((await req(admin,deletePath,{version:0,confirmed:true})).status,409);
+ assert.equal((await req(admin,deletePath,{version:listing.version,confirmed:true})).status,200);
+ assert.equal((await req(admin,'/listings')).body.listings.some(l=>l.id===listing.id),false);
+ assert.equal((await req(admin,'/evaluations')).body.evaluations.some(l=>l.id===listing.id),false);
+ assert.equal((await req(admin,'/listings/'+listing.id)).status,404);
+ assert.equal((await req(admin,'/listings/'+listing.id+'/archive',{version:listing.version+1,archived:false,confirmed:true})).status,404);
+
 
 
  if(backend==='cloud'){

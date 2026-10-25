@@ -1,3 +1,4 @@
+import {renderPropertyConsultants} from './consultants.js';
 import {renderPrice} from './price.js';
 import {markOpportunity,brandOpportunities} from './opportunity-brand.js';
 import {createHeaderVoice} from './header-voice.js';
@@ -417,7 +418,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
         button.append(image,label,regionIcon('arrow-up-right'));group.append(button);
       });list.append(group);
     });
-    root.querySelector('.er-discovery')?.toggleAttribute('hidden',!regions.length);
+    root.querySelector('.er-discovery')?.removeAttribute('hidden');
     root.querySelector('.er-discovery-grid').replaceChildren(...regions.map(regionPlaceCard));
     icons();
   }
@@ -743,7 +744,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
       chapters.appendChild(button);
     });
     root.querySelector('.ep-chapter-row').hidden = property.photos.length === 1;
-    root.querySelector('.ep-contact').href = 'https://wa.me/5554991578029?text='+encodeURIComponent('Olá! Gostaria de combinar uma visita ao imóvel '+property.full+'.');
+    renderPropertyConsultants(root,siteContent.consultantDisplay,property);
     root.querySelector('.ep-plant').href = 'https://wa.me/5554991578029?text='+encodeURIComponent('Olá! Gostaria da planta e das medidas do imóvel '+property.full+'.');
     const nextProperty = properties[(properties.indexOf(property)+1)%properties.length];
     root.querySelector('.ep-next-title').textContent = nextProperty.title;
@@ -1492,6 +1493,18 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   renderCollection();
   updateFavorites();
   renderRegionNavigation();
+  let refreshingContent=false;
+  async function refreshSiteContent(){
+    if(refreshingContent||document.visibilityState==='hidden')return;refreshingContent=true;
+    try{const response=await fetch('/api/public/site-content',{cache:'no-store',signal:AbortSignal.timeout(8000)});if(!response.ok)return;const next=await response.json();if(!Array.isArray(next.regions))return;
+      const changedRegions=JSON.stringify(next.regions)!==JSON.stringify(regions);
+      Object.assign(siteContent,next);regions.splice(0,regions.length,...next.regions.filter(r=>r.enabled!==false));
+      regionStates.splice(0,regionStates.length,...new Map(regions.map(r=>[r.stateId,{id:r.stateId,name:r.stateName}])).values());
+      if(changedRegions){renderRegionNavigation();root.dispatchEvent(new CustomEvent('eme-site-content',{detail:next}));if(view==='region'&&!regionById(regionId))showHome();else if(view==='catalog')catalog.show();}
+      if(view==='property'&&byId(selectedId))renderPropertyConsultants(root,siteContent.consultantDisplay,byId(selectedId));
+    }catch{}finally{refreshingContent=false;}
+  }
+  window.addEventListener('focus',refreshSiteContent);document.addEventListener('visibilitychange',refreshSiteContent);
   showHome(null,false,false);
   restore(experienceState?.widgetState);
   applyRoute();

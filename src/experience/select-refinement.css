@@ -1,0 +1,36 @@
+html #eme-continuo .ec-header{grid-template-columns:52px minmax(230px,1.05fr) minmax(400px,1.3fr) 36px}
+html #eme-continuo .ec-header .ec-favorites{grid-area:1/4}
+html #eme-continuo .eme-floating-chat{position:fixed;right:24px;bottom:calc(24px + env(safe-area-inset-bottom));z-index:65;width:62px;height:62px;min-height:62px;padding:0;border:0;border-radius:50%;background:transparent;display:grid;place-items:center;box-shadow:0 5px 18px #102a2c35;transition:transform .2s}
+html #eme-continuo .eme-floating-chat::before{display:none}
+html #eme-continuo .eme-floating-chat>.ex-chat-symbol{width:62px;height:62px;display:block;background:none;mask:none}
+html #eme-continuo .eme-floating-chat .ex-chat-symbol svg{display:block;width:100%;height:100%}
+html #eme-continuo .eme-floating-chat[aria-expanded=true]{visibility:hidden;pointer-events:none}
+html #eme-continuo .ex-chat-minimized{display:none!important}
+html #eme-continuo .eme-floating-chat:focus-visible{outline:2px solid #bda367;outline-offset:5px}
+html #eme-continuo .eme-floating-chat:hover{transform:translateY(-2px)}
+.eme-access-welcome{position:fixed;inset:0;margin:auto;width:min(760px,calc(100% - 32px));max-height:calc(100dvh - 32px);box-sizing:border-box;border:1px solid #e0e4d8;border-radius:22px;padding:16px;background:#faf9f2;color:#173f32;font-family:inherit;overflow:auto;box-shadow:0 30px 100px #051e1b70;animation:eme-welcome-in .28s ease-out}
+.eme-access-welcome::backdrop{background:#092a2bc2;backdrop-filter:blur(8px);animation:eme-welcome-fade .28s ease-out}
+.eme-welcome-close{position:absolute;top:22px;right:22px;z-index:1;display:grid;place-items:center;width:44px;height:44px;border:1px solid #cfb77940;border-radius:50%;background:#153b2d;color:#ead49b;font-size:26px;cursor:pointer}
+.eme-welcome-intro{background:radial-gradient(ellipse at top left,#2d5947,transparent 75%),#153c2f;border-radius:14px;padding:34px 36px 28px;color:#ead49b}
+.eme-welcome-intro .eme-welcome-kicker{font-size:10px;letter-spacing:.2em;margin:0 0 18px;color:#dbc58e}
+.eme-welcome-intro h2{font-size:clamp(34px,4vw,48px);font-weight:400;letter-spacing:-.045em;line-height:1.05;margin:0 0 17px}
+.eme-welcome-intro>p:last-of-type{font-size:15px;line-height:1.65;color:#e1d8b9;margin:0}
+.eme-welcome-benefits{display:flex;gap:12px 20px;flex-wrap:wrap;margin-top:22px;padding-top:19px;border-top:1px solid #ead49b33;font-size:12px}
+.eme-welcome-profiles{display:grid;grid-template-columns:1fr 1fr;padding:26px 22px 24px;gap:36px}
+.eme-welcome-profiles article{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+.eme-welcome-number{font-size:10px;letter-spacing:.15em;color:#8c7b53}
+.eme-welcome-profiles h3{font-size:22px;font-weight:400;letter-spacing:-.035em;margin:8px 0 12px}
+.eme-welcome-profiles p{font-size:14px;line-height:1.7;color:#657a70;flex:1;margin:0 0 18px}
+.eme-welcome-profiles a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 16px;box-sizing:border-box;border:1px solid #baaa7d;border-radius:7px;color:#234d3b;text-decoration:none;font-size:13px}
+.eme-access-welcome footer{display:flex;align-items:center;flex-wrap:wrap;gap:10px 16px;padding:18px 22px 7px;border-top:1px solid #dce1d3;font-size:12px;color:#6b7a6c}
+.eme-access-welcome footer a{color:#37583d;text-underline-offset:4px;min-height:32px;display:inline-flex;align-items:center}
+.eme-welcome-explore{margin-left:auto;font:inherit;color:inherit;background:none;border:0;min-height:44px;padding:0;cursor:pointer}
+.eme-access-welcome :focus-visible{outline:2px solid #a78d50;outline-offset:4px}
+@keyframes eme-welcome-in{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
+@keyframes eme-welcome-fade{from{opacity:0}to{opacity:1}}
+@media(max-width:1200px){html #eme-continuo .ec-header{grid-template-columns:46px minmax(180px,1fr) minmax(350px,1.45fr) 32px}}
+@media(max-width:980px){html #eme-continuo .ec-header{grid-template-columns:46px minmax(180px,1fr) 64px 36px}}
+@media(max-width:620px){html #eme-continuo .ec-header{grid-template-columns:46px minmax(68px,1fr) 36px}html #eme-continuo .ec-header .ec-favorites{grid-area:1/3}html #eme-continuo .eme-floating-chat{right:16px;bottom:calc(16px + env(safe-area-inset-bottom));width:56px;height:56px;min-height:56px}html #eme-continuo .eme-floating-chat>.ex-chat-symbol{width:56px;height:56px}.eme-access-welcome{padding:10px;border-radius:18px;max-height:calc(100dvh - 24px)}.eme-welcome-intro{padding:28px 22px 22px}.eme-welcome-close{top:16px;right:16px;width:40px;height:40px}.eme-welcome-intro h2{font-size:34px;padding-right:20px}.eme-welcome-benefits{gap:9px;flex-direction:column;font-size:12px;margin-top:16px;padding-top:14px}.eme-welcome-profiles{padding:22px 14px 18px;gap:22px;grid-template-columns:1fr}.eme-welcome-profiles article+article{border-top:1px solid #dce1d3;padding-top:20px}.eme-welcome-profiles h3{font-size:23px}.eme-welcome-profiles p{margin-bottom:14px}.eme-access-welcome footer{padding:14px 14px 4px;gap:4px 14px}.eme-welcome-explore{margin-left:0;width:100%;text-align:left}}
+@media(prefers-reduced-motion:reduce){.eme-access-welcome,.eme-access-welcome::backdrop{animation:none}html #eme-continuo .eme-floating-chat{transition:none}}
+@media(max-width:620px){.eme-welcome-intro{padding:22px 20px 18px}.eme-welcome-intro .eme-welcome-kicker{margin-bottom:12px}.eme-welcome-intro h2{font-size:30px;margin-bottom:12px}.eme-welcome-intro>p:last-of-type{font-size:13px;line-height:1.5}.eme-welcome-benefits{flex-direction:row;gap:7px 12px;margin-top:13px;padding-top:13px;font-size:11px}.eme-welcome-profiles{padding:18px 14px 16px;gap:16px}.eme-welcome-profiles article+article{padding-top:16px}.eme-welcome-profiles h3{font-size:21px;margin:6px 0 9px}.eme-welcome-profiles p{font-size:13px;line-height:1.55;margin-bottom:12px}.eme-welcome-profiles a{font-size:12px}.eme-access-welcome footer{font-size:11px}}
+@media(max-width:620px){html #eme-continuo .ec-bottom{gap:10px}html #eme-continuo .ec-bottom .ec-navigation{margin-right:64px;flex:none}html #eme-continuo .ec-bottom .ec-scene-note{min-width:0;white-space:normal;line-height:1.4}}

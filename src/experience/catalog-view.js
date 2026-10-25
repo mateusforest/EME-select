@@ -24,6 +24,7 @@ export function createCatalog({root,properties,assets,regions,getSaved,onOpen,on
   }
   field('state').addEventListener('change',()=>regionOptions());
   function populate() {
+    if(filters.region&&!regions.some(r=>r.id===filters.region))filters.region='';
     for(const key of Object.keys(catalogDefaults)) if(field(key)) {
       if(key==='saved')field(key).checked=filters.saved;
       else field(key).value=filters[key];

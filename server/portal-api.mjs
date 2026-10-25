@@ -4,7 +4,7 @@ import {accessChange} from './access-management.mjs';
 import {createPortalContent} from './portal-content.mjs';
 import {attachLocalLeads} from './leads-local.mjs';
 import {createPublicChat} from './public-chat.mjs';
-import {createPeopleApi} from './people.mjs';
+import {createPeopleApi,peopleRecordId} from './people.mjs';
 import {createDevelopmentApi} from './developments.mjs';
 import {types} from './cloud/domain.mjs';
 import {submission} from './submission.mjs';
@@ -120,7 +120,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
   const caseQuery = 'SELECT evaluations.*, users.name AS assignee FROM evaluations JOIN users ON users.id=evaluations.assignee_id';
   function caseFor(id, user) {
     const row = db.prepare(caseQuery + ' WHERE evaluations.id=?').get(id);
-    if (!row || user.role !== 'admin' && row.assignee_id !== user.id) fail(404, 'Avaliação não encontrada.');
+    if (!row || row.deleted_at || user.role !== 'admin' && row.assignee_id !== user.id) fail(404, 'Avaliação não encontrada.');
     return row;
   }
   const curation = attachCuration({db,fail,text,fields,caseFor,transaction,audit,stamp,requireAdmin,send});
@@ -147,7 +147,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
   });
   db.exec('CREATE TABLE IF NOT EXISTS portal_content(id TEXT PRIMARY KEY, version INTEGER NOT NULL, data TEXT NOT NULL)');
   const content=createPortalContent({
-   read:async id=>{const row=db.prepare('SELECT * FROM portal_content WHERE id=?').get(id);return row?{...row,data:JSON.parse(row.data)}:null;},
+   read:async id=>{if(id===peopleRecordId){const person=db.prepare('SELECT * FROM people_config WHERE id=1').get();return person?{...person,data:JSON.parse(person.data)}:null;}const row=db.prepare('SELECT * FROM portal_content WHERE id=?').get(id);return row?{...row,data:JSON.parse(row.data)}:null;},
    write:async(req,id,row,data,user,action)=>transaction(()=>{const current=db.prepare('SELECT version FROM portal_content WHERE id=?').get(id);if((current?.version||0)!==(row?.version||0))fail(409,'O cadastro mudou. Recarregue.');const version=(row?.version||0)+1;db.prepare('INSERT INTO portal_content(id,version,data) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,data=excluded.data').run(id,version,JSON.stringify(data));audit(user.id,action,'Conteúdo administrativo revisado.');return {id,version,data};}),
    listDocuments:async()=>db.prepare("SELECT id,version,json_extract(data,'$.document') AS document FROM portal_content WHERE json_extract(data,'$.kind')='company_document' ORDER BY rowid DESC").all().map(r=>({id:r.id,version:r.version,...JSON.parse(r.document)})),
    catalog:async()=>db.prepare('SELECT published FROM listings WHERE published IS NOT NULL').all().map(r=>JSON.parse(r.published)),
@@ -322,7 +322,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
       if (path === '/api/evaluations') {
         if (req.method === 'GET') {
           const items = user.role === 'admin' ? db.prepare(caseQuery + ' ORDER BY evaluations.updated_at DESC').all() : db.prepare(caseQuery + ' WHERE assignee_id=? ORDER BY evaluations.updated_at DESC').all(user.id);
-          send(res,200,{ evaluations:items }); return true;
+          send(res,200,{ evaluations:items.filter(item=>!item.deleted_at) }); return true;
         }
         if (req.method === 'POST') {
           const body = requestBody; fields(body,['title','city','type','operation','owner','assigneeId']);

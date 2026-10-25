@@ -6,4 +6,4 @@ export function leadId(value:unknown):string;
 export function leadPhone(value:unknown):string;
 export function leadInput(body:unknown):{requestId:string;propertyId:string|null;data:Record<string,unknown>};
 export function leadUpdate(body:unknown):{version:number;status:string;assigneeId:string|null;nextContactAt:string|null;note:string};
-export function routingInput(body:unknown):{version:number;mode:string;brokers:string[]};
+export function routingInput(body:unknown):{version:number;mode:string;brokers:string[];weights:Record<string,number>};

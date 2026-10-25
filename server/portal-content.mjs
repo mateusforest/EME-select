@@ -1,3 +1,5 @@
+import {peopleRecordId} from './people.mjs';
+import {selectTeam} from '../shared/team-profiles.mjs';
 import {randomUUID} from 'node:crypto';
 import {admin,fail,fields,text} from './cloud/domain.mjs';
 import {defaultSiteContent,publicSiteContent,siteRecordId,initialRegions,applyOpportunityPrices} from '../shared/portal-content.mjs';
@@ -7,7 +9,7 @@ export function createPortalContent({read,write,listDocuments,catalog}){
  const siteDetail=row=>({version:row?.version||0,config:{...defaultSiteContent(),...row?.data.config}});
  async function publicHandle(path,req,res,send){if(path!=='/api/public/site-content'||req.method!=='GET')return false;const config=publicSiteContent((await read(siteRecordId))?.data),properties=await catalog(),ids=new Set(properties.map(p=>p.id));send(200,{...config,opportunityIds:config.opportunityIds?.filter(id=>ids.has(id))??null,opportunityPrices:Object.fromEntries(applyOpportunityPrices(properties,config).filter(p=>p.originalPrice).map(p=>[p.id,p.price])),regionAssignments:Object.fromEntries(Object.entries(config.regionAssignments).filter(([id])=>ids.has(id)))});return true;}
  function validateConfig(config,published){
-  fields(config,['regions','opportunityIds','opportunityPrices','regionAssignments']);
+  fields(config,['regions','opportunityIds','opportunityPrices','regionAssignments','consultantDisplay']);
   if(!Array.isArray(config.regions)||config.regions.length>50)fail(400,'Cadastre até 50 regiões.');
   const regions=config.regions.map(r=>{
    fields(r,['id','stateId','stateName','city','name','context','asset','enabled','intro','collectionTitle','postcard','imageAlt','credit','license','licenseUrl','source']);
@@ -31,11 +33,20 @@ export function createPortalContent({read,write,listDocuments,catalog}){
    if(!property||!Number.isFinite(price)||price<=0||price>=property.price||Math.abs(price*100-Math.round(price*100))>0.0001)fail(400,'O preço com desconto deve ser maior que zero e menor que o preço atual, com até duas casas decimais.');
    opportunityPrices[id]=price;
   }
-  return {regions,opportunityIds:config.opportunityIds,opportunityPrices,regionAssignments:assignments};
+  return {regions,opportunityIds:config.opportunityIds,opportunityPrices,regionAssignments:assignments,consultantDisplay:validateDisplay(config.consultantDisplay)};
  }
+ function validateDisplay(value={mode:'team',personId:''}){fields(value,['mode','personId']);if(!['team','fixed'].includes(value.mode)||typeof value.personId!=='string'||value.mode==='fixed'&&!uuid.test(value.personId))fail(400,'Escolha a equipe ou um consultor publicado.');return {mode:value.mode,personId:value.mode==='fixed'?value.personId:''};}
  async function handle(path,req,res,user,body,send){
-  if(path!=='/api/site-content'&&!path.startsWith('/api/company-documents'))return false;
+  if(path!=='/api/site-consultants'&&path!=='/api/site-content'&&!path.startsWith('/api/company-documents'))return false;
   admin(user);
+  if(path==='/api/site-consultants'&&req.method==='PATCH'){
+   fields(body,['version','consultantDisplay']);const row=await read(siteRecordId);if(body.version!==(row?.version||0))fail(409,'O conteúdo mudou. Recarregue antes de salvar.');
+   const display=validateDisplay(body.consultantDisplay),directory=await read(peopleRecordId);
+   const roster=directory?.data.rosterVersion===2?(directory.data.live||[]):selectTeam.map((p,i)=>({...p,id:'eae00000-0000-4000-8000-00000000010'+i}));
+   if(display.mode==='fixed'&&!roster.some(p=>p.id===display.personId&&/^CRECI\b/i.test(p.registration||'')))fail(400,'Selecione um consultor publicado.');
+   const data={kind:'site_content',config:{...siteDetail(row).config,consultantDisplay:display}};
+   send(200,siteDetail(await write(req,siteRecordId,row,data,user,'Consultores dos anúncios atualizados')));return true;
+  }
   if(path==='/api/site-content'){
    const row=await read(siteRecordId);const properties=await catalog();
    if(req.method==='GET'){send(200,{...siteDetail(row),properties:properties.map(({id,title,location,type,price})=>({id,title,location,type,price}))});return true;}

@@ -18,6 +18,7 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
   if(!db.prepare('PRAGMA table_info(listing_photos)').all().some(c=>c.name==='room'))db.exec("ALTER TABLE listing_photos ADD COLUMN room TEXT NOT NULL DEFAULT ''");
   db.exec('PRAGMA user_version=4');
   let processing=0;
+  if(!db.prepare('PRAGMA table_info(evaluations)').all().some(c=>c.name==='deleted_at'))db.exec('ALTER TABLE evaluations ADD COLUMN deleted_at TEXT');
   if(!db.prepare('PRAGMA table_info(evaluations)').all().some(c=>c.name==='archived'))db.exec('ALTER TABLE evaluations ADD COLUMN archived INTEGER NOT NULL DEFAULT 0');
   for(const [name,type] of [['original_data','BLOB'],['enhancement',"TEXT NOT NULL DEFAULT ''"]])if(!db.prepare('PRAGMA table_info(listing_photos)').all().some(c=>c.name===name))db.exec('ALTER TABLE listing_photos ADD COLUMN '+name+' '+type);
   if(!db.prepare('PRAGMA table_info(listing_photos)').all().some(c=>c.name==='archived'))db.exec('ALTER TABLE listing_photos ADD COLUMN archived INTEGER NOT NULL DEFAULT 0');
@@ -59,6 +60,8 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
     const bytes=originalRequested&&p.original_data?p.original_data:p.data;res.writeHead(200,{'Content-Type':'image/webp','Content-Length':bytes.length,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});res.end(Buffer.from(bytes));return true;
   }
   async function handle(path,req,res,user,body){
+    const deletion=path.match(/^\/api\/(listings|evaluations)\/([a-f0-9-]{36})\/delete$/);
+    if(deletion&&req.method==='POST'){requireAdmin(user);fields(body,['version','confirmed']);const id=deletion[2],e=caseFor(id,user),l=db.prepare('SELECT * FROM listings WHERE id=?').get(id);if(deletion[1]==='listings'&&!l)fail(404,'Anúncio não encontrado.');checkVersion(deletion[1]==='listings'?l:e,body);if(body.confirmed!==true)fail(400,'Confirme a exclusão.');transaction(()=>{db.prepare('UPDATE evaluations SET deleted_at=?,archived=1,version=version+1,updated_at=? WHERE id=?').run(stamp(),stamp(),id);db.prepare('UPDATE listings SET published=NULL,published_version=NULL,version=version+1 WHERE id=?').run(id);audit(user.id,'Imóvel excluído','Retirado do cadastro e do site. Registros vinculados e auditoria preservados.',id);});send(res,200,{ok:true});return true;}
     const archive=path.match(/^\/api\/(listings|evaluations)\/([a-f0-9-]{36})\/archive$/);
     if(archive&&req.method==='POST'){
       const id=archive[2],evaluation=caseFor(id,user),listingRow=db.prepare('SELECT * FROM listings WHERE id=?').get(id);
@@ -67,7 +70,7 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
       send(res,200,{ok:true});return true;
     }
     if(path==='/api/listings'){
-      if(req.method==='GET'){const rows=db.prepare('SELECT listings.*,evaluations.assignee_id FROM listings JOIN evaluations ON evaluations.id=listings.id ORDER BY evaluations.updated_at DESC').all().filter(r=>user.role==='admin'||r.assignee_id===user.id);send(res,200,{listings:rows.map(r=>detail(r,user))});return true;}
+      if(req.method==='GET'){const rows=db.prepare('SELECT listings.*,evaluations.assignee_id FROM listings JOIN evaluations ON evaluations.id=listings.id WHERE evaluations.deleted_at IS NULL ORDER BY evaluations.updated_at DESC').all().filter(r=>user.role==='admin'||r.assignee_id===user.id);send(res,200,{listings:rows.map(r=>detail(r,user))});return true;}
       if(req.method==='POST'){
         fields(body,['draft','evaluationId']);const d=validate(body.draft);const id=body.evaluationId||randomUUID();
         if(body.evaluationId){const evaluation=caseFor(id,user);if(evaluation.archived)fail(409,'Restaure o imóvel antes de criar seu anúncio.');if(['Entrada aprovada','Não selecionado'].includes(evaluation.stage))requireAdmin(user);if(db.prepare('SELECT id FROM listings WHERE id=?').get(id))fail(409,'Já existe anúncio para esta avaliação.');}

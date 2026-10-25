@@ -1,0 +1,24 @@
+#eme-continuo .ec-team-list{grid-template-columns:repeat(2,minmax(0,1fr));justify-content:start;gap:40px;max-width:1000px}
+#eme-continuo .ec-team-list article{padding:24px 0;border-top:1px solid #c8d0c2;flex-direction:row;align-items:center;gap:24px}
+.eme-consultant-name{display:inline-flex;align-items:center;gap:9px;flex-wrap:wrap}
+.eme-consultant-name>span{display:inline-flex;flex:none}
+.eme-verified{width:19px;height:19px;color:#51745e;flex:none}
+#eme-continuo .eme-consultant-open{background:none;border:0;padding:0;text-align:left;cursor:pointer;color:inherit}
+#eme-continuo .eme-consultant-open h3{font:inherit;font-size:22px}
+.eme-consultant-dialog{position:fixed;inset:0;margin:auto;padding:44px;width:min(600px,calc(100% - 32px));max-height:calc(100dvh - 32px);overflow:auto;box-sizing:border-box;border:1px solid #cbd3c6;border-radius:20px;background:#f9f8f0;color:#183e31;font:inherit;box-shadow:0 25px 90px #071e2855}
+.eme-consultant-dialog::backdrop{background:#102b29a6;backdrop-filter:blur(7px)}
+.eme-profile-close{position:absolute;top:12px;right:12px;width:44px;height:44px;border:0;background:transparent;color:inherit;font-size:28px;cursor:pointer}
+.eme-profile-head{display:flex;align-items:center;gap:24px;margin-top:12px}
+.eme-profile-head img{width:112px;height:112px;border-radius:50%;object-fit:cover;flex:none}
+.eme-profile-head h2{font-size:27px;font-weight:400;line-height:1.25;margin:10px 0}
+.eme-profile-head p,.eme-profile-head small{font-size:13px;line-height:1.6;color:#607769;margin:0}
+.eme-profile-head .eme-profile-kicker{font-size:10px;letter-spacing:.15em}
+.eme-profile-bio{font-size:16px;line-height:1.8;margin:30px 0 20px}
+.eme-profile-specialties{font-size:13px;color:#657b6b;padding-top:18px;border-top:1px solid #d3dacd}
+.eme-profile-contact{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 20px;box-sizing:border-box;background:#194333;color:#f9f7ed;border-radius:8px;text-decoration:none;margin-top:16px;font-size:14px}
+#eme-continuo .ep-person{display:flex;flex-direction:column;align-items:flex-start;gap:22px}
+#eme-continuo .ep-consultants{display:flex;flex-wrap:wrap;gap:24px}
+#eme-continuo .ep-consultant-mini{display:flex;flex-direction:column;align-items:flex-start;gap:12px;background:transparent;border:0;color:inherit;text-align:left;padding:0;cursor:pointer}
+#eme-continuo .ep-consultant-mini img{width:74px;height:74px;border-radius:50%;object-fit:cover}
+#eme-continuo .ep-consultant-mini .eme-consultant-name{font-size:16px}
+@media(max-width:700px){#eme-continuo .ec-team-list{grid-template-columns:1fr;gap:8px}#eme-continuo .ec-team-list article{gap:18px}#eme-continuo .ec-team-list img{width:88px;height:88px}.eme-consultant-dialog{padding:34px 24px}.eme-profile-head{flex-direction:column;align-items:flex-start}.eme-profile-head h2{font-size:26px}}

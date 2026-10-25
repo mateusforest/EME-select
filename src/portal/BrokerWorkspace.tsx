@@ -41,6 +41,7 @@ export function BrokerToday({admin=false,items,listings,onNavigate,onCapture}:{a
    setErrors(errs);setLoading(false);
   });return()=>{active=false;};
  },[revision]);
+ items=items.filter(item=>!item.archived&&!listings.some(listing=>listing.id===item.id&&listing.archived));listings=listings.filter(item=>!item.archived);
  const pending=leads?.filter(l=>!['won','lost'].includes(l.status))||[];
  const overdue=pending.filter(l=>l.next_contact_at&&Date.parse(l.next_contact_at)<Date.now());
  const visits=ops?.visits.filter(v=>['requested','confirmed'].includes(v.status)&&Date.parse(v.endAt)>=Date.now()).sort((a,b)=>a.startAt.localeCompare(b.startAt))||[];

@@ -1,0 +1,12 @@
+import {useEffect,useState} from 'react';
+import {api} from './api';
+import type {SiteContent} from '../../shared/portal-content.mjs';
+type Content={version:number;config:SiteContent};
+type Person={id:string;name:string;registration:string};
+export default function PublicConsultants(){
+ const [record,setRecord]=useState<Content|null>(null),[people,setPeople]=useState<Person[]>([]),[selection,setSelection]=useState('team'),[busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');
+ async function load(){setError('');try{const [content,roster]=await Promise.all([api<Content>('/site-content'),api<{people:Person[]}>('/public/people')]);setRecord(content);setPeople(roster.people.filter(p=>/^CRECI\b/i.test(p.registration)));setSelection(content.config.consultantDisplay?.mode==='fixed'?content.config.consultantDisplay.personId:'team');}catch(e){setError((e as Error).message);}}
+ useEffect(()=>{void load();},[]);
+ async function save(){if(!record)return;setBusy(true);setError('');setMessage('');try{const result=await api<Content>('/site-consultants','PATCH',{version:record.version,consultantDisplay:selection==='team'?{mode:'team',personId:''}:{mode:'fixed',personId:selection}});setRecord(result);setMessage('Apresentação dos consultores atualizada no site.');}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+ return <details className="ps-card lead-routing"><summary>Consultores exibidos nos anúncios do site</summary><div className="ps-form"><p>Escolha como o visitante encontra a equipe na página do imóvel.</p>{record&&<><label>Apresentação pública<select value={selection} onChange={e=>{setSelection(e.target.value);setMessage('');}}><option value="team">Equipe de consultores · atendimento pela regra de leads</option>{people.map(p=><option key={p.id} value={p.id}>{p.name} · contato direto</option>)}</select></label><p className="pc-help">Na opção Equipe, mostramos os consultores publicados e o formulário envia o contato para a distribuição configurada acima. Na opção de contato fixo, o botão abre o WhatsApp do consultor: esse contato direto não entra automaticamente na fila de leads.</p><button className="ps-button" disabled={busy} onClick={()=>void save()}>{busy?'Salvando…':'Atualizar apresentação no site'}</button></>}{message&&<p role="status">{message}</p>}{error&&<p role="alert" className="pt-error">{error} <button className="ps-text-button" onClick={()=>void load()}>Recarregar</button></p>}</div></details>;
+}
