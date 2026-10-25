@@ -1,11 +1,17 @@
 import {createAnalytics,analyticsBucket,analyticsDay,mergeAnalytics,analyticsReport} from '../analytics.mjs';
 import {createHash} from 'node:crypto';
 import {publicAccess} from '../select-access.mjs';
+import {propertyRecordsQuery} from '../../shared/portal-content.mjs';
 export function attachCloudAnalytics({client}){
  const {rest,rpc}=client;
  async function all(query){const output=[];for(let offset=0;offset<100000;offset+=500){const rows=await rest(query+'&limit=500&offset='+offset);output.push(...rows);if(rows.length<500)return output;}throw Object.assign(Error('O período excede o limite desta consulta. Escolha um período menor.'),{status:503});}
  const store={
-  async record(input,date){const bucket=analyticsBucket(input,date),inventory=await all('eme_cases?select=id,data->published,data->access&data->published=not.is.null'),catalog=new Map(inventory.filter(r=>publicAccess({data:r})).map(r=>[r.id,r.published.title]));
+  async record(input,date){
+   const bucket=analyticsBucket(input,date);
+   // ->> converts JSON null to SQL NULL; -> does not, so unpublished drafts
+   // used to reach the title lookup and abort every event in the batch.
+   const inventory=await all('eme_cases?select=id,data->published,data->access&data->>published=not.is.null'+propertyRecordsQuery+'&order=id');
+   const catalog=new Map(inventory.filter(r=>r.published&&typeof r.published==='object'&&!Array.isArray(r.published)&&typeof r.published.title==='string'&&publicAccess({data:r})).map(r=>[r.id,r.published.title]));
    for(let attempt=0;attempt<5;attempt++){
     const row=(await rest('eme_cases?id=eq.'+bucket.id+'&select=id,version,data'))[0];if(row&&row.data.kind!=='site_analytics')throw Error('Analytics record collision');const {data,changed}=mergeAnalytics(row?.data,input,bucket,catalog,date);if(!changed)return;
     if(row){const saved=await rest('eme_cases?id=eq.'+row.id+'&version=eq.'+row.version,'PATCH',{data,version:row.version+1,updated_at:date.toISOString()});if(saved.length)return;}

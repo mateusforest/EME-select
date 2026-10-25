@@ -59,9 +59,9 @@ test('public measurement honors privacy headers and admin report rejects other r
  await assert.rejects(service.handle('/api/analytics',{method:'GET',url:'/api/analytics?days=999'},{role:'admin'},send),{status:400});
 });
 
-test('cloud collector retries optimistic conflicts, deduplicates retries and excludes reserved properties',async()=>{
+test('cloud collector ignores unpublished JSON nulls, retries conflicts and excludes reserved properties',async()=>{
  const records=new Map(),reserved=randomUUID();let conflict=true,pruned=false;const client={rpc:async()=>true,rest:async(path,method='GET',body)=>{
-  if(path.includes('data->published=not.is.null'))return [{id:property,published:{title:'Public property'}},{id:reserved,published:{title:'Private'},access:{visibility:'reserved'}}];
+  if(path.includes('published=not.is.null')){assert.ok(path.includes('data->>published=not.is.null'));assert.ok(path.includes(propertyRecordsQuery));assert.ok(path.includes('order=id'));return [{id:randomUUID(),published:null},{id:randomUUID()},{id:randomUUID(),published:false},{id:property,published:{title:'Public property'}},{id:reserved,published:{title:'Private'},access:{visibility:'reserved'}}];}
   if(path.startsWith('eme_profiles?'))return [{id:randomUUID()}];
   if(method==='DELETE'){assert.match(path,/kind=eq.site_analytics/);assert.match(path,/day=lt/);pruned=true;return [];}
   if(method==='POST'){if(records.has(body.id))throw Object.assign(Error('Conflict'),{status:409});records.set(body.id,{...body,version:1});return [body];}
@@ -78,15 +78,16 @@ test('cloud collector retries optimistic conflicts, deduplicates retries and exc
 
 test('cloud analytics HTTP is authenticated and aggregates only the requested period',async t=>{
  const token='a'.repeat(43),brokerToken='b'.repeat(43),hash=s=>createHash('sha256').update(s).digest('hex');const admin={id:randomUUID(),name:'Admin',role:'admin',active:true,must_change:false};
+ const measured=input([event(),event('page_view',{page:'property',propertyId:property})]),measuredAt=new Date(),stored=mergeAnalytics(null,measured,analyticsBucket(measured,measuredAt),catalog,measuredAt).data;
  const client={request:async()=>{throw Error('Unexpected request');},rpc:async()=>true,rest:async path=>{
   if(path.startsWith('eme_sessions?'))return [{eme_profiles:{...admin,role:path.includes(hash(token))?'admin':'corretor'},expires_at:new Date(Date.now()+3600000).toISOString(),last_seen:new Date().toISOString()}];
-  if(path.startsWith('eme_cases?')){assert.match(path,/kind=eq.site_analytics/);assert.match(path,/day=gte/);assert.match(path,/day=lte/);return [];}
+  if(path.startsWith('eme_cases?')){assert.match(path,/kind=eq.site_analytics/);assert.match(path,/day=gte/);assert.match(path,/day=lte/);return [Object.fromEntries(['day','startedAt','visits','pageViews','pages','properties','sections','devices','sources','limited'].map(key=>[key,stored[key]]))];}
   if(path.startsWith('eme_leads?')){assert.match(path,/created_at=gte/);assert.match(path,/created_at=lt/);assert.ok(!path.includes('select=*'));return [];}
   throw Error(path);
  }};
  let service;const server=http.createServer((req,res)=>service.handle(req,res));await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>server.close(r)));const host='127.0.0.1:'+server.address().port,origin='http://'+host;service=createCloudApi({env:{EME_TEST_HOST:host},client});
  const request=session=>fetch(origin+'/api/analytics?days=7',{headers:{Cookie:session?'eme_cloud_session='+session:''}});
- assert.equal((await request('')).status,401);assert.equal((await request(brokerToken)).status,403);const response=await request(token);assert.equal(response.status,200);assert.equal((await response.json()).daily.length,7);
+ assert.equal((await request('')).status,401);assert.equal((await request(brokerToken)).status,403);const response=await request(token);assert.equal(response.status,200);const report=await response.json();assert.equal(report.daily.length,7);assert.equal(report.visits,1);assert.equal(report.landingViews,1);assert.equal(report.propertyViews,1);assert.equal(report.properties[0].views,1);
  const malformed=await fetch(origin+'/api/public/analytics',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({events:[]})});assert.equal(malformed.status,400);
 });
 import {portalRequestUrl} from '../api/portal.js';
