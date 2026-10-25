@@ -749,6 +749,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
 
   function openProperty(id,animate = true,originRegion = null) {
     if (!byId(id) || changingPage) return;
+    if(animate)root.dispatchEvent(new CustomEvent('eme-analytics-property',{detail:{id}}));
     if(view==='opportunities'){propertyOriginOpportunities=true;opportunitiesReturnScroll=root.querySelector('.ec-page-scroll').scrollTop;}else if(view!=='property')propertyOriginOpportunities=false;
     if(view==='catalog'){propertyOriginCatalog=true;catalogReturnScroll=root.querySelector('.ec-page-scroll').scrollTop;}else if(view!=='property')propertyOriginCatalog=false;
     if (assistantMode && !chatMinimized) minimizeChat(false);
@@ -1366,6 +1367,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     const hash=view==='property'?'#/imovel/'+selectedId:view==='region'?'#/regiao/'+regionId:view==='catalog'?catalog.hash():view==='opportunities'?opportunities.hash():'#/';
     const navigation=view==='property'&&propertyOriginOpportunities?{opportunitiesReturn:opportunities.hash(),opportunitiesScroll:opportunitiesReturnScroll}:view==='property'&&propertyOriginCatalog?{catalogReturn:catalog.hash(),catalogScroll:catalogReturnScroll}:null;
     if(location.hash!==hash)history.pushState(navigation,'',hash);
+    root.dispatchEvent(new Event('eme-analytics-route'));
     document.title=(view==='property'?byId(selectedId)?.title:view==='region'?regionById(regionId).name:view==='catalog'?'Todos os imóveis':view==='opportunities'?'Oportunidades':'Seu próximo lugar')+' — EME Select';
   }
   function applyRoute(){

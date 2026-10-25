@@ -1,3 +1,4 @@
+import {attachLocalAnalytics} from './analytics-local.mjs';
 import {accessChange} from './access-management.mjs';
 import {createPortalContent} from './portal-content.mjs';
 import {attachLocalLeads} from './leads-local.mjs';
@@ -158,6 +159,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
   const operations = attachOperations({db,transaction,stamp,send});
   const whatsapp = attachWhatsApp({db,transaction,consume,send});
   const leads=attachLocalLeads({db,transaction,stamp,consume});
+ const analytics=attachLocalAnalytics({db,transaction,consume});
   let hashing = 0;
   async function passwordJob(fn) {
     if (hashing >= 2) fail(503, 'O acesso está ocupado. Tente novamente em alguns instantes.');
@@ -184,6 +186,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
       const isDocumentUpload = path === '/api/operations/commands';
       if (isDocumentUpload) { const access=session(req); if(!access||access.must_change)fail(401,'Entre para registrar a operação.'); }
       const requestBody = req.method === 'GET' ? null : await json(req,isPhotoUpload?11300000:isDocumentUpload?3000000:(path.startsWith('/api/developments/')||path==='/api/people')?120000:32768);
+      if(await analytics.publicHandle(path,req,requestBody,(status,value)=>send(res,status,value)))return true;
       if(await leads.publicHandle(path,req,requestBody,(status,value)=>send(res,status,value)))return true;
       if(await publicChat.handle(path,req,requestBody,(status,value)=>send(res,status,value)))return true;
       if(path==='/api/public/submissions'&&req.method==='POST'){
@@ -265,6 +268,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
       if (await intelligence.handle(path,req,res,user,requestBody)) return true;
       if (await spatial.handle(path,req,res,user,requestBody,(status,value)=>send(res,status,value))) return true;
       if (await operations.handle(path,req,res,user,requestBody)) return true;
+      if(await analytics.handle(path,req,user,(status,value)=>send(res,status,value)))return true;
       if(await leads.handle(path,req,user,requestBody,(status,value)=>send(res,status,value)))return true;
       if (await whatsapp.handle(path,req,res,user,requestBody)) return true;
       if (await content.handle(path,req,res,user,requestBody,(status,value)=>send(res,status,value))) return true;

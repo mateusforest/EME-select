@@ -1,4 +1,4 @@
-import { ClipboardCheck, FileText, House, KeyRound, LayoutDashboard, MessageSquare, ShieldCheck, SlidersHorizontal, Sparkles, Users, Wallet, Globe2, Gem, MapPinned, type LucideIcon } from 'lucide-react';
+import { ChartNoAxesCombined, ClipboardCheck, FileText, House, KeyRound, LayoutDashboard, MessageSquare, ShieldCheck, SlidersHorizontal, Sparkles, Users, Wallet, Globe2, Gem, MapPinned, type LucideIcon } from 'lucide-react';
 
 export interface PortalNavigationItem {
   id: string;
@@ -31,6 +31,7 @@ export const portalNavigation: PortalNavigationItem[] = [
   { id: 'pessoas', label: 'Perfis no site', title: 'Nossa equipe.', description: 'Perfis, retratos e cargos apresentados na página inicial.', icon: Users, group: 'Site e conteúdo', status: 'active', adminOnly: true },
   { id: 'equipe', label: 'Acessos da equipe', title: 'Pessoas certas. Responsabilidades claras.', description: 'Administradores e corretores. Contas e permissões da equipe.', icon: Users, group: 'Equipe', status: 'active', adminOnly: true },
   { id: 'clientes', label: 'Clientes e proprietários', title: 'Cada acesso, acompanhado.', description: 'Cadastros do Acesso Select, confirmações de e-mail, solicitações e vínculos de imóveis.', icon: Users, group: 'Operação', status: 'active', adminOnly: true },
+  {id:'desempenho',label:'Desempenho do site',title:'O interesse, em perspectiva.',description:'Visitas, navegação, imóveis e contatos recebidos. Os sinais do site em um só lugar.',icon:ChartNoAxesCombined,group:'Site e conteúdo',status:'active',adminOnly:true},
   {id:'oportunidades',label:'Oportunidades',title:'O que merece destaque.',description:'Escolha os imóveis publicados que ganham destaque na experiência.',icon:Gem,group:'Site e conteúdo',status:'active',adminOnly:true},
   {id:'regioes',label:'Regiões',title:'Um olhar para cada lugar.',description:'Estados, destinos e vínculos com os imóveis da coleção.',icon:MapPinned,group:'Site e conteúdo',status:'active',adminOnly:true},
   {id:'empresa-documentos',label:'Documentos da empresa',title:'A empresa, bem organizada.',description:'Contratos e documentos internos em uma área privada da administração.',icon:FileText,group:'Gestão',status:'active',adminOnly:true},

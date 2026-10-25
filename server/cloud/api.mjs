@@ -1,3 +1,4 @@
+import {attachCloudAnalytics} from './analytics.mjs';
 import {createSelectAccess,publicAccess,canRead,clearSelectCookie} from '../select-access.mjs';
 import {accessChange} from '../access-management.mjs';
 import {createPortalContent} from '../portal-content.mjs';
@@ -55,6 +56,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
  const operations=attachCloudOperations({client,hashOf});
  const whatsapp=attachCloudWhatsApp({client,env});
  const leads=attachCloudLeads({client,hashOf});
+ const analytics=attachCloudAnalytics({client});
  function setCookie(res,token,expired=false){res.setHeader('Set-Cookie',`${cookieName}=${token}; Path=/api; HttpOnly; SameSite=Strict; Secure; Max-Age=${expired?0:28800}`);}
  async function session(req){const token=tokenOf(req);if(!/^[\w-]{43}$/.test(token))return null;const rows=await rest('eme_sessions?token_hash=eq.'+digest(token)+'&select=*,eme_profiles(*)');const row=rows[0];if(!row||!row.eme_profiles.active||Date.parse(row.expires_at)<Date.now()||Date.parse(row.last_seen)<Date.now()-1800000)return null;await rest('eme_sessions?token_hash=eq.'+digest(token),'PATCH',{last_seen:new Date().toISOString()});return row.eme_profiles;}
  async function openSession(req,res,id){await rest('eme_sessions?token_hash=eq.'+hashOf(req),'DELETE');const token=randomBytes(32).toString('base64url');await rest('eme_sessions','POST',{token_hash:digest(token),user_id:id,expires_at:new Date(Date.now()+28800000).toISOString()});setCookie(res,token);}
@@ -89,6 +91,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    if(await content.publicHandle(path,req,res,send))return;
    if(await people.publicHandle(path,req,res,send))return;
    if(await developments.publicHandle(path,req,res,send))return;
+   if(await analytics.publicHandle(path,req,body,send))return;
    if(await leads.publicHandle(path,req,body,send))return;
    if(await publicChat.handle(path,req,body,send))return;
    if(path==='/api/public/properties'&&req.method==='GET'){const rows=await rest('eme_cases?select=id,data->published,data->access&data->published=not.is.null');return send(200,{properties:rows.filter(r=>publicAccess({data:r})).map(r=>r.published).filter(Boolean)});}
@@ -127,6 +130,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    if(await intelligence.handle(path,req,res,user,body,send))return;
    if(await spatial.handle(path,req,res,user,body,send))return;
    if(await operations.handle(path,req,res,user,body,send))return;
+   if(await analytics.handle(path,req,user,send))return;
    if(await leads.handle(path,req,user,body,send))return;
    if(await whatsapp.handle(path,req,res,user,body,send))return;
    if(path==='/api/assignees'&&req.method==='GET'){const people=(await members()).filter(p=>p.active&&(user.role==='admin'||p.id===user.id)).map(({id,name,role})=>({id,name,role}));return send(200,{members:people});}
