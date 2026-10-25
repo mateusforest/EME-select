@@ -9,7 +9,7 @@
 #eme-continuo .eco-scene{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
 #eme-continuo .eco-scene video,html #eme-continuo .eco-scene .eco-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% center;filter:none;opacity:1}
 #eme-continuo .eco-product-eme .eco-scene video,html #eme-continuo .eco-product-eme .eco-scene .eco-poster{object-position:65% center}
-#eme-continuo .eco-scene:after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#f7f7ee80,transparent 20%,transparent 85%,#f7f7ee25),linear-gradient(90deg,#f7f7ee 0%,#f7f7eefc 30%,#f7f7eec9 48%,#f7f7ee55 70%,#f7f7ee00 100%)}
+#eme-continuo .eco-scene:after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#f7f7ee80,transparent 20%,transparent 85%,#f7f7ee25),linear-gradient(90deg,#f7f7ee 0%,#f7f7eefc 35%,#f7f7eee6 52%,#f7f7ee66 74%,#f7f7ee00 100%)}
 html #eme-continuo .eco-is-playing .eco-scene .eco-poster{opacity:0}
 #eme-continuo .eco-copy{position:relative;z-index:2;display:flex;flex-direction:column;align-items:flex-start;height:100%;padding:0}
 #eme-continuo .eco-brand{height:48px;display:flex;align-items:center;gap:16px;margin:0 0 8px}
@@ -44,6 +44,6 @@ html #eme-continuo .eco-is-playing .eco-scene .eco-poster{opacity:0}
  #eme-continuo .eco-cta{min-width:190px;min-height:46px;font-size:13px;padding:12px 18px;margin-top:0}
  #eme-continuo .eco-scene video,html #eme-continuo .eco-scene .eco-poster{object-position:58% center}
  #eme-continuo .eco-product-eme .eco-scene video,html #eme-continuo .eco-product-eme .eco-scene .eco-poster{object-position:67% center}
- #eme-continuo .eco-scene:after{background:linear-gradient(0deg,#f7f7ee9c,transparent 25%,transparent 90%,#f7f7ee30),linear-gradient(90deg,#f7f7ee 0%,#f7f7eef2 32%,#f7f7eeb3 57%,#f7f7ee2b 88%,transparent)}
+ #eme-continuo .eco-scene:after{background:linear-gradient(0deg,#f7f7ee9c,transparent 25%,transparent 90%,#f7f7ee30),linear-gradient(90deg,#f7f7ee 0%,#f7f7eefc 40%,#f7f7eee6 60%,#f7f7ee73 82%,transparent)}
 }
 @media(prefers-reduced-motion:reduce){#eme-continuo .eco-cta,#eme-continuo .eco-cta svg{transition:none}}
