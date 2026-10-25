@@ -344,6 +344,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   let catalogReturnScroll = 0;
   let regionReturnScroll = 0;
   let regionPickerOpener = collectionToggle;
+  let searchRequest=null;
   let homeStateId=regionStates[0]?.id||'rs';
   const catalog=createCatalog({root,properties,assets,regions,getSaved:()=>savedIds,
     onOpen:id=>openProperty(id),
@@ -367,6 +368,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if(persist)save();
   }
   function showCatalog(query,{returning=false,persist=true}={}) {
+    searchRequest?.abort();searchRequest=null;catalog.busy(false);
     if(assistantMode&&!chatMinimized)minimizeChat(false);
     view='catalog';root.dataset.page=view;home.hidden=true;propertyPage.hidden=true;regionPage.hidden=true;opportunities.page.hidden=true;propertyOriginOpportunities=false;
     propertyOriginRegion=null;propertyOriginCatalog=false;setRegionPicker(false);
@@ -670,7 +672,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   }
 
   function renderProperty() {
-    const back=root.querySelector('.ep-back');back.replaceChildren(element('span','','←'),document.createTextNode(propertyOriginOpportunities ? ' Voltar às oportunidades' : propertyOriginRegion ? ' Voltar a '+regionById(propertyOriginRegion).name : ' Voltar à coleção'));
+    const back=root.querySelector('.ep-back');back.replaceChildren(element('span','','←'),document.createTextNode(propertyOriginOpportunities ? ' Voltar às oportunidades' : propertyOriginRegion ? ' Voltar a '+regionById(propertyOriginRegion).name : propertyOriginCatalog&&catalog.isSearch()?' Voltar à busca':' Voltar à coleção'));
     const property = byId(selectedId);
     propertyPage.setAttribute('aria-label',property.title);
     root.querySelector('.ep-finance').hidden = property.operation === 'alugar';
@@ -1239,9 +1241,20 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     status.textContent='Nova conversa iniciada.';save();
   }
   root.querySelector('.ex-new-chat').addEventListener('click',newConversation);
-  function runSearch(text,reset = true) {
+  async function runSearch(text) {
     if (!text.trim()) { headerSearch.focus(); return; }
-    openAssistant('search'); respond(text,reset); save();
+    showCatalog({searchPhrase:text.trim().slice(0,800)});
+    const request=new AbortController();searchRequest=request;catalog.busy(true);
+    try{
+      const response=await fetch('/api/public/properties',{cache:'no-store',signal:AbortSignal.any([request.signal,AbortSignal.timeout(15000)])});
+      if(!response.ok)throw Error('Confira sua conexão e envie a busca novamente.');
+      const data=await response.json();if(!Array.isArray(data.properties))throw Error('Confira sua conexão e envie a busca novamente.');
+      if(searchRequest!==request)return;
+      const refreshed=mapProperties(data.properties,assets);
+      for(const p of refreshed){p.regionId=byId(p.id)?.regionId||regions.find(r=>p.location.toLowerCase().includes(r.city.toLowerCase()))?.id;p.opportunity=siteContent.opportunityIds===null||siteContent.opportunityIds.includes(p.id);searchFacts[p.id]=p.searchFacts;}
+      properties.splice(0,properties.length,...refreshed);catalog.render();catalog.busy(false);
+    }catch(error){if(searchRequest===request&&!request.signal.aborted)catalog.busy(false,error.name==='TimeoutError'?'A consulta demorou. Envie a busca novamente.':error.message);}
+    finally{if(searchRequest===request)searchRequest=null;}
   }
   function openLead(kind) {
     leadKind = kind;
@@ -1307,7 +1320,12 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   headerVoicePanel.innerHTML='<span class="voice-level" aria-hidden="true"></span><span class="header-voice-message" role="status" aria-live="polite"></span><button type="button" class="header-voice-stop" hidden>Concluir</button><button type="button" class="header-voice-cancel" aria-label="Fechar gravação de voz">×</button>';
   headerSearch.closest('form').append(headerVoicePanel);
   const headerVoice=createHeaderVoice({input:headerSearch,button:root.querySelector('.ex-search .ex-microphone'),panel:headerVoicePanel,message:headerVoicePanel.querySelector('.header-voice-message'),stop:headerVoicePanel.querySelector('.header-voice-stop'),cancel:headerVoicePanel.querySelector('.header-voice-cancel'),Recognition:window.SpeechRecognition||window.webkitSpeechRecognition});
-  window.addEventListener('pagehide',()=>headerVoice.finish());
+  const chatVoicePanel=headerVoicePanel.cloneNode(true);chatVoicePanel.className='header-voice chat-inline-voice';composer.before(chatVoicePanel);
+  const chatVoice=createHeaderVoice({idleLabel:'Usar a voz',reviewLabel:'Revise o texto e envie sua mensagem.',input:composer.elements.message,button:root.querySelector('.ex-assistant-footer .ex-microphone'),panel:chatVoicePanel,message:chatVoicePanel.querySelector('.header-voice-message'),stop:chatVoicePanel.querySelector('.header-voice-stop'),cancel:chatVoicePanel.querySelector('.header-voice-cancel'),Recognition:window.SpeechRecognition||window.webkitSpeechRecognition});
+  window.addEventListener('pagehide',()=>{headerVoice.finish();chatVoice.finish();});
+  composer.addEventListener('click',event=>{if(event.target.closest('button'))chatVoice.finish();},true);
+  composer.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey)chatVoice.finish();},true);
+  root.querySelectorAll('.ex-new-chat,.ex-minimize-chat,.ex-assistant-back').forEach(button=>button.addEventListener('click',()=>chatVoice.finish()));
   root.querySelector('.ex-search-submit').addEventListener('click',()=>{headerVoice.finish();runSearch(headerSearch.value);});
   headerSearch.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();headerVoice.finish();runSearch(headerSearch.value);}});
   composer.querySelector('button').addEventListener('click',()=>{respond(composer.elements.message.value);save();});
@@ -1343,9 +1361,9 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if (target.closest('.ex-chat-minimized')) {openAssistant(assistantMode || 'chat');save();return;}
     if (target.closest('.ex-minimize-chat')) {minimizeChat();save();return;}
     if (target.closest('.ex-microphone')) {
-      if(target.closest('.ex-search')){voiceRecognition?.stop();headerVoice.start();return;}
+      if(target.closest('.ex-search')){chatVoice.finish();voiceRecognition?.stop();headerVoice.start();return;}
       headerVoice.finish();
-      openAssistant('voice'); root.querySelector('.ex-transcript').value=''; root.querySelector('.ex-voice-state').textContent='';save();return;
+      chatVoice.start();return;
     }
     if (target.closest('.ex-assistant-back')) {closeAssistant();save();return;}
     if (target.closest('.ex-chat-return')) {chatWelcome();openAssistant('chat');save();return;}
@@ -1377,7 +1395,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     const navigation=view==='property'&&propertyOriginOpportunities?{opportunitiesReturn:opportunities.hash(),opportunitiesScroll:opportunitiesReturnScroll}:view==='property'&&propertyOriginCatalog?{catalogReturn:catalog.hash(),catalogScroll:catalogReturnScroll}:null;
     if(location.hash!==hash)history.pushState(navigation,'',hash);
     root.dispatchEvent(new Event('eme-analytics-route'));
-    document.title=(view==='property'?byId(selectedId)?.title:view==='region'?regionById(regionId).name:view==='catalog'?'Todos os imóveis':view==='opportunities'?'Oportunidades':'Seu próximo lugar')+' — EME Select';
+    document.title=(view==='property'?byId(selectedId)?.title:view==='region'?regionById(regionId).name:view==='catalog'?(catalog.isSearch()?'Sua busca':'Todos os imóveis'):view==='opportunities'?'Oportunidades':'Seu próximo lugar')+' — EME Select';
   }
   function applyRoute(){
     const before=routingReady;routingReady=false;
@@ -1388,10 +1406,10 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
       if(history.state?.opportunitiesReturn){opportunities.show(history.state.opportunitiesReturn.split('?')[1]||'');opportunities.page.hidden=true;propertyOriginOpportunities=true;propertyOriginCatalog=false;opportunitiesReturnScroll=history.state.opportunitiesScroll||0;renderProperty();}
     }
     else if(parts[0]==='regiao'&&regionById(parts[1]))showRegion(parts[1],{persist:false});
-    else if(parts[0]==='colecao')showCatalog(location.hash.split('?')[1]||'',{persist:false});
+    else if(parts[0]==='colecao'||parts[0]==='busca')showCatalog(location.hash.split('?')[1]||'',{persist:false});
     else if(parts[0]==='oportunidades')showOpportunities(location.hash.split('?')[1]||'',{returning:view==='property'&&propertyOriginOpportunities,persist:false});
     else {showHome(null,false,true);if(['imovel','visita'].includes(parts[0]))status.textContent='Este imóvel não está disponível na coleção atual.';}
-    document.title=(view==='property'?byId(selectedId)?.title:view==='region'?regionById(regionId).name:view==='catalog'?'Todos os imóveis':view==='opportunities'?'Oportunidades':'Seu próximo lugar')+' — EME Select';
+    document.title=(view==='property'?byId(selectedId)?.title:view==='region'?regionById(regionId).name:view==='catalog'?(catalog.isSearch()?'Sua busca':'Todos os imóveis'):view==='opportunities'?'Oportunidades':'Seu próximo lugar')+' — EME Select';
     routingReady=before;
     updateHeaderNavigation();
   }

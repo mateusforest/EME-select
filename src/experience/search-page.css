@@ -1,0 +1,11 @@
+#eme-continuo .el-search-loading{padding:80px 20px;text-align:center;color:#173c32;min-height:360px}
+#eme-continuo .el-search-loading[hidden],#eme-continuo .el-layout[hidden],#eme-continuo .header-voice button[hidden]{display:none!important}
+#eme-continuo .el-search-loading h2{font-size:clamp(26px,3vw,40px);font-weight:400;margin:24px 0 12px}
+#eme-continuo .el-search-orbit{display:inline-grid;place-items:center;width:68px;height:68px;font-size:32px;border-radius:24px;color:#173c32;background:#e3eadf;box-shadow:0 0 0 10px #e3eadf66;animation:search-breathe 1.4s ease-in-out infinite alternate}
+#eme-continuo .has-error .el-search-orbit{animation:none}
+#eme-continuo .is-search-page .el-heading>p:last-child{max-width:760px;overflow-wrap:anywhere}
+#eme-continuo .chat-inline-voice{position:static;margin:8px 14px;flex-shrink:0;box-shadow:none}
+#eme-continuo .chat-inline-voice button{min-width:44px;min-height:44px;background:transparent;border:0;color:#173c32;font:inherit;font-size:12px;cursor:pointer}
+@keyframes search-breathe{to{transform:scale(1.08);box-shadow:0 0 0 20px #e3eadf22}}
+@media(prefers-reduced-motion:reduce){#eme-continuo .el-search-orbit{animation:none}}
+@media(max-width:600px){#eme-continuo .el-search-loading{padding:56px 12px;min-height:280px}}

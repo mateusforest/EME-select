@@ -1,9 +1,14 @@
 import {renderPrice} from './price.js';
 import {catalogDefaults,catalogFromQuery,catalogHash,selectCatalog} from './catalog.js';
 import {createIcons} from './icons.js';
+import {searchFilters} from './search-query.js';
 export function createCatalog({root,properties,assets,regions,getSaved,onOpen,onSave,onChange,onHome}) {
   const page=root.querySelector('.el-catalog'),form=page.querySelector('.el-filters');
   let filters={...catalogDefaults};
+  let searchPhrase='';
+  const heading=page.querySelector('h1'),intro=page.querySelector('.el-heading>p:last-child'),originalHeading=heading.innerHTML,originalIntro=intro.textContent;
+  const loading=document.createElement('div');loading.className='el-search-loading';loading.hidden=true;loading.setAttribute('role','status');loading.innerHTML='<span class="el-search-orbit" aria-hidden="true">M</span><h2>Encontrando seu próximo lugar.</h2><p>Consultando os imóveis da coleção…</p>';page.querySelector('.el-layout').before(loading);
+  function setSearch(phrase){searchPhrase=phrase;page.classList.toggle('is-search-page',!!phrase);if(phrase){heading.textContent='Sua busca. Novas possibilidades.';intro.textContent='Você procurou: “'+phrase+'”';}else{heading.innerHTML=originalHeading;intro.textContent=originalIntro;}}
   const node=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el;};
   const icon=name=>{const el=node('i');el.dataset.lucide=name;el.setAttribute('aria-hidden','true');return el;};
   const option=(value,label)=>{const el=node('option','',label);el.value=value;return el;};
@@ -74,5 +79,5 @@ export function createCatalog({root,properties,assets,regions,getSaved,onOpen,on
   const mobile=matchMedia('(max-width:760px)');
   page.querySelector('.el-filter-panel').open=!mobile.matches;
   mobile.addEventListener('change',event=>{page.querySelector('.el-filter-panel').open=!event.matches;});
-  return {page,render,hash:()=>catalogHash(filters),show(query){if(query!==undefined)filters=typeof query==='string'?catalogFromQuery(query):{...catalogDefaults,...query};populate();render();page.hidden=false;}};
+  return {page,render,isSearch:()=>!!searchPhrase,busy(value,error=''){loading.hidden=!value&&!error;loading.classList.toggle('has-error',!!error);loading.querySelector('h2').textContent=error?'Não foi possível atualizar a busca.':'Encontrando seu próximo lugar.';loading.querySelector('p').textContent=error||'Consultando os imóveis da coleção…';page.querySelector('.el-layout').hidden=value||!!error;page.setAttribute('aria-busy',String(value));},hash:()=>{const hash=catalogHash(filters);return searchPhrase?hash.replace('#/colecao','#/busca')+(hash.includes('?')?'&':'?')+'busca='+encodeURIComponent(searchPhrase):hash;},show(query){if(query!==undefined){const phrase=typeof query==='string'?new URLSearchParams(query).get('busca'):query.searchPhrase;setSearch(phrase||'');filters=typeof query==='string'?catalogFromQuery(query):{...catalogDefaults,...query};if(phrase&&typeof query!=='string')filters=searchFilters(phrase,regions);}populate();render();page.hidden=false;}};
 }
