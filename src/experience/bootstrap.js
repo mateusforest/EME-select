@@ -9,6 +9,7 @@ import {selectTeam} from '../team-profiles';
 import './experience.css';
 import './production.css';
 import './header.css';
+import './header-voice.css';
 import './opportunities.css';
 import './price.css';
 import './chat.css';

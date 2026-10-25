@@ -1,4 +1,5 @@
 import {renderPrice} from './price.js';
+import {createHeaderVoice} from './header-voice.js';
 import {defaultSiteContent} from '../../shared/portal-content.mjs';
 import {mapProperties} from './properties.js';
 import {createIcons} from './icons.js';
@@ -1302,8 +1303,13 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   }
 
   root.querySelectorAll('button[type="submit"]').forEach(button=>button.type='button');
-  root.querySelector('.ex-search-submit').addEventListener('click',()=>runSearch(headerSearch.value));
-  headerSearch.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();runSearch(headerSearch.value);}});
+  const headerVoicePanel=document.createElement('div');headerVoicePanel.className='header-voice';headerVoicePanel.hidden=true;
+  headerVoicePanel.innerHTML='<span class="voice-level" aria-hidden="true"></span><span class="header-voice-message" role="status" aria-live="polite"></span><button type="button" class="header-voice-stop" hidden>Concluir</button><button type="button" class="header-voice-cancel" aria-label="Fechar gravação de voz">×</button>';
+  headerSearch.closest('form').append(headerVoicePanel);
+  const headerVoice=createHeaderVoice({input:headerSearch,button:root.querySelector('.ex-search .ex-microphone'),panel:headerVoicePanel,message:headerVoicePanel.querySelector('.header-voice-message'),stop:headerVoicePanel.querySelector('.header-voice-stop'),cancel:headerVoicePanel.querySelector('.header-voice-cancel'),Recognition:window.SpeechRecognition||window.webkitSpeechRecognition});
+  window.addEventListener('pagehide',()=>headerVoice.finish());
+  root.querySelector('.ex-search-submit').addEventListener('click',()=>{headerVoice.finish();runSearch(headerSearch.value);});
+  headerSearch.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();headerVoice.finish();runSearch(headerSearch.value);}});
   composer.querySelector('button').addEventListener('click',()=>{respond(composer.elements.message.value);save();});
   function resizeMessageInput() {
     const field = composer.elements.message;
@@ -1337,6 +1343,8 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if (target.closest('.ex-chat-minimized')) {openAssistant(assistantMode || 'chat');save();return;}
     if (target.closest('.ex-minimize-chat')) {minimizeChat();save();return;}
     if (target.closest('.ex-microphone')) {
+      if(target.closest('.ex-search')){voiceRecognition?.stop();headerVoice.start();return;}
+      headerVoice.finish();
       openAssistant('voice'); root.querySelector('.ex-transcript').value=''; root.querySelector('.ex-voice-state').textContent='';save();return;
     }
     if (target.closest('.ex-assistant-back')) {closeAssistant();save();return;}

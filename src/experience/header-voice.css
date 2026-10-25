@@ -1,0 +1,10 @@
+#eme-continuo .ec-header .ex-search{position:relative}
+#eme-continuo .header-voice{position:absolute;top:calc(100% + 10px);left:0;right:0;display:flex;align-items:center;gap:8px;padding:10px 12px;background:#f7f7ef;border:1px solid #d6dfd4;border-radius:12px;box-shadow:0 8px 24px #173c3214;color:#173c32;z-index:20}
+#eme-continuo .header-voice[hidden]{display:none}
+#eme-continuo .header-voice-message{flex:1;min-width:0;font-size:12px;line-height:1.4}
+#eme-continuo .ec-header .ex-search .header-voice button{width:auto;min-width:44px;min-height:44px;flex-shrink:0;font-size:12px;color:#173c32;padding:6px;background:transparent}
+#eme-continuo .header-voice .voice-level{width:6px;height:14px;background:#2a6954;border-radius:4px;flex-shrink:0}
+#eme-continuo .header-voice.is-recording .voice-level{animation:voice-pulse 1s ease-in-out infinite alternate}
+#eme-continuo .ec-header .ex-microphone[aria-pressed=true]{background:#dce9de;border-radius:50%}
+@keyframes voice-pulse{to{transform:scaleY(.35);opacity:.5}}
+@media(prefers-reduced-motion:reduce){#eme-continuo .header-voice.is-recording .voice-level{animation:none}}
