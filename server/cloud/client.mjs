@@ -5,8 +5,16 @@ export function createClient(env=process.env,fetcher=fetch){
  async function request(path,{method='GET',body,publicKey=false,raw=false,headers={}}={}){
   const key=publicKey?pub:secret;
   const response=await fetcher(url+path,{method,headers:{apikey:key,...(!publicKey&&key.startsWith('eyJ')?{Authorization:'Bearer '+key}:{}),...(body!==undefined&&!raw?{'Content-Type':'application/json'}:{}),...headers},...(body!==undefined?{body:raw?body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(20000)});
-  if(!response.ok){let error={};try{error=await response.json();}catch{}const message=error.message||error.msg||'';
-   if(message.includes('RATE_LIMIT')||response.status===429)fail(429,'Muitas tentativas. Aguarde antes de tentar novamente.');
+  if(!response.ok){let error={};try{error=await response.json();}catch{}error.code=error.code||error.error_code;const message=error.message||error.msg||'';
+   const authFailure=(status,text,code,retryAfter)=>{throw Object.assign(new Error(text),{status,code,...(retryAfter?{retryAfter}:{})});};
+   if(path.startsWith('/auth/')){
+    if(error.code==='over_email_send_rate_limit'||/email rate limit/i.test(message))authFailure(429,'O serviço de confirmação atingiu o limite de envio de e-mails. Seu acesso não depende de aprovação da administração. Aguarde até uma hora antes de reenviar a confirmação.', 'confirmation_limit',3600);
+    if(error.code==='email_address_not_authorized')authFailure(503,'O envio de confirmação para novos clientes ainda precisa ser configurado pela EME. Não é uma restrição da sua conta.','confirmation_unavailable');
+    if(error.code==='email_not_confirmed')authFailure(403,'Confirme seu e-mail para entrar. Confira também o spam ou solicite uma nova confirmação.','email_unconfirmed');
+    if(error.code==='signup_disabled')authFailure(503,'O cadastro está temporariamente indisponível. A equipe precisa revisar a configuração do Acesso Select.','signup_unavailable');
+    if(error.code==='unexpected_failure'&&/mail|smtp/i.test(message))authFailure(503,'Não foi possível enviar o e-mail de confirmação. A EME precisa revisar o serviço de envio.','confirmation_unavailable');
+   }
+   if(message.includes('RATE_LIMIT')||response.status===429)authFailure(429,'Muitas tentativas em pouco tempo. Aguarde 15 minutos antes de tentar novamente.','attempt_limit',900);
    if(message.includes('LEAD_REQUEST_REUSED'))fail(409,'Esta referência de contato já foi usada.');
    if(message.includes('LEAD_'))fail(400,'Confira o interesse, o responsável e os dados do lead.');
    if(message.includes('STALE_VERSION'))fail(409,'O cadastro mudou. Reabra antes de continuar.');

@@ -6,13 +6,13 @@ export interface Criterion { key:string; label:string; weight:number; help:strin
 export interface Verification { key:string; label:string; help:string; state:string; note:string; author:string|null; date:string|null }
 export interface Curation { policy:string; family:string|null; familyLabel:string; threshold:number; legacy:boolean; criteria:Criterion[]; checks:Verification[]; pending:string; score:number|null; blockers:string[]; coverage:number; locked:boolean }
 export interface CaseDetails { evaluation: LiveEvaluation; history: HistoryEntry[]; curation:Curation }
-export class ApiError extends Error { constructor(message: string, public status: number) { super(message); } }
+export class ApiError extends Error { constructor(message: string, public status: number, public code = '', public retryAfter = 0) { super(message); } }
 export async function api<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
   let response: Response;
   try { response = await fetch('/api' + path, { method, credentials:'same-origin', cache:'no-store', ...(method !== 'GET' ? { headers:{'Content-Type':'application/json'}, body:JSON.stringify(body ?? {}) } : {}) }); }
   catch { throw new ApiError('Não foi possível conectar ao portal. Confira sua conexão e tente novamente.',0); }
-  let value: T & { error?: string };
+  let value: T & { error?: string; code?: string; retryAfter?: number };
   try { value = await response.json(); } catch { throw new ApiError('O serviço do portal não respondeu corretamente. Tente novamente.',response.status); }
-  if (!response.ok) throw new ApiError(value.error || 'Não foi possível concluir a operação.',response.status);
+  if (!response.ok) throw new ApiError(value.error || 'Não foi possível concluir a operação.',response.status,value.code,value.retryAfter);
   return value;
 }

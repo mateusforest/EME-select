@@ -16,8 +16,9 @@ function fixture(){
  const calls=[],headers={};
  const res={setHeader:(k,v)=>headers[k]=v,getHeader:k=>headers[k],end:()=>{}};
  const client={
-  request:async(path,args)=>{calls.push(path);if(path==='/auth/v1/user')return identity;if(path.startsWith('/auth/v1/token'))return {user:identity,access_token:'test-token',expires_in:3600};if(path.startsWith('/storage/'))return new Response('test');if(path==='/auth/v1/logout')return {};throw Error(path);},
+  request:async(path,args)=>{calls.push(path);if(path.startsWith('/auth/v1/admin/users?'))return {users:[identity]};if(path==='/auth/v1/user')return identity;if(path.startsWith('/auth/v1/token'))return {user:identity,access_token:'test-token',expires_in:3600};if(path.startsWith('/storage/'))return new Response('test');if(path==='/auth/v1/logout')return {};throw Error(path);},
   rest:async(path,method,body)=>{
+   if(path==='eme_profiles?select=id')return [];
    if(path.startsWith('eme_profiles?id='))return member?[member]:[];
    if(path.startsWith('eme_cases?id=eq.'+ownerId)){if(method==='PATCH')profile={...profile,...body};return [profile];}
    if(path.includes('kind=eq.select_account'))return [profile];

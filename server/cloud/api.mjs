@@ -183,7 +183,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
     }else fail(405,'Operação indisponível.');
    }
    row=await save(req,row,data,label,note,assignee);return send(200,match[1]==='listings'?listing(row):await details(row));
-  }catch(e){if(!e.status)console.error('Cloud portal failure:',e.name);send(e.status||503,{error:e.status?e.message:'Não foi possível concluir a operação. Tente novamente.'});}
+  }catch(e){if(!e.status)console.error('Cloud portal failure:',e.name);if(e.retryAfter)res.setHeader('Retry-After',String(e.retryAfter));send(e.status||503,{error:e.status?e.message:'Não foi possível concluir a operação. Tente novamente.',...(e.code&&['confirmation_limit','confirmation_unavailable','email_unconfirmed','signup_unavailable','attempt_limit'].includes(e.code)?{code:e.code,retryAfter:e.retryAfter||0}:{})});}
  }
  return {handle};
 }

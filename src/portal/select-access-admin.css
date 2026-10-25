@@ -1,0 +1,27 @@
+.sa-workspace {display:grid;gap:24px;min-width:0}
+.sa-workspace .ps-card {padding:24px;min-width:0}
+.sa-summary {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.sa-summary strong {display:block;font-size:30px;color:#173e31;font-weight:500}
+.sa-summary span,.sa-help {color:#61776d;font-size:14px}
+.sa-tabs {display:flex;gap:8px;flex-wrap:wrap}
+.sa-tabs button {border:1px solid #d5ded2;background:transparent;color:#173e31;border-radius:24px;padding:12px 18px;min-height:44px;cursor:pointer}
+.sa-tabs button[aria-pressed=true] {background:#173e31;color:#fff}
+.sa-toolbar {display:flex;align-items:end;gap:16px;flex-wrap:wrap}
+.sa-toolbar label {flex:1;min-width:180px;display:grid;gap:8px}
+.sa-toolbar input,.sa-toolbar select {border:1px solid #cfd9cf;border-radius:8px;background:#fffdf8;padding:12px;color:#173e31;min-height:44px;width:100%}
+.sa-account {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:20px}
+.sa-account h3 {margin:0 0 8px}
+.sa-account p {overflow-wrap:anywhere}
+.sa-account details {grid-column:1/-1;border-top:1px solid #d5ded2;padding-top:16px}
+.sa-account summary {cursor:pointer;min-height:44px;color:#173e31}
+.sa-event {border-left:2px solid #c3d2c0;padding:8px 16px;margin:12px 0}
+.sa-event p {white-space:pre-wrap}
+.sa-options {display:grid;gap:8px;max-height:220px;overflow:auto;padding:12px;border:1px solid #d5ded2;border-radius:8px}
+.sa-options label {display:flex!important;align-items:center;gap:10px!important;font-weight:400!important;overflow-wrap:anywhere}
+.sa-options input {width:18px!important;min-height:18px!important;flex-shrink:0;accent-color:#173e31}
+.sa-workspace fieldset {min-width:0}
+.sa-workspace .ps-form {margin-top:18px}
+.sa-workspace [role=alert] {border-left:3px solid #9b6130;padding:12px;background:#fff7e8}
+.sa-empty {padding:24px 0;color:#61776d}
+@media(max-width:650px){.sa-summary{gap:8px}.sa-summary .ps-card{padding:14px}.sa-summary span{font-size:12px}.sa-summary strong{font-size:24px}.sa-workspace .ps-card{padding:18px}.sa-account{grid-template-columns:1fr}.sa-tabs{display:grid;grid-template-columns:1fr}.sa-toolbar{align-items:stretch}.sa-toolbar label{min-width:100%}}
+.select-portal .sa-tabs button[aria-pressed=true]{color:#fff;background:#173e31}

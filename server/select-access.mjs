@@ -19,17 +19,41 @@ export function createSelectAccess({client,rate,staffSession,openStaffSession,cl
  async function account(id){let row=(await rest('eme_cases?id=eq.'+id))[0];if(row&&row.data.kind!=='select_account')fail(403,'Conta indisponível.');return row;}
  async function persist(row,data){if(Buffer.byteLength(JSON.stringify(data))>135000)fail(400,'Seu histórico atingiu o limite deste espaço. Entre em contato com a equipe.');const saved=await rest('eme_cases?id=eq.'+row.id+'&version=eq.'+row.version,'PATCH',{data,version:row.version+1,updated_at:new Date().toISOString()});if(!saved?.length)fail(409,'Seu espaço mudou. Recarregue antes de salvar.');return saved[0];}
  async function ensureAccount(u){let row=await account(u.id);if(row)return row;const admin=(await rest('eme_profiles?role=eq.admin&active=eq.true&select=id&limit=1'))[0];if(!admin)fail(503,'Cadastro temporariamente indisponível.');return (await rest('eme_cases','POST',{id:u.id,assignee_id:admin.id,data:{kind:'select_account',name:clean(u.user_metadata?.name,80)||'Meu Select',email:u.email,intent:['buyer','owner','both'].includes(u.user_metadata?.intent)?u.user_metadata.intent:'buyer',favorites:[],search:{},whatsapp:false,phone:'',events:[],consentHistory:[]}}))[0];}
+ // Read identity accounts as well as portal profiles: confirmation and the first login
+ // must not be prerequisites for the administrator to see a registration.
+ async function customerAccounts(){
+  const [profiles,team]=await Promise.all([rest('eme_cases?data->>kind=eq.select_account'),rest('eme_profiles?select=id')]);
+  const staffIds=new Set(team.map(p=>p.id)),byId=new Map(profiles.map(p=>[p.id,p]));const users=[];
+  for(let page=1;page<=100;page++){
+   const batch=(await request('/auth/v1/admin/users?page='+page+'&per_page=100')).users||[];
+   users.push(...batch);if(batch.length<100)break;if(page===100)fail(503,'A lista de acessos excedeu o limite desta consulta. Fale com o suporte.');
+  }
+  return users.filter(u=>u.email&&!staffIds.has(u.id)&&!u.deleted_at).map(u=>{
+   const row=byId.get(u.id),d=row?.data||{};
+   return {id:u.id,version:row?.version||0,name:d.name||clean(u.user_metadata?.name,80)||'Cliente',email:u.email,intent:d.intent||(['buyer','owner','both'].includes(u.user_metadata?.intent)?u.user_metadata.intent:'buyer'),whatsapp:d.whatsapp===true,events:d.events||[],confirmed:!!u.email_confirmed_at,createdAt:u.created_at,lastSignIn:u.last_sign_in_at||null};
+  });
+ }
  async function handle(path,req,res,body,send){
   if(!path.startsWith('/api/select/'))return false;
   const staff=await staffSession(req);
   if(path==='/api/select/session'&&req.method==='GET'){const u=staff||await identity(req);send(200,{user:u?{id:u.id,name:u.name||clean(u.user_metadata?.name,80),staff:!!staff}:null});return true;}
   if(path==='/api/select/register'&&req.method==='POST'){
-   await rate('select-register:'+String(req.headers['x-forwarded-for']||'unknown'),5);
    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email||'')||typeof body.password!=='string'||body.password.length<12||body.password.length>128||!clean(body.name,80))fail(400,'Informe nome, e-mail e senha com pelo menos 12 caracteres.');
    if(body.intent!==undefined&&!['buyer','owner','both'].includes(body.intent))fail(400,'Escolha como podemos ajudar.');
+   await rate('select-register:'+String(req.headers['x-forwarded-for']||'unknown'),5);
    const result=await request('/auth/v1/signup',{method:'POST',publicKey:true,body:{email:body.email.trim().toLowerCase(),password:body.password,data:{name:clean(body.name,80),...(body.intent?{intent:body.intent}:{})}}});
+   // Supabase can return an obfuscated user for duplicate registrations. Do not
+   // create a portal record from that response or change an existing person's data.
+   const registered=result.user||result;
+   if(registered.id&&registered.identities?.length)await ensureAccount(registered);
    if(result.access_token)setToken(res,result.access_token,result.expires_in||3600);
    send(200,{authenticated:!!result.access_token,message:result.access_token?'Acesso criado.':'Confira seu e-mail para confirmar o cadastro. Se já possui conta, entre com sua senha.'});return true;
+  }
+  if(path==='/api/select/resend'&&req.method==='POST'){
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email||''))fail(400,'Informe seu e-mail.');
+   await rate('select-resend:'+String(req.headers['x-forwarded-for']||'unknown'),3);
+   await request('/auth/v1/resend',{method:'POST',publicKey:true,body:{type:'signup',email:body.email.trim().toLowerCase()}});
+   send(200,{message:'Se houver um cadastro aguardando confirmação, você receberá um novo e-mail. Confira também o spam.'});return true;
   }
   if(path==='/api/select/login'&&req.method==='POST'){
    await rate('select-login:'+String(req.headers['x-forwarded-for']||'unknown'),15);
@@ -41,12 +65,12 @@ export function createSelectAccess({client,rate,staffSession,openStaffSession,cl
    setToken(res,result.access_token,result.expires_in||3600);send(200,{staff:false});return true;
   }
   if(path==='/api/select/admin'&&staff?.role==='admin'&&!staff.must_change){
-   if(req.method==='GET'){const inventory=await properties();send(200,{accounts:(await rest('eme_cases?data->>kind=eq.select_account')).map(r=>({id:r.id,version:r.version,...r.data,ownedCount:inventory.filter(p=>p.data.access?.owners?.includes(r.id)).length})),properties:inventory.map(r=>({id:r.id,version:r.version,title:ownerProperty(r).title,published:!!r.data.published,access:r.data.access||{visibility:'public',allowed:[],owners:[]}}))});return true;}
+   if(req.method==='GET'){const inventory=await properties();send(200,{accounts:(await customerAccounts()).map(a=>({...a,ownedCount:inventory.filter(p=>p.data.access?.owners?.includes(a.id)).length})),properties:inventory.map(r=>({id:r.id,version:r.version,title:ownerProperty(r).title,published:!!r.data.published,access:r.data.access||{visibility:'public',allowed:[],owners:[]}}))});return true;}
    if(req.method==='POST'){
     if(body.action==='access'){
      const row=(await properties()).find(r=>r.id===body.id);if(!row||row.version!==body.version)fail(409,'Recarregue o imóvel.');
      if(!['public','reserved','individual'].includes(body.visibility))fail(400,'Visibilidade inválida.');
-     const ids=(await rest('eme_cases?data->>kind=eq.select_account&select=id')).map(r=>r.id);
+     const ids=(await customerAccounts()).filter(a=>a.confirmed).map(a=>a.id);
      for(const key of ['allowed','owners'])if(!Array.isArray(body[key])||body[key].length>100||body[key].some(id=>!ids.includes(id)))fail(400,'Selecione contas existentes.');
      if(body.owners.some(id=>!row.data.access?.owners?.includes(id))&&body.ownershipVerified!==true)fail(400,'Confirme a conferência da identidade e do vínculo com o imóvel.');
      if(body.publicAt&&(!Number.isFinite(Date.parse(body.publicAt))||Date.parse(body.publicAt)<=Date.now()))fail(400,'Escolha uma data futura.');
@@ -62,7 +86,7 @@ export function createSelectAccess({client,rate,staffSession,openStaffSession,cl
      }
      await saveCase(req,row,{...row.data,ownerUpdates:[...(row.data.ownerUpdates||[]),update]},'Acompanhamento compartilhado','Informação disponibilizada aos proprietários vinculados.');
     }else if(body.action==='reply'){
-     const row=await account(body.id);if(!row||row.version!==body.version)fail(409,'Recarregue a conversa.');if(!clean(body.message,3000))fail(400,'Escreva uma mensagem.');
+     let row=await account(body.id);if(!row&&body.version===0){const known=(await customerAccounts()).find(a=>a.id===body.id);if(!known)fail(404,'Conta não encontrada.');const auth=await request('/auth/v1/admin/users/'+body.id);row=await ensureAccount(auth.user||auth);}else if(!row||row.version!==body.version)fail(409,'Recarregue a conversa.');if(!clean(body.message,3000))fail(400,'Escreva uma mensagem.');
      await persist(row,{...row.data,events:[...row.data.events,{id:randomUUID(),type:'reply',text:clean(body.message,3000),at:new Date().toISOString(),author:staff.name}]});
     }else fail(400,'Ação indisponível.');send(200,{ok:true});return true;
    }
