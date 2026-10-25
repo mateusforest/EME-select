@@ -1,0 +1,5 @@
+#eme-continuo .has-discount{display:flex;align-items:baseline;flex-wrap:wrap;gap:.22em .5em}
+#eme-continuo .has-discount>.eme-price-before{font-size:max(12px,.58em);font-weight:400;line-height:1.5;opacity:.68;text-decoration-thickness:1px;white-space:nowrap}
+#eme-continuo .has-discount>.eme-price-current{font-size:inherit;line-height:inherit;white-space:nowrap}
+#eme-continuo .eo-spotlight-price.has-discount{gap:.35em .65em}
+#eme-continuo .ep-price.has-discount{font-size:clamp(28px,2.5vw,36px);gap:.22em .4em}

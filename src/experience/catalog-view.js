@@ -1,3 +1,4 @@
+import {renderPrice} from './price.js';
 import {catalogDefaults,catalogFromQuery,catalogHash,selectCatalog} from './catalog.js';
 import {createIcons} from './icons.js';
 export function createCatalog({root,properties,assets,regions,getSaved,onOpen,onSave,onChange,onHome}) {
@@ -37,7 +38,7 @@ export function createCatalog({root,properties,assets,regions,getSaved,onOpen,on
       const location=node('p','el-card-location',p.location);
       const title=node('h2'),titleLink=node('a','',p.title);titleLink.href=link.href;titleLink.dataset.catalogProperty=p.id;title.append(titleLink);
       const facts=node('p','el-card-facts',p.summary),bottom=node('div','el-card-bottom');
-      const price=node('div');price.append(node('small','',p.operation==='alugar'?'Para alugar':'À venda'),node('strong','',p.price));
+      const price=node('div');price.append(node('small','',p.operation==='alugar'?'Para alugar':'À venda'),renderPrice(node('strong'),p));
       const save=node('button','er-save');save.type='button';save.dataset.catalogSave=p.id;save.setAttribute('aria-label',(saved.has(p.id)?'Remover dos salvos: ':'Salvar: ')+p.title);save.setAttribute('aria-pressed',String(saved.has(p.id)));save.append(icon('heart'));bottom.append(price,save);
       card.append(link,location,title,facts,bottom);grid.append(card);
     }

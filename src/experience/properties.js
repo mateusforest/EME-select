@@ -1,6 +1,6 @@
 import {publicTitle,publicReasons} from '../public-presentation.mjs';
 const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-const currency=value=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(value);
+const currency=value=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0,maximumFractionDigits:2}).format(value);
 const safeImage=url=>typeof url==='string'&&/^\/api\/photos\/[a-f0-9-]{36}$/.test(url)?url:null;
 const blank='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900"><rect width="100%" height="100%" fill="#e4e8dd"/><text x="50%" y="50%" text-anchor="middle" fill="#183e2e" font-family="sans-serif" font-size="28">Fotografia em atualização</text></svg>');
 export function mapProperties(rows,assets){
@@ -19,7 +19,7 @@ export function mapProperties(rows,assets){
   const headings=['Integração para viver junto','Conforto nos detalhes','Ambientes que se conectam','Conforto para a rotina','Espaços também lá fora'];
   const highlights=paragraphs.map((text,i)=>[headings[i]||'Mais sobre o imóvel',text]);
   if(!highlights.length)highlights.push(['Sobre este lugar',summary+'. Conheça os detalhes com a equipe.']);
-  return {...p,title:publicTitle(p.title),full:publicTitle(p.title),short:publicTitle(p.title),type,group,location,regionId,price:currency(p.price)+(p.operation==='alugar'?' / mês':''),cover:photos[0].asset,photos,summary,facts,lead:reasons[0]||paragraphs[0]||summary,storyTitle:'Um lugar para conhecer. Detalhes para escolher.',highlights,
+  return {...p,originalPrice:Number.isFinite(p.originalPrice)&&p.originalPrice>p.price?currency(p.originalPrice)+(p.operation==='alugar'?' / mês':''):null,title:publicTitle(p.title),full:publicTitle(p.title),short:publicTitle(p.title),type,group,location,regionId,price:currency(p.price)+(p.operation==='alugar'?' / mês':''),cover:photos[0].asset,photos,summary,facts,lead:reasons[0]||paragraphs[0]||summary,storyTitle:'Um lugar para conhecer. Detalhes para escolher.',highlights,
     dossier:[['Espaços e medidas',facts.map(([k,v])=>k+': '+v).join(' · '),'Solicite a planta e confirme as medidas com a equipe.'],['Localização',location,p.locationProfile||'Converse com a equipe sobre o endereço e o entorno.'],['Condições e próximos passos','Valor anunciado: '+currency(p.price)+(p.operation==='alugar'?' / mês':''),p.costNotes||'Confirme disponibilidade, documentação e condições com a equipe.']],
     searchFacts:{price:p.price,bedrooms:p.bedrooms,parking:p.parking,city:place,features:['patio','lareira','piso aquecido','churrasqueira','suite','piscina'].filter(f=>normalize(copy+' '+(p.tags||[]).join(' ')).includes(f))}};
  });

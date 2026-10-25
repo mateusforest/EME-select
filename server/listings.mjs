@@ -8,7 +8,7 @@ const environments=['litoral','serra','urbano','comercial','terrenos','industria
 const stringKeys=['privateAddress','ownerName','ownerContact','title','city','neighborhood','description','features','reasons','costNotes'];
 const numberKeys=['price','area','bedrooms','suites','parking','condominiumFee','propertyTax'];
 const blank={privateAddress:'',ownerName:'',ownerContact:'',title:'',city:'',neighborhood:'',type:'Casa',environment:'urbano',condominium:'',operation:'comprar',price:null,area:null,bedrooms:null,suites:null,parking:null,condominiumFee:null,propertyTax:null,description:'',features:'',reasons:'',costNotes:''};
-export function attachListings({db,fail,text,fields,caseFor,transaction,audit,stamp,requireAdmin,send,session}) {
+export function attachListings({db,fail,text,fields,caseFor,transaction,audit,stamp,requireAdmin,send,session,priceProperties=async properties=>properties}) {
   db.exec(`BEGIN IMMEDIATE;
     CREATE TABLE IF NOT EXISTS listings(id TEXT PRIMARY KEY REFERENCES evaluations(id),version INTEGER NOT NULL DEFAULT 1,data TEXT NOT NULL,published TEXT,published_version INTEGER) STRICT;
     CREATE TABLE IF NOT EXISTS listing_photos(id TEXT PRIMARY KEY,listing_id TEXT NOT NULL REFERENCES listings(id),data BLOB NOT NULL,width INTEGER NOT NULL,height INTEGER NOT NULL,caption TEXT NOT NULL,position INTEGER NOT NULL) STRICT;
@@ -47,7 +47,7 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
   }
   async function publicHandle(path,req,res){
     if(path==='/api/public/properties'&&req.method==='GET'){
-      const entries=db.prepare("SELECT published FROM listings JOIN evaluations ON evaluations.id=listings.id WHERE published IS NOT NULL").all();send(res,200,{properties:entries.map(r=>JSON.parse(r.published))});return true;
+      const entries=db.prepare("SELECT published FROM listings JOIN evaluations ON evaluations.id=listings.id WHERE published IS NOT NULL").all();send(res,200,{properties:await priceProperties(entries.map(r=>JSON.parse(r.published)))});return true;
     }
     const match=path.match(/^\/api\/photos\/([a-f0-9-]{36})$/);if(!match||req.method!=='GET')return false;
     const p=db.prepare('SELECT listing_photos.*,listings.published,evaluations.stage FROM listing_photos JOIN listings ON listings.id=listing_photos.listing_id JOIN evaluations ON evaluations.id=listings.id WHERE listing_photos.id=?').get(match[1]);

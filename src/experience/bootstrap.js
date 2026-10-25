@@ -10,6 +10,7 @@ import './experience.css';
 import './production.css';
 import './header.css';
 import './opportunities.css';
+import './price.css';
 import './chat.css';
 import './editorial.css';
 import '../mobile.css';

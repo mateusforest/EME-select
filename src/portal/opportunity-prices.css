@@ -1,0 +1,11 @@
+.pa-opportunity-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,290px);gap:24px;align-items:center;padding:22px 0;border-top:1px solid #e2e7dd}
+.pa-opportunity-choice{display:flex;align-items:center;gap:16px;cursor:pointer;min-width:0}
+.pa-opportunity-choice input{width:18px;height:18px;accent-color:#183e32;flex-shrink:0}
+.pa-opportunity-choice strong,.pa-opportunity-choice small{display:block}
+.pa-opportunity-choice small{margin-top:6px;color:#61766b}
+.pa-opportunity-pricing{display:grid;gap:10px;font-size:13px}
+.pa-base-price{color:#61766b}.pa-base-price strong{margin-left:8px;color:#183e32;font-weight:500}
+.pa-opportunity-pricing label{display:grid;gap:7px;color:#183e32}
+.pa-opportunity-pricing input{width:100%;min-height:44px;box-sizing:border-box;padding:10px 12px;background:#fafbf8;border:1px solid #ccd8ca;border-radius:8px;color:#183e32;font:inherit}
+.pa-opportunity-pricing .ps-text-button{justify-self:start;min-height:32px}
+@media(max-width:700px){.pa-opportunity-card{grid-template-columns:1fr;gap:16px}.pa-opportunity-pricing{margin-left:34px}}

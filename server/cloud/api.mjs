@@ -74,7 +74,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
   for(let offset=0;offset<10000;offset+=500){
    const rows=await rest('eme_cases?select=id,data->published,data->access&data->published=not.is.null&order=id&limit=500&offset='+offset);
    entries.push(...rows.filter(row=>publicAccess({data:row})).map(row=>row.published).filter(Boolean));
-   if(rows.length<500)return entries;
+   if(rows.length<500)return content.priceProperties(entries);
   }
   fail(503,'O catálogo está em atualização. Tente novamente em instantes.');
  };
@@ -97,7 +97,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    if(await analytics.publicHandle(path,req,body,send))return;
    if(await leads.publicHandle(path,req,body,send))return;
    if(await publicChat.handle(path,req,body,send))return;
-   if(path==='/api/public/properties'&&req.method==='GET'){const rows=await rest('eme_cases?select=id,data->published,data->access&data->published=not.is.null');return send(200,{properties:rows.filter(r=>publicAccess({data:r})).map(r=>r.published).filter(Boolean)});}
+   if(path==='/api/public/properties'&&req.method==='GET'){const rows=await rest('eme_cases?select=id,data->published,data->access&data->published=not.is.null');return send(200,{properties:await content.priceProperties(rows.filter(r=>publicAccess({data:r})).map(r=>r.published).filter(Boolean))});}
    if(path==='/api/public/submissions'&&req.method==='POST'){
     if(Buffer.byteLength(JSON.stringify(body))>16000)fail(413,'Reduza o tamanho das informações.');
     await rate('submission-ip:'+digest(String(req.headers['x-forwarded-for']||'unknown').split(',')[0]),6);await rate('submission-total',100);

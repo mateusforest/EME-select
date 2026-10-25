@@ -152,11 +152,11 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
    listDocuments:async()=>db.prepare("SELECT id,version,json_extract(data,'$.document') AS document FROM portal_content WHERE json_extract(data,'$.kind')='company_document' ORDER BY rowid DESC").all().map(r=>({id:r.id,version:r.version,...JSON.parse(r.document)})),
    catalog:async()=>db.prepare('SELECT published FROM listings WHERE published IS NOT NULL').all().map(r=>JSON.parse(r.published)),
   });
-  const listings = attachListings({db,fail,text,fields,caseFor,transaction,audit,stamp,requireAdmin,send,session});
+  const listings = attachListings({db,fail,text,fields,caseFor,transaction,audit,stamp,requireAdmin,send,session,priceProperties:content.priceProperties});
   const finance = attachFinance({db,transaction,stamp,fail,send});
   const intelligence = attachIntelligence({db,dbPath,transaction,stamp,caseFor,consume,send,env,fetcher:aiFetcher});
   const submissionFlow=attachLocalSubmissionFlow({db,ai:intelligence,transaction,consume});
-  const publicChat=createPublicChat({ai:intelligence,rate:consume,readCatalog:async()=>db.prepare('SELECT published FROM listings WHERE published IS NOT NULL ORDER BY id').all().map(row=>JSON.parse(row.published))});
+  const publicChat=createPublicChat({ai:intelligence,rate:consume,readCatalog:async()=>content.priceProperties(db.prepare('SELECT published FROM listings WHERE published IS NOT NULL ORDER BY id').all().map(row=>JSON.parse(row.published)))});
   const spatial=attachLocalSpatial({db,transaction,stamp,ai:intelligence});
   const operations = attachOperations({db,transaction,stamp,send});
   const whatsapp = attachWhatsApp({db,transaction,consume,send});

@@ -1,3 +1,4 @@
+import {renderPrice} from './price.js';
 import {opportunityDefaults,opportunitiesFromQuery,opportunitiesHash,selectOpportunities} from './opportunities.js';
 import {createIcons} from './icons.js';
 
@@ -20,7 +21,7 @@ export function createOpportunities({root,properties,assets,regions,getSaved,onO
    spotlight.querySelector('img').replaceWith(photo(first,true));
    spotlight.querySelector('.eo-spotlight-copy p').textContent=first.location;
    spotlight.querySelector('h2').textContent=first.title;
-   spotlight.querySelector('.eo-spotlight-price').textContent=first.price;
+   renderPrice(spotlight.querySelector('.eo-spotlight-price'),first);
   }
   const typeList=page.querySelector('.eo-types');typeList.replaceChildren();
   for(const [type,label,glyph] of types){
@@ -39,7 +40,7 @@ export function createOpportunities({root,properties,assets,regions,getSaved,onO
    const arrow=node('span','eo-card-arrow');arrow.append(icon('arrow-up-right'));cover.append(badge,arrow);
    const body=node('div','eo-card-body'),title=node('h3');title.append(propertyLink(p,'',p.title));
    const detail=node('p','eo-card-reason',p.lead),bottom=node('div','eo-card-bottom'),price=node('div');
-   price.append(node('small','',p.operation==='alugar'?'Para alugar':'À venda'),node('strong','',p.price));
+   price.append(node('small','',p.operation==='alugar'?'Para alugar':'À venda'),renderPrice(node('strong'),p));
    const save=node('button','eo-save');save.type='button';save.dataset.opportunitySave=p.id;save.setAttribute('aria-pressed',String(saved.has(p.id)));save.setAttribute('aria-label',(saved.has(p.id)?'Remover dos salvos: ':'Salvar: ')+p.title);save.append(icon('heart'));
    bottom.append(price,save);
    body.append(node('p','eo-card-location',p.location),title,node('p','eo-card-facts',p.summary),detail,bottom);

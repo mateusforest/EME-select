@@ -1,13 +1,13 @@
 import {randomUUID} from 'node:crypto';
 import {admin,fail,fields,text} from './cloud/domain.mjs';
-import {defaultSiteContent,publicSiteContent,siteRecordId,initialRegions} from '../shared/portal-content.mjs';
+import {defaultSiteContent,publicSiteContent,siteRecordId,initialRegions,applyOpportunityPrices} from '../shared/portal-content.mjs';
 import {prepareOperationsFile,sendOperationsFile} from './operations.mjs';
 const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 export function createPortalContent({read,write,listDocuments,catalog}){
- const siteDetail=row=>({version:row?.version||0,config:row?.data.config||defaultSiteContent()});
- async function publicHandle(path,req,res,send){if(path!=='/api/public/site-content'||req.method!=='GET')return false;const config=publicSiteContent((await read(siteRecordId))?.data),ids=new Set((await catalog()).map(p=>p.id));send(200,{...config,opportunityIds:config.opportunityIds?.filter(id=>ids.has(id))??null,regionAssignments:Object.fromEntries(Object.entries(config.regionAssignments).filter(([id])=>ids.has(id)))});return true;}
+ const siteDetail=row=>({version:row?.version||0,config:{...defaultSiteContent(),...row?.data.config}});
+ async function publicHandle(path,req,res,send){if(path!=='/api/public/site-content'||req.method!=='GET')return false;const config=publicSiteContent((await read(siteRecordId))?.data),properties=await catalog(),ids=new Set(properties.map(p=>p.id));send(200,{...config,opportunityIds:config.opportunityIds?.filter(id=>ids.has(id))??null,opportunityPrices:Object.fromEntries(applyOpportunityPrices(properties,config).filter(p=>p.originalPrice).map(p=>[p.id,p.price])),regionAssignments:Object.fromEntries(Object.entries(config.regionAssignments).filter(([id])=>ids.has(id)))});return true;}
  function validateConfig(config,published){
-  fields(config,['regions','opportunityIds','regionAssignments']);
+  fields(config,['regions','opportunityIds','opportunityPrices','regionAssignments']);
   if(!Array.isArray(config.regions)||config.regions.length>50)fail(400,'Cadastre até 50 regiões.');
   const regions=config.regions.map(r=>{
    fields(r,['id','stateId','stateName','city','name','context','asset','enabled','intro','collectionTitle','postcard','imageAlt','credit','license','licenseUrl','source']);
@@ -23,7 +23,15 @@ export function createPortalContent({read,write,listDocuments,catalog}){
   if(config.opportunityIds!==null&&(!Array.isArray(config.opportunityIds)||config.opportunityIds.length>100||config.opportunityIds.some(id=>!ids.has(id))||new Set(config.opportunityIds).size!==config.opportunityIds.length))fail(400,'Selecione oportunidades entre os imóveis publicados.');
   const assignments=config.regionAssignments;if(!assignments||typeof assignments!=='object'||Array.isArray(assignments)||Object.keys(assignments).length>1000)fail(400,'Vínculos de região inválidos.');
   const regionIds=new Set(regions.map(r=>r.id));for(const [id,region]of Object.entries(assignments))if(!uuid.test(id)||!regionIds.has(region))fail(400,'Confira os vínculos entre imóveis e regiões.');
-  return {regions,opportunityIds:config.opportunityIds,regionAssignments:assignments};
+  const prices=config.opportunityPrices??{};
+  if(typeof prices!=='object'||Array.isArray(prices)||Object.keys(prices).length>1000)fail(400,'Confira os preços com desconto.');
+  const opportunityPrices={};
+  for(const [id,price]of Object.entries(prices)){
+   const property=published.find(p=>p.id===id);
+   if(!property||!Number.isFinite(price)||price<=0||price>=property.price||Math.abs(price*100-Math.round(price*100))>0.0001)fail(400,'O preço com desconto deve ser maior que zero e menor que o preço atual, com até duas casas decimais.');
+   opportunityPrices[id]=price;
+  }
+  return {regions,opportunityIds:config.opportunityIds,opportunityPrices,regionAssignments:assignments};
  }
  async function handle(path,req,res,user,body,send){
   if(path!=='/api/site-content'&&!path.startsWith('/api/company-documents'))return false;
@@ -56,5 +64,5 @@ export function createPortalContent({read,write,listDocuments,catalog}){
   if(!match[2]&&req.method==='PATCH'){fields(body,['version','archived']);if(body.version!==row.version)fail(409,'O documento mudou. Atualize a lista.');if(typeof body.archived!=='boolean')fail(400,'Informe a situação.');const data={...row.data,document:{...row.data.document,archived:body.archived}};await write(req,row.id,row,data,user,body.archived?'Documento interno arquivado':'Documento interno restaurado');send(200,{ok:true});return true;}
   fail(405,'Operação indisponível.');
  }
- return {publicHandle,handle};
+ return {publicHandle,handle,priceProperties:async properties=>applyOpportunityPrices(properties,(await read(siteRecordId))?.data.config)};
 }

@@ -1,3 +1,4 @@
+import {renderPrice} from './price.js';
 import {defaultSiteContent} from '../../shared/portal-content.mjs';
 import {mapProperties} from './properties.js';
 import {createIcons} from './icons.js';
@@ -444,7 +445,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
       const title=regionButton('er-property-title',property.title);title.dataset.regionProperty=property.id;
       const bottom=element('div','er-property-bottom'),saveButton=regionButton('er-save');
       saveButton.dataset.regionSave=property.id;saveButton.setAttribute('aria-label',(savedIds.has(property.id)?'Remover dos salvos: ':'Salvar: ')+property.title);saveButton.setAttribute('aria-pressed',String(savedIds.has(property.id)));saveButton.append(regionIcon('heart'));
-      bottom.append(element('span','',property.price),saveButton);
+      bottom.append(renderPrice(element('span'),property),saveButton);
       card.append(photo,element('p','er-property-location',property.type+' · '+property.location.split(' · ')[0]),title,element('p','er-property-facts',property.summary),bottom);grid.append(card);
     });
     const empty=regionPage.querySelector('.er-empty');empty.hidden=items.length>0;
@@ -582,7 +583,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     root.querySelector('.ec-featured-title').textContent = property.title;
     root.querySelector('.ec-featured-lead').textContent = property.lead;
     root.querySelector('.ec-featured-facts').textContent = property.summary;
-    root.querySelector('.ec-featured-price').textContent = property.price;
+    renderPrice(root.querySelector('.ec-featured-price'),property);
     root.querySelector('.ec-open-property').setAttribute('aria-label','Conhecer '+property.title);
     tabs.replaceChildren();
     visible.forEach(item => {
@@ -676,7 +677,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     root.querySelector('.ep-title').textContent = property.title;
     root.querySelector('.ep-location').textContent = property.location;
     root.querySelector('.ep-summary').textContent = property.summary;
-    root.querySelector('.ep-price').textContent = property.price;
+    renderPrice(root.querySelector('.ep-price'),property);
     const facts = root.querySelector('.ep-facts');
     facts.replaceChildren();
     property.facts.forEach(([name,value])=>{
@@ -1048,7 +1049,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     const copy = element('span');
     copy.append(element(small ? 'span' : 'strong',small ? 'ex-mini-name' : '',property.title));
     if (!small) copy.append(element('small','',property.summary));
-    copy.append(element('span',small ? 'ex-mini-price' : 'ex-result-price',property.price));
+    copy.append(renderPrice(element('span',small ? 'ex-mini-price' : 'ex-result-price'),property));
     if (!small) copy.append(element('em','',reason || 'Conhecer o imóvel ↗︎'));
     button.append(image,copy); return button;
   }

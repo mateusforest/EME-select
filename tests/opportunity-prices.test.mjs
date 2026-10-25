@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {createPortalContent} from '../server/portal-content.mjs';
+import {defaultSiteContent,applyOpportunityPrices} from '../shared/portal-content.mjs';
+import {mapProperties} from '../src/experience/properties.js';
+const id=randomUUID(),other=randomUUID();
+const properties=[{id,title:'Casa teste',price:1000000,isIllustrative:false},{id:other,title:'Outra casa',price:600000,isIllustrative:false}];
+test('discounts preserve original listing, apply only to selected opportunities and feed filters',()=>{
+ const config={...defaultSiteContent(),opportunityIds:[id],opportunityPrices:{[id]:950000,[other]:500000}};
+ const result=applyOpportunityPrices(properties,config);
+ assert.equal(result[0].price,950000);assert.equal(result[0].originalPrice,1000000);assert.equal(properties[0].price,1000000);assert.equal(result[1].price,600000);
+ const mapped=mapProperties(result,{});assert.equal(mapped[0].searchFacts.price,950000);assert.match(mapped[0].price,/950/);assert.match(mapped[0].originalPrice,/1\.000/);
+ assert.equal(applyOpportunityPrices(properties,{...config,opportunityIds:[]})[0].price,1000000);
+ assert.equal(applyOpportunityPrices(properties,{...config,opportunityPrices:{}})[0].originalPrice,undefined);
+ for(const price of [0,-1,1000000,1000001,'950000',null])assert.equal(applyOpportunityPrices(properties,{...config,opportunityPrices:{[id]:price}})[0].originalPrice,undefined);
+});
+test('admin saves and removes discounts; server rejects invalid amounts and hides obsolete/private offers',async()=>{
+ let row=null,catalog=properties;
+ const service=createPortalContent({read:async()=>row,write:async(_req,_id,previous,data)=>row={version:(previous?.version||0)+1,data},catalog:async()=>catalog,listDocuments:async()=>[]});
+ const admin={role:'admin'},request={method:'PATCH'};let response;
+ const save=config=>service.handle('/api/site-content',request,{},admin,{version:row?.version||0,config},(status,data)=>response={status,data});
+ const config={...defaultSiteContent(),opportunityIds:[id],opportunityPrices:{[id]:900000}};
+ await save(config);assert.equal(response.status,200);assert.equal(response.data.config.opportunityPrices[id],900000);
+ assert.equal((await service.priceProperties(properties))[0].price,900000);
+ for(const price of [0,-1,1000000,1000001,'900000',900000.001])await assert.rejects(save({...config,opportunityPrices:{[id]:price}}),{status:400});
+ await assert.rejects(save({...config,opportunityPrices:{[randomUUID()]:123}}),{status:400});
+ await assert.rejects(service.handle('/api/site-content',request,{}, {role:'corretor'}, {version:1,config},()=>{}),{status:403});
+ await service.publicHandle('/api/public/site-content',{method:'GET'},{},(status,data)=>response={status,data});assert.equal(response.data.opportunityPrices[id],900000);
+ catalog=[properties[1]];await service.publicHandle('/api/public/site-content',{method:'GET'},{},(_status,data)=>response=data);assert.deepEqual(response.opportunityPrices,{});
+ catalog=properties;await save({...config,opportunityPrices:{}});assert.equal((await service.priceProperties(properties))[0].price,1000000);
+ const legacy={...config};delete legacy.opportunityPrices;await save(legacy);assert.deepEqual(response.data.config.opportunityPrices,{});
+});
