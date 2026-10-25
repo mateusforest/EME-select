@@ -48,7 +48,11 @@ export function mountEcosystem(container){
   video.addEventListener('playing',()=>panel.classList.add('eco-is-playing'));
   video.addEventListener('pause',()=>panel.classList.remove('eco-is-playing'));
   video.addEventListener('error',()=>panel.classList.remove('eco-is-playing'));
-  video.addEventListener('loadedmetadata',()=>{video.playbackRate=1.3;});
+  video.addEventListener('loadedmetadata',()=>{
+   video.playbackRate=1.3;
+   const start=Number(video.dataset.start||0);
+   if(start>0&&start<video.duration)video.currentTime=start;
+  });
   video.addEventListener('loadeddata',()=>update(state));
   states.push(state);observer.observe(panel);
  });

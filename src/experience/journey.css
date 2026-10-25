@@ -40,11 +40,7 @@ html #eme-continuo .eco-scene .eco-poster{position:absolute;inset:0;width:100%;h
 html #eme-continuo .eco-is-playing .eco-poster{opacity:0}
 html #eme-continuo .eco-scene video::-webkit-media-controls{display:none!important}
 html #eme-continuo .eco-scene video::-webkit-media-controls-start-playback-button{display:none!important;-webkit-appearance:none}
-@media(min-width:761px){
- html #eme-continuo .eco-scene .eco-poster{left:12%;filter:saturate(.76);opacity:.96}
- html #eme-continuo .eco-product-eme .eco-scene .eco-poster{left:7%;object-position:38% center}
- html #eme-continuo .eco-is-playing .eco-scene .eco-poster{opacity:0}
-}
+
 @media(max-width:1050px){html #eme-continuo .es-benefits{display:block}html #eme-continuo .es-benefits a{margin-top:24px}html #eme-continuo .es-selection form{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){
  html #eme-continuo .ec-page-scroll{overflow-anchor:none}
@@ -92,9 +88,9 @@ html #eme-continuo .eco-scene video::-webkit-media-controls-start-playback-butto
  html #eme-continuo .es-selection form button{margin-top:4px;width:100%}
  html #eme-continuo .es-region{margin-top:16px;width:100%;font-size:13px;text-align:left}
  html #eme-continuo .eme-ecosystem{margin-top:0;padding-top:32px}
- html #eme-continuo .eco-product{gap:22px;padding-bottom:32px}
- html #eme-continuo .eco-scene{border:1px solid #24473918;box-shadow:0 8px 24px #173e3010}
- html #eme-continuo .eco-scene:after{background:none}
+
+
+
  html #eme-continuo .ec-header .es-invite{right:4px;width:min(340px,calc(100vw - 36px));padding:28px 26px 22px;border-radius:28px 54px 28px 36px}
  html #eme-continuo .es-invite h2{font-size:27px}
 }

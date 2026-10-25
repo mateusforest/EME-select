@@ -1,3 +1,4 @@
+import {attachLocalSubmissionFlow} from './submission-flow-local.mjs';
 import {attachLocalAnalytics} from './analytics-local.mjs';
 import {accessChange} from './access-management.mjs';
 import {createPortalContent} from './portal-content.mjs';
@@ -154,6 +155,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
   const listings = attachListings({db,fail,text,fields,caseFor,transaction,audit,stamp,requireAdmin,send,session});
   const finance = attachFinance({db,transaction,stamp,fail,send});
   const intelligence = attachIntelligence({db,dbPath,transaction,stamp,caseFor,consume,send,env,fetcher:aiFetcher});
+  const submissionFlow=attachLocalSubmissionFlow({db,ai:intelligence,transaction,consume});
   const publicChat=createPublicChat({ai:intelligence,rate:consume,readCatalog:async()=>db.prepare('SELECT published FROM listings WHERE published IS NOT NULL ORDER BY id').all().map(row=>JSON.parse(row.published))});
   const spatial=attachLocalSpatial({db,transaction,stamp,ai:intelligence});
   const operations = attachOperations({db,transaction,stamp,send});
@@ -185,7 +187,8 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
       if (isPhotoUpload) { const access=session(req); if(!access||access.must_change)fail(401,'Entre para enviar fotografias.'); }
       const isDocumentUpload = path === '/api/operations/commands';
       if (isDocumentUpload) { const access=session(req); if(!access||access.must_change)fail(401,'Entre para registrar a operação.'); }
-      const requestBody = req.method === 'GET' ? null : await json(req,isPhotoUpload?11300000:isDocumentUpload?3000000:(path.startsWith('/api/developments/')||path==='/api/people')?120000:32768);
+      const requestBody = req.method === 'GET' ? null : await json(req,isPhotoUpload?11300000:isDocumentUpload?3000000:(path.startsWith('/api/developments/')||path==='/api/people')?120000:/^\/api\/public\/submissions\/[^/]+\/photos$/.test(path)?3000000:32768);
+      if(await submissionFlow.publicHandle(path,req,requestBody,(status,value)=>send(res,status,value)))return true;
       if(await analytics.publicHandle(path,req,requestBody,(status,value)=>send(res,status,value)))return true;
       if(await leads.publicHandle(path,req,requestBody,(status,value)=>send(res,status,value)))return true;
       if(await publicChat.handle(path,req,requestBody,(status,value)=>send(res,status,value)))return true;
@@ -199,6 +202,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
           if(db.prepare('SELECT id FROM evaluations WHERE id=?').get(entry.id))fail(409,'Esta referência já existe. Inicie uma nova solicitação.');
           db.prepare('INSERT INTO evaluations(id,title,city,type,operation,owner,assignee_id,stage,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)').run(entry.id,d.title,d.city,d.type,entry.data.operation,d.ownerName,responsible.id,'Recebido',stamp(),stamp());
           db.prepare('INSERT INTO listings(id,data) VALUES(?,?)').run(entry.id,JSON.stringify(d));
+          if(entry.data.submission)db.prepare('INSERT INTO submission_materials(id,data) VALUES(?,?)').run(entry.id,JSON.stringify(entry.data.submission));
           db.prepare('INSERT INTO submission_receipts(request_id,payload_hash) VALUES(?,?)').run(entry.id,payloadHash);
           audit(responsible.id,'Envio pelo site','Recebimento automático de dados declarados. Sem aprovação; administrador atribuído como responsável.',entry.id);
         });send(res,201,{reference:entry.id});return true;
@@ -268,6 +272,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
       if (await intelligence.handle(path,req,res,user,requestBody)) return true;
       if (await spatial.handle(path,req,res,user,requestBody,(status,value)=>send(res,status,value))) return true;
       if (await operations.handle(path,req,res,user,requestBody)) return true;
+      if(await submissionFlow.handle(path,req,user,(status,value)=>send(res,status,value)))return true;
       if(await analytics.handle(path,req,user,(status,value)=>send(res,status,value)))return true;
       if(await leads.handle(path,req,user,requestBody,(status,value)=>send(res,status,value)))return true;
       if (await whatsapp.handle(path,req,res,user,requestBody)) return true;

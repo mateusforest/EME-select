@@ -5,3 +5,28 @@
 #eme-continuo .ec-header .es-invite a{display:block;width:fit-content;height:auto;min-height:0;font-size:16px;line-height:1.5;margin:16px 0 0;padding:0;color:#e5cc8b}
 #eme-continuo .ec-header .es-invite a.es-enter{font-size:12px;margin-top:14px}
 #eme-continuo .ec-header .es-invite .es-dismiss{height:32px;min-height:32px;width:32px;padding:0;color:#e5cc8b}
+
+/* The two Select profiles share a single compact invitation. */
+html #eme-continuo .er-discovery.es-discovery{width:100%;max-width:none}
+#eme-continuo .es-discovery .es-search-panel{width:calc(100% - 12.5vw);max-width:1408px;margin-inline:auto}
+#eme-continuo .es-access-card{display:grid;grid-template-columns:.8fr 1.1fr 1.1fr;gap:30px;max-width:none;margin:0 0 48px;padding:38px max(6.25vw,calc((100% - 1180px)/2)) 24px;border-radius:0;background:radial-gradient(ellipse at 15% 0,#2a5644,transparent 70%),#153e2e;color:#e5cc8b}
+#eme-continuo .es-access-card>div,#eme-continuo .es-access-card article{min-width:0}
+#eme-continuo .es-access-card .es-access-kicker{font-size:10px;letter-spacing:.17em;color:#e5cc8b;margin:0 0 18px}
+#eme-continuo .es-access-card h2{font-size:clamp(30px,2.7vw,40px);font-weight:400;letter-spacing:-1.2px;line-height:1.16;color:#f0da9e;margin:0 0 25px}
+#eme-continuo .es-access-card h2 em{font-style:normal;font-weight:500;color:#ffe8ad}
+html #eme-continuo .es-access-card .es-access-intro h2{margin-bottom:26px}
+#eme-continuo .es-access-card h3{font-size:16px;font-weight:500;line-height:1.4;letter-spacing:0;color:#f3dda5;margin:0 0 22px;padding:7px 11px;background:#e5cc8b0d;border-left:2px solid #d9c28c9c;border-radius:0 5px 5px 0}
+#eme-continuo .es-access-card p{font-size:14px;line-height:1.7;letter-spacing:0;color:#e5d8b3;margin:0}
+#eme-continuo .es-access-intro>p:last-child{font-size:12px;line-height:1.6;color:#cfcea9}
+#eme-continuo .es-access-card article{display:flex;flex-direction:column;align-items:flex-start;border-left:1px solid #e5cc8b35;padding-left:28px}
+#eme-continuo .es-access-card article p{flex:1;padding-bottom:22px}
+#eme-continuo .es-access-card a{position:relative;display:inline-flex;align-items:center;justify-content:center;max-width:100%;min-height:36px;padding:6px 13px;color:#f0da9e;font-size:13px;line-height:1.5;text-decoration:none;border:1px solid transparent;border-radius:8px;background:#1b4637;box-shadow:-4px -4px 10px #49776248,5px 6px 12px #071f19a6;transition:background .2s,box-shadow .2s,transform .2s}
+#eme-continuo .es-access-card a:hover{background:#204d3d;box-shadow:-4px -4px 12px #49776260,5px 6px 12px #071f19a6;transform:translateY(-1px)}
+#eme-continuo .es-access-card a:active{transform:none;box-shadow:inset 3px 3px 7px #071f1980,inset -3px -3px 7px #49776235}
+#eme-continuo .es-access-card a svg{width:18px;height:18px;flex-shrink:0}
+@media(prefers-reduced-motion:reduce){#eme-continuo .es-access-card a{transition:none}}
+@media(pointer:coarse){#eme-continuo .es-access-card a::after{content:'';position:absolute;inset:-5px 0}}
+#eme-continuo .es-access-card a:focus-visible{outline:2px solid #f0da9e;outline-offset:5px;border-radius:2px}
+#eme-continuo .es-access-card .es-access-footer{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:18px;padding-top:18px;border-top:1px solid #e5cc8b30;font-size:12px;color:#d9d3b2}
+@media(max-width:1050px){#eme-continuo .es-access-card{grid-template-columns:1fr 1fr;gap:28px;padding:32px 6.25vw 24px}#eme-continuo .es-access-intro{grid-column:1/-1}#eme-continuo .es-access-intro h2 br{display:none}#eme-continuo .es-access-card h2{margin-bottom:20px}#eme-continuo .es-access-card .es-access-kicker{margin-bottom:12px}#eme-continuo .es-access-card article{border-left:0;padding-left:0}#eme-continuo .es-access-card article+article{border-left:1px solid #e5cc8b35;padding-left:24px}}
+@media(max-width:650px){#eme-continuo .es-discovery .es-search-panel{width:calc(100% - 48px)}#eme-continuo .es-access-card{grid-template-columns:1fr;gap:26px;padding:30px 24px 24px;margin-bottom:36px}#eme-continuo .es-access-card h2{font-size:31px}#eme-continuo .es-access-card article,#eme-continuo .es-access-card article+article{border-left:0;border-top:1px solid #e5cc8b35;padding:24px 0 0}#eme-continuo .es-access-card p{font-size:14px;line-height:1.65}#eme-continuo .es-access-card .es-access-footer{display:flex;align-items:flex-start;flex-direction:column;gap:15px;padding-top:22px}}

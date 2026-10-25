@@ -1,3 +1,4 @@
+import {requestSubmissionReview} from './submission-review-ai.mjs';
 import {requestCapture} from './capture-ai.mjs';
 import {requestListingPreparation} from './listing-ai.mjs';
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
@@ -117,6 +118,13 @@ export function createIntelligence({ store, encryptionKey, env = process.env, fe
     send(200, await snapshot(user)); return true;
   }
   return { handle, studioStatus:status,
+    async submissionReview(input){
+      const settings=resolveAISettings(await store.settings(),env);
+      if(env.EME_PUBLIC_SUBMISSION_AI_ENABLED==='false'||!settings.enabled)aiFail(503,'Análise automática indisponível.');
+      const apiKey=settings.secret?openKey(settings.secret,encryptionKey):env.OPENAI_API_KEY;
+      if(!apiKey)aiFail(503,'Análise automática indisponível.');
+      return requestSubmissionReview({...input,apiKey,model:settings.model,fetcher});
+    },
     async publicChatAvailable(){
       const settings=resolveAISettings(await store.settings(),env);
       return env.EME_PUBLIC_CHAT_ENABLED!=='false'&&settings.enabled&&Boolean(settings.secret||env.OPENAI_API_KEY);

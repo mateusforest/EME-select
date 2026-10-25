@@ -1,3 +1,4 @@
+import {attachCloudSubmissionFlow} from './submission-flow.mjs';
 import {attachCloudAnalytics} from './analytics.mjs';
 import {createSelectAccess,publicAccess,canRead,clearSelectCookie} from '../select-access.mjs';
 import {accessChange} from '../access-management.mjs';
@@ -77,6 +78,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
   }
   fail(503,'O catálogo está em atualização. Tente novamente em instantes.');
  };
+ const submissionFlow=attachCloudSubmissionFlow({client,ai:intelligence});
  const publicChat=createPublicChat({ai:intelligence,readCatalog:readChatCatalog,rate});
  async function handle(req,res){
   const send=(status,value)=>{res.statusCode=status;res.setHeader('Content-Type','application/json; charset=utf-8');res.end(JSON.stringify(value));};
@@ -91,6 +93,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    if(await content.publicHandle(path,req,res,send))return;
    if(await people.publicHandle(path,req,res,send))return;
    if(await developments.publicHandle(path,req,res,send))return;
+   if(await submissionFlow.publicHandle(path,req,body,send))return;
    if(await analytics.publicHandle(path,req,body,send))return;
    if(await leads.publicHandle(path,req,body,send))return;
    if(await publicChat.handle(path,req,body,send))return;
@@ -130,6 +133,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    if(await intelligence.handle(path,req,res,user,body,send))return;
    if(await spatial.handle(path,req,res,user,body,send))return;
    if(await operations.handle(path,req,res,user,body,send))return;
+   if(await submissionFlow.handle(path,req,user,send))return;
    if(await analytics.handle(path,req,user,send))return;
    if(await leads.handle(path,req,user,body,send))return;
    if(await whatsapp.handle(path,req,res,user,body,send))return;
