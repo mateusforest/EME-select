@@ -1,3 +1,4 @@
+import {archiveChange} from '../../shared/archive.mjs';
 import {attachCloudSubmissionFlow} from './submission-flow.mjs';
 import {attachCloudAnalytics} from './analytics.mjs';
 import {createSelectAccess,publicAccess,canRead,clearSelectCookie} from '../select-access.mjs';
@@ -162,7 +163,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    if(['/api/evaluations','/api/listings'].includes(path)){
     if(req.method==='GET'){const rows=(await rest('eme_cases?order=updated_at.desc'+propertyRecordsQuery+(user.role==='admin'?'':'&assignee_id=eq.'+user.id))).filter(r=>!internalKinds.includes(r.data.kind));if(path.endsWith('listings'))return send(200,{listings:rows.filter(r=>r.data.draft).map(listing)});const people=await members();return send(200,{evaluations:rows.map(r=>evaluation(r,people))});}
     if(req.method==='POST'){await rate('create-case:'+user.id,100);let row,assignee=user.id,data;
-     if(path.endsWith('listings')){fields(body,['draft','evaluationId']);const d=draft(body.draft);if(body.evaluationId){row=await caseFor(text(body.evaluationId,36,36),user);if(row.data.draft)fail(409,'Já existe anúncio para esta avaliação.');if(closed.includes(row.data.stage))admin(user);assignee=row.assignee_id;data=changed(syncDraft(row.data,d));}else{row=newCase({});data=changed(syncDraft(row.data,d));}}
+     if(path.endsWith('listings')){fields(body,['draft','evaluationId']);const d=draft(body.draft);if(body.evaluationId){row=await caseFor(text(body.evaluationId,36,36),user);if(row.data.archived)fail(409,'Restaure o imóvel antes de criar seu anúncio.');if(row.data.draft)fail(409,'Já existe anúncio para esta avaliação.');if(closed.includes(row.data.stage))admin(user);assignee=row.assignee_id;data=changed(syncDraft(row.data,d));}else{row=newCase({});data=changed(syncDraft(row.data,d));}}
      else{fields(body,['title','city','type','operation','owner','assigneeId']);if(!types.includes(body.type)||!['Venda','Locação','Venda e locação'].includes(body.operation))fail(400,'Tipo ou finalidade inválidos.');assignee=body.assigneeId||user.id;row=newCase({title:text(body.title,1,120),city:text(body.city,1,120),owner:text(body.owner||'',0,120),type:body.type,operation:body.operation});data=row.data;}
      const saved=await save(req,row,data,'Cadastro criado','Recebido pela equipe para avaliação.',assignee);return send(201,path.endsWith('listings')?listing(saved):await details(saved));
     }
@@ -174,8 +175,10 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
     const response=await request('/storage/v1/object/authenticated/eme-property-photos/'+(source.originalId||source.id)+'.webp',{raw:true});
     return send(200,await prepareEnlargement(Buffer.from(await response.arrayBuffer())));
    }
-   const match=path.match(/^\/api\/(evaluations|listings)\/([a-f0-9-]{36})(?:\/(curation|decision|photos|publish|unpublish))?$/);if(!match)fail(404,'Operação não encontrada.');let row=await caseFor(match[2],user);const action=match[3];if(match[1]==='listings'&&!row.data.draft)fail(404,'Anúncio não encontrado.');
+   const match=path.match(/^\/api\/(evaluations|listings)\/([a-f0-9-]{36})(?:\/(curation|decision|photos|publish|unpublish|archive))?$/);if(!match)fail(404,'Operação não encontrada.');let row=await caseFor(match[2],user);const action=match[3];if(match[1]==='listings'&&!row.data.draft)fail(404,'Anúncio não encontrado.');
    if(req.method==='GET'&&!action)return send(200,match[1]==='listings'?listing(row):await details(row));checkVersion(row,body);let data=structuredClone(row.data),label='Cadastro atualizado',note='Revisão registrada.',assignee=row.assignee_id;
+   if(action==='archive'&&req.method==='POST'){const archived=archiveChange(user,row.version,body);data.archived=archived;data.published=null;data.publishedVersion=null;await save(req,row,data,archived?'Imóvel arquivado':'Imóvel restaurado','Histórico preservado. Restauração não republica o anúncio.',assignee);return send(200,{ok:true});}
+   if(data.archived)fail(409,'Restaure o imóvel antes de editar ou publicar.');
    if(match[1]==='evaluations'){
     if(action==='curation'&&req.method==='POST'){data=reviseCuration(data,body,user);label='Curadoria revisada';note=JSON.stringify(data.curation);}
     else if(action==='decision'&&req.method==='POST'){const reviewed=curation(data);data=decision(data,body,user);label=data.stage;note=body.reason+'\nRégua: '+reviewed.policy+'. Nota: '+(reviewed.score??'incompleta')+'.'+(body.action==='approve'?' Revisão humana confirmada. Entrada interna; sem publicação automática.':'');}

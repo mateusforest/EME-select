@@ -123,4 +123,22 @@ test('real listings: private photos, curation and explicit publication',async t=
   assert.equal(entry.image,'/assets/property-placeholder.svg');assert.equal(entry.location,draft.city);assert.deepEqual(entry.images,[]);
  });
 
+ await t.test('archive withdraws public listing and photos, preserves history and restores privately',async()=>{
+  item=(await req(admin,'/listings/'+item.id)).body;
+  item=(await req(admin,'/listings/'+item.id+'/publish',{version:item.version,confirmed:true,reviewMode:'simplified'})).body;
+  const endpoint='/listings/'+item.id+'/archive',body={version:item.version,archived:true,confirmed:true};
+  assert.equal((await req(admin,endpoint,{...body,confirmed:false})).status,400);
+  assert.equal((await req(admin,endpoint,{...body,version:0})).status,409);
+  assert.equal((await req(broker,endpoint,body)).status,404);
+  assert.equal((await req(admin,endpoint,body)).status,200);
+  const saved=(await req(admin,'/listings/'+item.id)).body;
+  assert.equal(saved.archived,true);assert.equal(saved.published,false);assert.deepEqual(saved.photos,item.photos);
+  assert.equal((await req(anonymous,'/public/properties')).body.properties.some(p=>p.id===item.id),false);
+  assert.equal((await req(anonymous,item.photos[0].url.replace('/api',''))).status,404);
+  assert.equal((await req(admin,'/listings/'+item.id+'/publish',{version:saved.version,confirmed:true,reviewMode:'simplified'})).status,409);
+  assert.equal((await req(admin,endpoint,{version:saved.version,archived:false,confirmed:true})).status,200);
+  const restored=(await req(admin,'/listings/'+item.id)).body;
+  assert.equal(restored.archived,false);assert.equal(restored.published,false);assert.deepEqual(restored.draft,item.draft);
+ });
+
 });

@@ -53,6 +53,23 @@ for(const backend of ['local','cloud'])test(backend+': administrative documents 
  const published=(await req(anon,'/public/site-content')).body;assert.equal(published.regions.length,1);assert.equal(published.regions[0].intro,site.config.regions[0].intro);assert.deepEqual(published.opportunityIds,[]);assert.equal(JSON.stringify(published).includes('Company-private'),false);
  const invalid={...site.config,opportunityIds:[randomUUID()]};assert.equal((await req(admin,'/site-content',{version:saved.body.version,config:invalid},'PATCH')).status,400);
  const injected={...site.config,regions:[{...initialRegions[0],source:'javascript:alert(1)'}]};assert.equal((await req(admin,'/site-content',{version:saved.body.version,config:injected},'PATCH')).status,400);
+ const cleared=await req(admin,'/site-content',{version:saved.body.version,config:{...site.config,regions:[],regionAssignments:{}}},'PATCH');
+ assert.equal(cleared.status,200);assert.deepEqual((await req(anon,'/public/site-content')).body.regions,[]);
+
+
+ if(backend==='cloud'){
+  const id=randomUUID(),draft={title:'Imóvel para arquivar',city:'Vacaria',type:'Casa',operation:'comprar',features:'',reasons:'',description:''};
+  rows.set(id,{id,version:1,assignee_id:profiles[1].id,data:{title:draft.title,draft,photos:[],published:{id,title:draft.title},stage:'Recebido'}});
+  const endpoint='/listings/'+id+'/archive',body={version:1,archived:true,confirmed:true};
+  assert.equal((await req(broker,endpoint,body)).status,403);
+  assert.equal((await req(admin,endpoint,{...body,version:0})).status,409);
+  assert.equal((await req(admin,endpoint,{...body,confirmed:false})).status,400);
+  assert.equal((await req(admin,endpoint,body)).status,200);
+  assert.equal(rows.get(id).data.archived,true);assert.equal(rows.get(id).data.published,null);
+  assert.equal((await req(admin,'/listings/'+id+'/publish',{version:2,confirmed:true,reviewMode:'simplified'})).status,409);
+  assert.equal((await req(admin,endpoint,{version:2,archived:false,confirmed:true})).status,200);
+  assert.equal(rows.get(id).data.archived,false);assert.equal(rows.get(id).data.published,null);assert.deepEqual(rows.get(id).data.draft,draft);
+ }
  {
   const users=(await req(admin,'/users')).body.users,member=users.find(u=>u.role==='corretor'),owner=users.find(u=>u.role==='admin');
   const body={name:'Broker Updated',role:'admin',active:true,expected:{name:member.name,role:member.role,active:member.active}};

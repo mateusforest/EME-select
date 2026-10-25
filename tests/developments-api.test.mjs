@@ -52,4 +52,11 @@ test('development drafts, authorized plans, publication, persistence and withdra
  record=(await req(admin,path+'/unpublish',{version:record.version})).body;
  assert.deepEqual((await req(anon,'/public'+path)).body.config.units,[]);assert.notEqual((await req(anon,imagePath)).status,200);
  assert.deepEqual((await req(anon,'/public/properties')).body.properties,[]);
+ assert.equal((await req(broker,path+'/archive',{version:record.version,archived:true,confirmed:true})).status,403);
+ record=(await req(admin,path+'/archive',{version:record.version,archived:true,confirmed:true})).body;
+ assert.equal(record.archived,true);assert.equal(record.config.units.length,config.units.length);
+ assert.equal((await req(admin,path+'/publish',{version:record.version,confirmed:true})).status,409);
+ record=(await req(admin,path+'/archive',{version:record.version,archived:false,confirmed:true})).body;
+ assert.equal(record.archived,false);assert.equal(record.published,false);
+
 });

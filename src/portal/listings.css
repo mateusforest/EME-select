@@ -24,3 +24,5 @@
 .pl-publication-final{border-top:1px solid #dce2d5;padding-top:24px;margin-top:24px}
 .pl-publication-note{margin-top:24px;color:#65745b;font-size:12px;line-height:1.7}
 @media(max-width:1100px){.pl-publication-checks{grid-template-columns:minmax(0,1fr)}}
+
+.pl-archive-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.pl-archive-row>.pl-list-item{flex:1;min-width:240px}.pl-archive-row>.ps-button{margin:8px}.pl-archive-row .pl-list-item:disabled{opacity:.7}

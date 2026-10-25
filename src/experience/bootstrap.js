@@ -12,6 +12,7 @@ import './header.css';
 import './header-voice.css';
 import './search-page.css';
 import './opportunities.css';
+import './opportunity-brand.css';
 import './price.css';
 import './chat.css';
 import './editorial.css';

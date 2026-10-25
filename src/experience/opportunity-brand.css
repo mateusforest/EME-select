@@ -1,0 +1,27 @@
+#eme-continuo .eme-opportunity-symbol{display:inline-flex;color:#b99658;vertical-align:middle;flex-shrink:0}
+#eme-continuo .eme-opportunity-symbol svg{width:30px;height:36px}
+#eme-continuo .eme-opportunity-badge{position:absolute;z-index:3;top:16px;left:16px;display:grid;place-items:center;width:48px;height:48px;border:1px solid #ccb07755;border-radius:11px;background:linear-gradient(130deg,#235746,#063b2c);color:#e5c37f;box-shadow:0 3px 12px #123c3220;pointer-events:none}
+#eme-continuo .eme-opportunity-badge svg{width:29px;height:35px}
+#eme-continuo .eo-preview-heading h2{display:flex;align-items:center;gap:14px}
+#eme-continuo .eo-preview-heading h2 .eme-opportunity-symbol svg{width:45px;height:54px}
+#eme-continuo .ec-featured-photo,#eme-continuo .el-card-photo,#eme-continuo .ep-photo{position:relative}
+#eme-continuo #eme-full-opportunities{background:radial-gradient(ellipse at 20% 15%,#e9edde66,transparent 70%)}
+#eme-continuo .ec-featured-location{font-style:italic;letter-spacing:0;text-transform:none}
+#eme-continuo .ec-featured-lead{line-height:1.65;margin-bottom:10px}
+#eme-continuo .ec-featured-copy .ec-open-property{width:100%;justify-content:space-between;border-radius:7px;background:linear-gradient(120deg,#245443,#073b2c);padding:18px 22px;color:#fff}
+#eme-continuo .ec-featured-copy .ec-featured-price{background:#e2e7d9;padding:13px 16px;border-radius:0 0 8px 8px;margin-top:0}
+#eme-continuo .ec-featured-copy .ec-price-label{background:#e2e7d9;padding:12px 16px 0;border-radius:8px 8px 0 0;margin-bottom:0}
+#eme-continuo .eme-price-saving{font-size:12px;line-height:1.5;padding:7px 10px;border-radius:7px;background:#f1dfb4;color:#173c32;margin-left:auto;white-space:nowrap}
+#eme-continuo .ec-property-tab[aria-pressed=true]{background:#e2e7d980;border-radius:9px}
+#eme-continuo .eo-badge,#eme-continuo .er-opportunity-tag{display:none}
+@media(max-width:600px){#eme-continuo .eme-opportunity-badge{width:38px;height:38px;top:12px;left:12px}#eme-continuo .eme-opportunity-badge svg{width:24px;height:29px}#eme-continuo .eo-preview-heading h2 .eme-opportunity-symbol svg{width:30px;height:38px}#eme-continuo .eme-price-saving{margin-left:0}}
+
+#eme-continuo .eo-spotlight-label{display:none}
+#eme-continuo .eme-price-saving{letter-spacing:normal;font-weight:400}
+#eme-continuo .eme-read-more{display:inline;padding:0;border:0;background:none;color:#123e30;font:inherit;font-weight:500;text-decoration:underline;text-underline-offset:4px}
+#eme-continuo .ex-mini,#eme-continuo .ex-result-card{position:relative}
+#eme-continuo .ex-mini .eme-opportunity-badge,#eme-continuo .ex-result-card .eme-opportunity-badge{width:26px;height:28px;top:5px;left:5px;border-radius:6px}
+#eme-continuo .ex-mini .eme-opportunity-badge svg,#eme-continuo .ex-result-card .eme-opportunity-badge svg{width:18px;height:22px}
+
+#eme-continuo #eme-full-opportunities .ec-featured-lead{display:block;overflow:visible;-webkit-line-clamp:unset;max-height:none}
+#eme-continuo #eme-full-opportunities .ec-open-property,#eme-continuo #eme-full-opportunities .ec-open-property:hover{background:linear-gradient(120deg,#245443,#073b2c);color:#fff;border:0}

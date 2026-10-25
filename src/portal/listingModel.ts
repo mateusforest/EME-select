@@ -7,7 +7,7 @@ export interface Draft {
  bathrooms:number|null;totalArea:number|null;yearBuilt:number|null;
 }
 export interface Photo {enhancement?:string;originalId?:string;id:string;url:string;caption:string;room?:string;width:number;height:number;position:number}
-export interface Listing {legacy?:boolean;id:string;version:number;draft:Draft;photos:Photo[];stage:string;published:boolean;hasUnpublishedChanges?:boolean;publishedVersion:number|null;blockers:string[]}
+export interface Listing {archived?:boolean;legacy?:boolean;id:string;version:number;draft:Draft;photos:Photo[];stage:string;published:boolean;hasUnpublishedChanges?:boolean;publishedVersion:number|null;blockers:string[]}
 export const emptyDraft:Draft={postalCode:'',locationProfile:'',privateAddress:'',ownerName:'',ownerContact:'',title:'',city:'',neighborhood:'',type:'Casa',environment:'urbano',condominium:'',operation:'comprar',price:null,area:null,bedrooms:null,suites:null,parking:null,condominiumFee:null,propertyTax:null,description:'',features:'',reasons:'',costNotes:'',sourceName:'',sourceUrl:'',sourceReference:'',sourceNotes:'',requesterRole:'',occupancy:'',documentationStatus:'',authorizationStatus:'',bathrooms:null,totalArea:null,yearBuilt:null};
 export const photoRooms=['Área social','Cozinha','Área íntima','Vista','Serviço','Condomínio','Exterior e acesso','Área de trabalho','Operação e armazenagem','Terreno e entorno'];
 export const listingTypes=['Casa','Casa em condomínio','Apartamento','Compacto','Cabana','Cobertura','Sala comercial','Loja','Edifício corporativo','Galpão','Pavilhão','Centro de distribuição','Terreno urbano','Lote em condomínio','Terra agrícola'];

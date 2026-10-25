@@ -1,4 +1,5 @@
 import {renderPrice} from './price.js';
+import {markOpportunity,brandOpportunities} from './opportunity-brand.js';
 import {createHeaderVoice} from './header-voice.js';
 import {defaultSiteContent} from '../../shared/portal-content.mjs';
 import {mapProperties} from './properties.js';
@@ -15,6 +16,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
 
 (() => {
   const root = document.getElementById('eme-continuo');
+  brandOpportunities(root);
   const hero = root.querySelector('.ec-hero');
   const viewport = root.querySelector('.ec-viewport');
   const world = root.querySelector('.ec-world');
@@ -443,7 +445,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
       const card=element('article','er-property-card');card.setAttribute('aria-label',property.title);
       const photo=regionButton('er-property-image');photo.dataset.regionProperty=property.id;photo.setAttribute('aria-label','Conhecer '+property.title);
       const image=element('img');image.src=assets[property.cover];image.alt=property.photos[0].caption;image.loading='lazy';photo.append(image);
-      if(property.opportunity) { const tag=element('span','er-opportunity-tag');tag.append(regionIcon('gem'),document.createTextNode('Oportunidade'));photo.append(tag); }
+      markOpportunity(photo,property);
       const arrow=element('span','er-card-arrow');arrow.append(regionIcon('arrow-up-right'));photo.append(arrow);
       const title=regionButton('er-property-title',property.title);title.dataset.regionProperty=property.id;
       const bottom=element('div','er-property-bottom'),saveButton=regionButton('er-save');
@@ -582,11 +584,14 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     image.src = assets[property.cover];
     image.alt = property.photos[0].caption;
     root.querySelector('.ec-featured-photo').setAttribute('aria-label','Explorar '+property.title);
-    root.querySelector('.ec-featured-location').textContent = property.location;
+    root.querySelector('.ec-featured-location').textContent = property.location+'   |   '+property.type;
     root.querySelector('.ec-featured-title').textContent = property.title;
-    root.querySelector('.ec-featured-lead').textContent = property.lead;
+    const lead=root.querySelector('.ec-featured-lead');lead.replaceChildren();const description=property.description||property.lead;const excerpt=element('span','',description.length>200?description.slice(0,197).trim()+'… ':description);lead.append(excerpt);if(description.length>200){const more=element('button','eme-read-more','Ver mais');more.type='button';more.setAttribute('aria-expanded','false');more.onclick=()=>{const expanded=more.getAttribute('aria-expanded')!=='true';more.setAttribute('aria-expanded',String(expanded));excerpt.textContent=expanded?description+' ':description.slice(0,197).trim()+'… ';more.textContent=expanded?'Ver menos':'Ver mais';};lead.append(more);}
     root.querySelector('.ec-featured-facts').textContent = property.summary;
     renderPrice(root.querySelector('.ec-featured-price'),property);
+    markOpportunity(root.querySelector('.ec-featured-photo'),property);
+    const before=Number(String(property.originalPrice||'').replace(/[^\d,]/g,'').replace(',','.')),after=property.searchFacts.price;
+    if(before>after){const saving=element('span','eme-price-saving',new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',notation:'compact',maximumFractionDigits:1}).format(before-after)+' de redução');root.querySelector('.ec-featured-price').append(saving);}
     root.querySelector('.ec-open-property').setAttribute('aria-label','Conhecer '+property.title);
     tabs.replaceChildren();
     visible.forEach(item => {
@@ -680,7 +685,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     root.querySelector('.ep-title').textContent = property.title;
     root.querySelector('.ep-location').textContent = property.location;
     root.querySelector('.ep-summary').textContent = property.summary;
-    renderPrice(root.querySelector('.ep-price'),property);
+    renderPrice(root.querySelector('.ep-price'),property);markOpportunity(root.querySelector('.ep-photo-stage'),property);
     const facts = root.querySelector('.ep-facts');
     facts.replaceChildren();
     property.facts.forEach(([name,value])=>{
@@ -1054,7 +1059,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if (!small) copy.append(element('small','',property.summary));
     copy.append(renderPrice(element('span',small ? 'ex-mini-price' : 'ex-result-price'),property));
     if (!small) copy.append(element('em','',reason || 'Conhecer o imóvel ↗︎'));
-    button.append(image,copy); return button;
+    button.append(image,copy);markOpportunity(button,property); return button;
   }
   function renderHeroHighlights() {
     const container = root.querySelector('.ex-hero-highlights');

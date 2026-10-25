@@ -85,3 +85,14 @@ test('maintenance and inspections keep actual evidence instead of fabricated com
  state=command(state,'lease.inspection',{id,kind:'entry',scheduledAt:context.now,completedAt:context.now,result:'action_required',notes:'Pendência hidráulica registrada em vistoria.'});
  assert.equal(state.leases[0].inspections[0].result,'action_required');
 });
+
+test('document archiving is admin-only, reversible and preserves prior review',()=>{
+ const file={filename:'autorizacao.pdf',mimeType:'application/pdf',sizeBytes:300,sha256:'a'.repeat(64)};
+ let state=command(emptyOperations(),'document.upload',{propertyId,title:'Autorização',category:'authorization'},{...broker,file});
+ const original=state.documents[0],data={id:original.id,archived:true};
+ assert.throws(()=>command(state,'document.review',data,broker),/administrador/);
+ assert.throws(()=>command(state,'document.review',{...data,status:'approved'}),/situação/);
+ state=command(state,'document.review',data);
+ assert.equal(state.documents[0].archived,true);assert.equal(state.documents[0].status,original.status);assert.equal(operationsMetrics(state,context.now).totals.pendingDocuments,0);
+ state=command(state,'document.review',{...data,archived:false});assert.equal(state.documents[0].archived,false);assert.equal(operationsMetrics(state,context.now).totals.pendingDocuments,1);
+});

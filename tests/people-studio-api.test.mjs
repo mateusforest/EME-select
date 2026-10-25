@@ -47,6 +47,11 @@ for(const backend of ['local','cloud'])test(backend+': people drafts, portrait p
  if(backend==='cloud')assert.equal((await req(admin,'/evaluations/'+peopleRecordId)).status,404);
  assert.equal((await req(admin,'/people',{version:record.version,people:[{...people[0],photoUrl:'/api/people-images/'+randomUUID()}]},'PATCH')).status,400);
  assert.equal((await req(admin,'/people/unpublish',{version:record.version})).status,200);assert.deepEqual((await req(anon,'/public/people')).body.people,[]);assert.notEqual((await req(anon,photoPath)).status,200);
+
+ record=(await req(admin,'/people')).body;
+ record=(await req(admin,'/people',{version:record.version,people:[]},'PATCH')).body;
+ assert.equal((await req(admin,'/people/publish',{version:record.version,confirmed:true})).status,200);
+ assert.deepEqual((await req(anon,'/public/people')).body.people,[]);
  if(backend==='cloud'){
   const listingId=randomUUID(),sourceId=randomUUID(),originalId=randomUUID();
   rows.set(listingId,{id:listingId,version:7,assignee_id:profiles[0].id,data:{draft:{},photos:[{id:sourceId,originalId}]}});

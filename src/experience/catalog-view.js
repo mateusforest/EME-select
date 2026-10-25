@@ -1,4 +1,5 @@
 import {renderPrice} from './price.js';
+import {markOpportunity} from './opportunity-brand.js';
 import {catalogDefaults,catalogFromQuery,catalogHash,selectCatalog} from './catalog.js';
 import {createIcons} from './icons.js';
 import {searchFilters} from './search-query.js';
@@ -40,6 +41,7 @@ export function createCatalog({root,properties,assets,regions,getSaved,onOpen,on
       const link=node('a','el-card-photo');link.href='#/imovel/'+p.id;link.dataset.catalogProperty=p.id;link.setAttribute('aria-label','Conhecer '+p.title);
       const image=node('img');image.src=assets[p.cover];image.alt=p.photos[0].caption;image.loading='lazy';image.decoding='async';image.width=p.photos[0].width;image.height=p.photos[0].height;
       const arrow=node('span','er-card-arrow');arrow.append(icon('arrow-up-right'));link.append(image,arrow);
+      markOpportunity(link,p);
       const location=node('p','el-card-location',p.location);
       const title=node('h2'),titleLink=node('a','',p.title);titleLink.href=link.href;titleLink.dataset.catalogProperty=p.id;title.append(titleLink);
       const facts=node('p','el-card-facts',p.summary),bottom=node('div','el-card-bottom');

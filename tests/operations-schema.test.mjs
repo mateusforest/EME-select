@@ -82,6 +82,15 @@ test('operations PostgreSQL boundary protects portfolios, files, admin actions a
     assert.equal(JSON.stringify(audit).includes(file.contentBase64),false);
     for(const role of ['anon','authenticated']){await db.exec('set role '+role);await assert.rejects(db.query('select * from public.eme_operations_files'),/permission denied/);await db.exec('reset role');}
   });
+  await t.test('administrative document lifecycle review preserves file bytes and supports restoration',async()=>{
+    const document=current.documents[0];
+    for(const archived of [true,false]){
+      const command={type:'document.review',data:{id:document.id,archived}},data={...current,documents:[{...document,archived}]};
+      await assert.rejects(save({command,data}),/FORBIDDEN/);
+      await save({session:'admin',command,data});await refresh();
+      assert.equal(current.documents[0].archived,archived);assert.equal(await count('eme_operations_files'),1);
+    }
+  });
   await t.test('broker ticket updates cannot erase or forge the recorded message history',async()=>{
     const saved=current.tickets[0],message={id:randomUUID(),direction:'internal',body:'Registro legítimo acrescentado.',occurredAt:createdAt,createdAt,createdBy:broker};
     const command={type:'ticket.message',data:{id:ticketId,direction:message.direction,body:message.body,occurredAt:createdAt}};

@@ -1,10 +1,11 @@
+import {archiveChange} from '../shared/archive.mjs';
 import sharp from 'sharp';
 import {randomUUID} from 'node:crypto';
 import {emptyDevelopment,validateDevelopment,developmentPublicationIssues} from '../shared/development.mjs';
 import {admin,fail,fields} from './cloud/domain.mjs';
 const route='/api/developments/moradas-da-serra';
 export function createDevelopmentApi({read,write,putImage,getImage,deleteImage}) {
- const detail=row=>({version:row?.version||0,config:row?.data.config||emptyDevelopment(),published:!!row?.data.live,publishedAt:row?.data.publishedAt||null});
+ const detail=row=>({version:row?.version||0,archived:!!row?.data.archived,config:row?.data.config||emptyDevelopment(),published:!!row?.data.live,publishedAt:row?.data.publishedAt||null});
  async function publicHandle(path,req,res,send){
   if(path==='/api/public/developments/moradas-da-serra'&&req.method==='GET'){
    const row=await read();send(200,{config:row?.data.live||emptyDevelopment(),published:!!row?.data.live});return true;
@@ -27,6 +28,8 @@ export function createDevelopmentApi({read,write,putImage,getImage,deleteImage})
   if(!Number.isInteger(body?.version)||body.version!==(row?.version||0))fail(409,'O empreendimento mudou. Recarregue antes de salvar.');
   let data={kind:'development',...(row?.data||{}),config:row?.data.config||emptyDevelopment(),images:row?.data.images||[]};
   let action='Empreendimento atualizado';
+  if(path===route+'/archive'&&req.method==='POST'){data.archived=archiveChange(user,row?.version||0,body);data.live=null;data.publishedAt=null;send(200,detail(await write(req,row,data,user,data.archived?'Empreendimento arquivado':'Empreendimento restaurado')));return true;}
+  if(data.archived)fail(409,'Restaure o empreendimento antes de editar ou publicar.');
   if(path===route&&req.method==='PATCH'){fields(body,['version','config']);data.config=validateDevelopment(body.config);}
   else if(path===route+'/publish'&&req.method==='POST'){
    fields(body,['version','confirmed']);if(body.confirmed!==true)fail(400,'Confirme a revisão das informações antes de publicar.');

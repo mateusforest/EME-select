@@ -1,4 +1,5 @@
 import {prepareEnlargement} from './photo-preparation.mjs';
+import {archiveChange} from '../shared/archive.mjs';
 import {draft as validateDraft} from './cloud/domain.mjs';
 import {photoPublicationIssues} from '../shared/photo-policy.mjs';
 import sharp from 'sharp';
@@ -17,6 +18,7 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
   if(!db.prepare('PRAGMA table_info(listing_photos)').all().some(c=>c.name==='room'))db.exec("ALTER TABLE listing_photos ADD COLUMN room TEXT NOT NULL DEFAULT ''");
   db.exec('PRAGMA user_version=4');
   let processing=0;
+  if(!db.prepare('PRAGMA table_info(evaluations)').all().some(c=>c.name==='archived'))db.exec('ALTER TABLE evaluations ADD COLUMN archived INTEGER NOT NULL DEFAULT 0');
   for(const [name,type] of [['original_data','BLOB'],['enhancement',"TEXT NOT NULL DEFAULT ''"]])if(!db.prepare('PRAGMA table_info(listing_photos)').all().some(c=>c.name===name))db.exec('ALTER TABLE listing_photos ADD COLUMN '+name+' '+type);
   if(!db.prepare('PRAGMA table_info(listing_photos)').all().some(c=>c.name==='archived'))db.exec('ALTER TABLE listing_photos ADD COLUMN archived INTEGER NOT NULL DEFAULT 0');
   const photos=id=>db.prepare('SELECT id,width,height,caption,position,room,enhancement FROM listing_photos WHERE listing_id=? AND archived=0 ORDER BY position,id').all(id).map(p=>({...p,url:'/api/photos/'+p.id}));
@@ -36,7 +38,7 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
   function publicData(r){const d=JSON.parse(r.data),images=photos(r.id).map(({url,caption,room,width,height})=>({url,caption,room,width,height}));return {
     id:r.id,title:d.title,environment:d.environment,locationProfile:d.locationProfile||undefined,condominium:d.condominium||undefined,location:[d.neighborhood,d.city].filter(Boolean).join(' · '),type:d.type==='Casa em condomínio'?'Casa':d.type,operation:d.operation,price:d.price,area:d.area,bedrooms:d.bedrooms,suites:d.suites,parking:d.parking,bathrooms:d.bathrooms,totalArea:d.totalArea,yearBuilt:d.yearBuilt,
     description:d.description,tags:d.features.split('\n').map(v=>v.trim()).filter(Boolean),reasons:d.reasons.split('\n').map(v=>v.trim()).filter(Boolean),costNotes:d.costNotes,condominiumFee:d.condominiumFee,propertyTax:d.propertyTax,image:images[0]?.url||'/assets/property-placeholder.svg',images,isIllustrative:false,hasInterior:false};}
-  const detail=(r,user)=>({id:r.id,version:r.version,draft:JSON.parse(r.data),photos:photos(r.id),stage:caseFor(r.id,user).stage,published:!!r.published,publishedVersion:r.published_version,hasUnpublishedChanges:!!r.published&&JSON.stringify(publicData(r))!==r.published,blockers:blockers(r,true)});
+  const detail=(r,user)=>({id:r.id,archived:!!caseFor(r.id,user).archived,version:r.version,draft:JSON.parse(r.data),photos:photos(r.id),stage:caseFor(r.id,user).stage,published:!!r.published,publishedVersion:r.published_version,hasUnpublishedChanges:!!r.published&&JSON.stringify(publicData(r))!==r.published,blockers:blockers(r,true)});
   function checkVersion(r,body){if(!Number.isInteger(body.version))fail(400,'Versão obrigatória.');if(r.version!==body.version)fail(409,'Este imóvel foi alterado. Reabra o cadastro antes de continuar.');}
   function changed(id,user,message){
     db.prepare('UPDATE listings SET version=version+1 WHERE id=?').run(id);
@@ -57,11 +59,18 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
     const bytes=originalRequested&&p.original_data?p.original_data:p.data;res.writeHead(200,{'Content-Type':'image/webp','Content-Length':bytes.length,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});res.end(Buffer.from(bytes));return true;
   }
   async function handle(path,req,res,user,body){
+    const archive=path.match(/^\/api\/(listings|evaluations)\/([a-f0-9-]{36})\/archive$/);
+    if(archive&&req.method==='POST'){
+      const id=archive[2],evaluation=caseFor(id,user),listingRow=db.prepare('SELECT * FROM listings WHERE id=?').get(id);
+      const archived=archiveChange(user,archive[1]==='listings'?listingRow?.version:evaluation.version,body);
+      transaction(()=>{db.prepare('UPDATE evaluations SET archived=?,version=version+1,updated_at=? WHERE id=?').run(archived?1:0,stamp(),id);db.prepare('UPDATE listings SET published=NULL,published_version=NULL,version=version+1 WHERE id=?').run(id);audit(user.id,archived?'Imóvel arquivado':'Imóvel restaurado','Histórico preservado. Restauração não republica o anúncio.',id);});
+      send(res,200,{ok:true});return true;
+    }
     if(path==='/api/listings'){
       if(req.method==='GET'){const rows=db.prepare('SELECT listings.*,evaluations.assignee_id FROM listings JOIN evaluations ON evaluations.id=listings.id ORDER BY evaluations.updated_at DESC').all().filter(r=>user.role==='admin'||r.assignee_id===user.id);send(res,200,{listings:rows.map(r=>detail(r,user))});return true;}
       if(req.method==='POST'){
         fields(body,['draft','evaluationId']);const d=validate(body.draft);const id=body.evaluationId||randomUUID();
-        if(body.evaluationId){const evaluation=caseFor(id,user);if(['Entrada aprovada','Não selecionado'].includes(evaluation.stage))requireAdmin(user);if(db.prepare('SELECT id FROM listings WHERE id=?').get(id))fail(409,'Já existe anúncio para esta avaliação.');}
+        if(body.evaluationId){const evaluation=caseFor(id,user);if(evaluation.archived)fail(409,'Restaure o imóvel antes de criar seu anúncio.');if(['Entrada aprovada','Não selecionado'].includes(evaluation.stage))requireAdmin(user);if(db.prepare('SELECT id FROM listings WHERE id=?').get(id))fail(409,'Já existe anúncio para esta avaliação.');}
         transaction(()=>{
           if(!body.evaluationId)db.prepare('INSERT INTO evaluations(id,title,city,type,operation,owner,assignee_id,stage,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)').run(id,d.title,d.city,d.type,d.operation==='comprar'?'Venda':'Locação','',user.id,'Recebido',stamp(),stamp());
           db.prepare('INSERT INTO listings(id,data) VALUES (?,?)').run(id,JSON.stringify(d));changed(id,user,'Cadastro de imóvel criado');
@@ -78,6 +87,7 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
     const match=path.match(/^\/api\/listings\/([a-f0-9-]{36})(?:\/(photos|publish|unpublish))?$/);if(!match)return false;
     const id=match[1],r=row(id,user);
     if(!match[2]&&req.method==='GET'){send(res,200,detail(r,user));return true;}
+    if(caseFor(id,user).archived)fail(409,'Restaure o imóvel antes de editar ou publicar.');
     if(req.method!=='POST'&&req.method!=='PATCH')fail(405,'Operação indisponível.');
     checkVersion(r,body);
     if(!['publish','unpublish'].includes(match[2])&&(r.published||['Entrada aprovada','Não selecionado'].includes(caseFor(id,user).stage)))requireAdmin(user);

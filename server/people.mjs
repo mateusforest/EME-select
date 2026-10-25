@@ -33,7 +33,7 @@ export function createPeopleApi({read,write,putImage,getImage,deleteImage}){
   if(path===route&&req.method==='PATCH'){fields(body,['version','people']);data.people=validate(body.people,data.images);}
   else if(path===route+'/publish'&&req.method==='POST'){
    fields(body,['version','confirmed']);if(body.confirmed!==true)fail(400,'Confirme a autorização para divulgar os perfis.');data.live=validate(data.people,data.images);
-   if(!data.live.length||data.live.some(p=>!p.photoUrl))fail(400,'Adicione nome, cargo e fotografia de cada pessoa antes de publicar.');
+   if(data.live.some(p=>!p.photoUrl))fail(400,'Adicione nome, cargo e fotografia de cada pessoa antes de publicar.');
    data.publishedAt=new Date().toISOString();action='Perfis publicados na página inicial';
   }else if(path===route+'/unpublish'&&req.method==='POST'){fields(body,['version']);data.live=null;data.publishedAt=null;action='Perfis retirados da página inicial';}
   else if(path===route+'/images'&&req.method==='POST'){

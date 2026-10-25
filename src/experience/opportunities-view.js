@@ -1,4 +1,5 @@
 import {renderPrice} from './price.js';
+import {markOpportunity,brandOpportunities} from './opportunity-brand.js';
 import {opportunityDefaults,opportunitiesFromQuery,opportunitiesHash,selectOpportunities} from './opportunities.js';
 import {createIcons} from './icons.js';
 
@@ -21,7 +22,7 @@ export function createOpportunities({root,properties,assets,regions,getSaved,onO
    spotlight.querySelector('img').replaceWith(photo(first,true));
    spotlight.querySelector('.eo-spotlight-copy p').textContent=first.location;
    spotlight.querySelector('h2').textContent=first.title;
-   renderPrice(spotlight.querySelector('.eo-spotlight-price'),first);
+   renderPrice(spotlight.querySelector('.eo-spotlight-price'),first);markOpportunity(spotlight,first);
   }
   const typeList=page.querySelector('.eo-types');typeList.replaceChildren();
   for(const [type,label,glyph] of types){
@@ -44,10 +45,10 @@ export function createOpportunities({root,properties,assets,regions,getSaved,onO
    const save=node('button','eo-save');save.type='button';save.dataset.opportunitySave=p.id;save.setAttribute('aria-pressed',String(saved.has(p.id)));save.setAttribute('aria-label',(saved.has(p.id)?'Remover dos salvos: ':'Salvar: ')+p.title);save.append(icon('heart'));
    bottom.append(price,save);
    body.append(node('p','eo-card-location',p.location),title,node('p','eo-card-facts',p.summary),detail,bottom);
-   card.append(cover,body);grid.append(card);
+   markOpportunity(cover,p);card.append(cover,body);grid.append(card);
   }
   regionField.value=filters.region;sortField.value=filters.sort;
-  createIcons();
+  brandOpportunities(root);createIcons();
  }
  function change(){render();onChange();}
  regionField.addEventListener('change',()=>{filters.region=regionField.value;change();});

@@ -1,6 +1,6 @@
 export interface TeamUser { id: string; name: string; email: string; role: 'admin' | 'corretor'; active: boolean; mustChangePassword: boolean }
 export interface Assignee { id: string; name: string; role: string }
-export interface LiveEvaluation { id: string; title: string; city: string; type: string; operation: string; owner: string; assignee_id: string; assignee: string; stage: string; version: number; created_at: string; updated_at: string }
+export interface LiveEvaluation { archived?:boolean; id: string; title: string; city: string; type: string; operation: string; owner: string; assignee_id: string; assignee: string; stage: string; version: number; created_at: string; updated_at: string }
 export interface HistoryEntry { id: number; action: string; detail: string; created_at: string; author: string }
 export interface Criterion { key:string; label:string; weight:number; help:string; minimum:number; anchors:string[]; score:number|null; note:string }
 export interface Verification { key:string; label:string; help:string; state:string; note:string; author:string|null; date:string|null }
