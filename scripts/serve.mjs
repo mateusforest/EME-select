@@ -20,7 +20,7 @@ const server = http.createServer(async (req, res) => {
     const requested = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname);
     if(canonicalSelectPath(requested)!==requested){res.writeHead(308,{Location:canonicalSelectPath(requested)+new URL(req.url,'http://127.0.0.1').search});res.end();return;}
     const portalRoute = /^\/acesso-select(?:\/[a-z0-9-]+){0,3}\/?$/.test(requested);
-    const submissionRoute = /^\/(?:enviar-imovel|apresentar\/(?:g400|cenario))\/?$/.test(requested);
+    const submissionRoute = /^\/(?:inovacao|enviar-imovel|apresentar\/(?:g400|cenario))\/?$/.test(requested);
     const path = resolve(root, `.${requested === '/' || portalRoute || submissionRoute ? '/index.html' : requested}`);
     if (!path.startsWith(root + sep)) { res.writeHead(403); res.end(); return; }
     const info = await stat(path);

@@ -5,6 +5,14 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/inovacao",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/inovacao/",
+      "destination": "/index.html"
+    },
+    {
       "source": "/acesso-select/:path*",
       "destination": "/index.html"
     },

@@ -5,6 +5,7 @@ export function mountEcosystem(container){
  if(!section)return;
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
  const states=[];
+ const motionPaused=()=>section.dataset.motionPaused===undefined?reduced.matches:section.dataset.motionPaused==='true';
  const observer=new IntersectionObserver(entries=>{
   for(const entry of entries){
    const state=states.find(item=>item.panel===entry.target);
@@ -22,7 +23,7 @@ export function mountEcosystem(container){
   if(state.video.paused)state.video.play().catch(()=>state.panel.classList.remove('eco-is-playing'));
  }
  function update(state){
-  if(!state.visible||document.hidden||reduced.matches){state.video.pause();return;}
+  if(!state.visible||document.hidden||motionPaused()){state.video.pause();return;}
   load(state);
   // Browsers may block playback in low-power mode; the poster remains visible.
   play(state);
@@ -60,11 +61,12 @@ export function mountEcosystem(container){
  window.addEventListener('pageshow',()=>states.forEach(update));
  // Retry a browser-blocked autoplay on a normal navigation gesture, without player UI.
  function resumeOnGesture(){
-  if(document.hidden||reduced.matches)return;
+  if(document.hidden||motionPaused())return;
   states.filter(state=>state.loaded&&state.visible).forEach(play);
  }
  document.addEventListener('touchstart',resumeOnGesture,{passive:true});
  document.addEventListener('touchend',resumeOnGesture,{passive:true});
  document.addEventListener('pointerup',resumeOnGesture,{passive:true});
  reduced.addEventListener('change',()=>states.forEach(update));
+ container.querySelector('#eme-continuo')?.addEventListener('eme-ecosystem-motion',()=>states.forEach(update));
 }

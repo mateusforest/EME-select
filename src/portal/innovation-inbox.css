@@ -1,0 +1,5 @@
+.innovation-inbox{display:grid;gap:18px;margin:24px 0}
+.innovation-inbox-heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.innovation-inbox-heading>div{flex:1;min-width:220px}.innovation-inbox-heading h2{margin:0 0 8px}.innovation-inbox-heading p{margin:0;color:#66796c;line-height:1.6}.innovation-pagination{display:flex;gap:10px;justify-content:flex-end}
+.innovation-inbox article{min-width:0;padding:24px;border:1px solid #dce2d5;border-radius:12px;background:#fffef9}
+.innovation-inbox header,.innovation-inbox footer{display:flex;gap:16px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.innovation-inbox h3{margin:0 0 8px}.innovation-inbox small{color:#66796c}.innovation-inbox p{line-height:1.75;margin:20px 0}.innovation-inbox a{color:#315d48;overflow-wrap:anywhere;text-underline-offset:4px}.innovation-inbox footer{border-top:1px solid #dce2d5;margin-top:22px;padding-top:18px}.innovation-inbox label{display:grid;gap:7px;font-size:13px}.innovation-inbox select{min-height:44px;padding:8px 14px;border:1px solid #b8c6b2;border-radius:7px;background:#fffef9;color:#193f34}

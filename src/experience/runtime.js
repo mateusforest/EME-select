@@ -6,6 +6,7 @@ import {defaultSiteContent} from '../../shared/portal-content.mjs';
 import {mapProperties} from './properties.js';
 import {createIcons} from './icons.js';
 import {createCatalog} from './catalog-view.js';
+import {createInnovation} from './innovation.js';
 import {createOpportunities} from './opportunities-view.js';
 import {createHeroFocus} from './hero-motion.js';
 import {createChatTransport} from './chat-client.js';
@@ -359,8 +360,20 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     onSave:id=>{if(savedIds.has(id))savedIds.delete(id);else savedIds.add(id);updateFavorites();status.textContent=savedIds.has(id)?'Imóvel salvo na sua seleção.':'Imóvel removido da sua seleção.';save();},
     onChange:()=>save(),onHome:()=>{showHome(null,true);save();}
   });
+  const innovation=createInnovation(root);
+  function showInnovation({persist=true}={}){
+    if(assistantMode&&!chatMinimized)minimizeChat(false);
+    searchRequest?.abort();searchRequest=null;catalog.busy(false);
+    view='innovation';root.dataset.page=view;
+    home.hidden=true;propertyPage.hidden=true;regionPage.hidden=true;catalog.page.hidden=true;opportunities.page.hidden=true;innovation.page.hidden=false;
+    propertyOriginRegion=null;propertyOriginCatalog=false;propertyOriginOpportunities=false;setRegionPicker(false);
+    root.querySelector('.ec-header').classList.remove('nav-open');root.querySelector('.ex-menu-toggle').setAttribute('aria-expanded','false');
+    root.querySelector('.ec-page-scroll').scrollTop=0;innovation.page.querySelector('h1').focus({preventScroll:true});
+    if(persist)save();
+  }
   function showOpportunities(query,{returning=false,persist=true}={}) {
     if(assistantMode&&!chatMinimized)minimizeChat(false);
+    innovation.page.hidden=true;
     view='opportunities';root.dataset.page=view;home.hidden=true;propertyPage.hidden=true;regionPage.hidden=true;catalog.page.hidden=true;
     propertyOriginRegion=null;propertyOriginCatalog=false;propertyOriginOpportunities=false;setRegionPicker(false);
     root.querySelector('.ec-header').classList.remove('nav-open');root.querySelector('.ex-menu-toggle').setAttribute('aria-expanded','false');
@@ -373,6 +386,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   function showCatalog(query,{returning=false,persist=true}={}) {
     searchRequest?.abort();searchRequest=null;catalog.busy(false);
     if(assistantMode&&!chatMinimized)minimizeChat(false);
+    innovation.page.hidden=true;
     view='catalog';root.dataset.page=view;home.hidden=true;propertyPage.hidden=true;regionPage.hidden=true;opportunities.page.hidden=true;propertyOriginOpportunities=false;
     propertyOriginRegion=null;propertyOriginCatalog=false;setRegionPicker(false);
     root.querySelector('.ec-header').classList.remove('nav-open');root.querySelector('.ex-menu-toggle').setAttribute('aria-expanded','false');
@@ -493,6 +507,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     homeStateId=regionById(id).stateId;
     opportunities.page.hidden=true;propertyOriginOpportunities=false;
     catalog.page.hidden=true;propertyOriginCatalog=false;
+    innovation.page.hidden=true;
     regionId=id;view='region';propertyOriginRegion=null;root.dataset.page='region';home.hidden=true;propertyPage.hidden=true;regionPage.hidden=false;
     root.querySelector('.ec-header').classList.remove('nav-open');root.querySelector('.ex-menu-toggle').setAttribute('aria-expanded','false');
     setRegionPicker(false);renderRegion();
@@ -638,6 +653,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if (assistantMode && !chatMinimized) minimizeChat(false);
     root.querySelector('.ec-header').classList.remove('nav-open');
     root.querySelector('.ex-menu-toggle').setAttribute('aria-expanded','false');
+    innovation.page.hidden=true;
     view = 'home';
     root.dataset.page = 'home';
     propertyPage.hidden = true;
@@ -769,6 +785,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     photoIndex = 0;
     const update = () => {
       catalog.page.hidden=true;regionPage.hidden=true;opportunities.page.hidden=true;
+      innovation.page.hidden=true;
       view = 'property';
       root.dataset.page = 'property';
       home.hidden = true;
@@ -794,6 +811,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if (sectionButton) {
       if(sectionButton.tagName==='A'&&(event.ctrlKey||event.metaKey||event.shiftKey||event.button!==0))return;
       event.preventDefault();
+      if(['innovation','curation'].includes(sectionButton.dataset.section)){showInnovation();return;}
       if(sectionButton.dataset.section==='collection'){showCatalog('');return;}
       if(sectionButton.dataset.section==='opportunities'){showOpportunities('');return;}
       showHome(sectionButton.dataset.section);save();return;
@@ -1321,7 +1339,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     finally{leadSending=false;root.querySelector('.ex-new-chat').disabled=false;button.disabled=false;button.textContent='Solicitar contato ↗︎';}
   }
 
-  root.querySelectorAll('button[type="submit"]').forEach(button=>button.type='button');
+  root.querySelectorAll('button[type="submit"]').forEach(button=>{if(!button.closest('.innovation-page'))button.type='button';});
   const headerVoicePanel=document.createElement('div');headerVoicePanel.className='header-voice';headerVoicePanel.hidden=true;
   headerVoicePanel.innerHTML='<span class="voice-level" aria-hidden="true"></span><span class="header-voice-message" role="status" aria-live="polite"></span><button type="button" class="header-voice-stop" hidden>Concluir</button><button type="button" class="header-voice-cancel" aria-label="Fechar gravação de voz">×</button>';
   headerSearch.closest('form').append(headerVoicePanel);
@@ -1399,14 +1417,16 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if(!routingReady)return;
     const hash=view==='property'?'#/imovel/'+selectedId:view==='region'?'#/regiao/'+regionId:view==='catalog'?catalog.hash():view==='opportunities'?opportunities.hash():'#/';
     const navigation=view==='property'&&propertyOriginOpportunities?{opportunitiesReturn:opportunities.hash(),opportunitiesScroll:opportunitiesReturnScroll}:view==='property'&&propertyOriginCatalog?{catalogReturn:catalog.hash(),catalogScroll:catalogReturnScroll}:null;
-    if(location.hash!==hash)history.pushState(navigation,'',hash);
+    const destination=view==='innovation'?'/inovacao':(location.pathname.replace(/\/$/,'')==='/inovacao'?'/'+hash:location.pathname+location.search+hash);
+    if(location.pathname+location.search+location.hash!==destination)history.pushState(navigation,'',destination);
     root.dispatchEvent(new Event('eme-analytics-route'));
-    document.title=(view==='property'?byId(selectedId)?.title:view==='region'?regionById(regionId).name:view==='catalog'?(catalog.isSearch()?'Sua busca':'Todos os imóveis'):view==='opportunities'?'Oportunidades':'Seu próximo lugar')+' — EME Select';
+    document.title=(view==='property'?byId(selectedId)?.title:view==='region'?regionById(regionId).name:view==='catalog'?(catalog.isSearch()?'Sua busca':'Todos os imóveis'):view==='opportunities'?'Oportunidades':view==='innovation'?'Inovação':'Seu próximo lugar')+' — EME Select';
   }
   function applyRoute(){
     const before=routingReady;routingReady=false;
     const parts=location.hash.split('?')[0].replace(/^#\/?/,'').split('/');
-    if(['imovel','visita'].includes(parts[0])&&byId(parts[1])) {
+    if(location.pathname.replace(/\/$/,'')==='/inovacao'||parts[0]==='inovacao')showInnovation({persist:false});
+    else if(['imovel','visita'].includes(parts[0])&&byId(parts[1])) {
       openProperty(parts[1],false);
       if(history.state?.catalogReturn){catalog.show(history.state.catalogReturn.split('?')[1]||'');catalog.page.hidden=true;propertyOriginCatalog=true;catalogReturnScroll=history.state.catalogScroll||0;}
       if(history.state?.opportunitiesReturn){opportunities.show(history.state.opportunitiesReturn.split('?')[1]||'');opportunities.page.hidden=true;propertyOriginOpportunities=true;propertyOriginCatalog=false;opportunitiesReturnScroll=history.state.opportunitiesScroll||0;renderProperty();}
@@ -1415,7 +1435,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     else if(parts[0]==='colecao'||parts[0]==='busca')showCatalog(location.hash.split('?')[1]||'',{persist:false});
     else if(parts[0]==='oportunidades')showOpportunities(location.hash.split('?')[1]||'',{returning:view==='property'&&propertyOriginOpportunities,persist:false});
     else {showHome(null,false,true);if(['imovel','visita'].includes(parts[0]))status.textContent='Este imóvel não está disponível na coleção atual.';}
-    document.title=(view==='property'?byId(selectedId)?.title:view==='region'?regionById(regionId).name:view==='catalog'?(catalog.isSearch()?'Sua busca':'Todos os imóveis'):view==='opportunities'?'Oportunidades':'Seu próximo lugar')+' — EME Select';
+    document.title=(view==='property'?byId(selectedId)?.title:view==='region'?regionById(regionId).name:view==='catalog'?(catalog.isSearch()?'Sua busca':'Todos os imóveis'):view==='opportunities'?'Oportunidades':view==='innovation'?'Inovação':'Seu próximo lugar')+' — EME Select';
     routingReady=before;
     updateHeaderNavigation();
   }
@@ -1447,7 +1467,8 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
         const target=root.querySelector('#eme-full-'+section);
         if(target.getClientRects().length && target.getBoundingClientRect().top<=readingLine)current=section;
       }
-    } else if(view==='opportunities'||(view==='property'&&propertyOriginOpportunities))current='opportunities';
+    } else if(view==='innovation')current='innovation';
+    else if(view==='opportunities'||(view==='property'&&propertyOriginOpportunities))current='opportunities';
     header.querySelectorAll('nav button').forEach(button=>{
       const section=button.dataset.section || (button.classList.contains('er-collection-toggle')?'collection':null);
       if(section&&section===current)button.setAttribute('aria-current','location');

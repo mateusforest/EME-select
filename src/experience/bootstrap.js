@@ -21,6 +21,8 @@ import '../mobile.css';
 import './journey.css';
 import './consultants.css';
 import './select-refinement.css';
+import './innovation.css';
+import './innovation-integration.css';
 
 export async function startExperience(){
  const container=document.getElementById('root');
@@ -48,7 +50,7 @@ export async function startExperience(){
  mountSelectEntry(container,siteContent);
  mountEcosystem(container);
  if(failed){const notice=document.createElement('div');notice.className='experience-offline';notice.setAttribute('role','status');notice.append('Não foi possível atualizar os imóveis. ');const retry=document.createElement('button');retry.textContent='Tentar novamente';retry.onclick=()=>location.reload();notice.append(retry);container.append(notice);}
- container.querySelectorAll('img').forEach(img=>{img.decoding='async';if(!img.closest('.ec-scene,.ec-header'))img.loading='lazy';});
+ container.querySelectorAll('img').forEach(img=>{img.decoding='async';if(!img.closest('.ec-scene,.ec-header,.innovation-page .hero-image'))img.loading='lazy';});
  addFooter(container);
  mountAnalytics(container);
 }
@@ -71,4 +73,5 @@ function addFooter(container){
  const portal=document.createElement('a');portal.href='/acesso-select';portal.textContent='Acesso Select';
  const privacy=document.createElement('button');privacy.type='button';privacy.className='experience-privacy';privacy.textContent='Privacidade';privacy.onclick=()=>dialog('Privacidade',['No Acesso Select, usamos nome, e-mail, telefone e CPF ou CNPJ para analisar o cadastro e administrar o acesso. O documento fica restrito à administração; não aparece no catálogo nem no aviso de WhatsApp. A entrada na seleção reservada depende de aprovação humana. O aviso sobre o cadastro pelo WhatsApp é opcional e separado dos avisos de imóveis. Solicite revisão ou exclusão dos dados pelos canais de atendimento da EME.','Medimos visitas, páginas, seções e imóveis consultados para melhorar o site. O painel não recebe nomes, e-mails, telefones, mensagens, textos de busca ou endereços IP. Uma referência temporária de sessão é renovada após 30 minutos de inatividade e transformada diariamente no servidor. Os registros de medição ficam disponíveis por até 90 dias. Você pode desativar a medição no rodapé; sinais de não rastreamento do navegador também são respeitados.','Seus imóveis salvos e sua escolha de estado ficam apenas neste navegador. O histórico do M fica na memória desta página e é apagado ao recarregar ou iniciar uma nova conversa. Ao enviar uma mensagem, o conteúdo e o contexto público dos imóveis são processados pela OpenAI para gerar a resposta. A EME não grava esse histórico no portal; a API é usada com armazenamento de respostas desativado. O provedor aplica suas próprias regras de tratamento e retenção. Evite enviar documentos ou dados sensíveis.','Os pedidos de contato são enviados ao portal privado da EME somente quando você preenche os dados e autoriza o contato. O resumo do interesse acompanha esse pedido. No WhatsApp, o resumo e os imóveis são preparados para você revisar e enviar. Para solicitar informações ou exclusão de dados, fale com a equipe pelo canal de atendimento do site.','A busca por voz depende do serviço de reconhecimento do seu navegador e só inicia com sua ação e autorização de microfone. Confira a transcrição antes de buscar.','Ao abrir o WhatsApp ou outro serviço externo, aplicam-se também as regras desse serviço.']);
  footer.insertBefore(privacy,footer.lastElementChild);footer.insertBefore(portal,footer.lastElementChild);
+ const innovationPrivacy=privacy.cloneNode(true);innovationPrivacy.className='text-button';innovationPrivacy.onclick=privacy.onclick;container.querySelector('.innovation-page .footer-bottom')?.append(innovationPrivacy);
 }

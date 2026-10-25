@@ -1,8 +1,8 @@
 import {createHash} from 'node:crypto';
 import {fail} from './cloud/domain.mjs';
 const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
-export const analyticsSections=['hero','collection','opportunities','team','owners','contact','curation','access','selection','chat','whatsapp','financing'];
-const pages=['home','catalog','opportunities','region','property'];
+export const analyticsSections=['hero','collection','opportunities','team','owners','contact','curation','innovation','ideas','access','selection','chat','whatsapp','financing'];
+const pages=['home','catalog','opportunities','region','property','innovation'];
 export const analyticsDay=(date=new Date())=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
 export function analyticsInput(body){
  if(!body||!uuid.test(body.session)||!Array.isArray(body.events)||!body.events.length||body.events.length>20)fail(400,'Medição inválida.');
