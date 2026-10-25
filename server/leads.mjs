@@ -11,7 +11,7 @@ export function createLeads({store,rate}){
  async function handle(path,req,user,body,send){
   if(path!=='/api/leads'&&path!=='/api/leads/settings'&&!/^\/api\/leads\/[a-f0-9-]{36}$/.test(path))return false;
   if(!user?.active||user.must_change||!['admin','corretor'].includes(user.role))leadFail(403,'Acesso não permitido.');
-  if(path==='/api/leads'&&req.method==='GET'){send(200,await store.snapshot(user));return true;}
+  if(path==='/api/leads'&&req.method==='GET'){send(200,await store.snapshot(user,new URL(req.url||path,'http://local').searchParams.get('scope')==='mine'));return true;}
   if(path==='/api/leads/settings'&&req.method==='POST'){if(user.role!=='admin')leadFail(403,'Somente a gestão altera a distribuição.');await store.settings(req,user,routingInput(body));send(200,await store.snapshot(user));return true;}
   if(req.method!=='PATCH'||path==='/api/leads')leadFail(405,'Operação indisponível.');
   await store.update(req,user,leadId(path.split('/').at(-1)),leadUpdate(body));send(200,await store.snapshot(user));return true;

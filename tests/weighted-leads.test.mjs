@@ -61,3 +61,21 @@ test('cloud advertises migration readiness and never silently falls back from we
  assert.deepEqual(calls.at(-1).args.p_weights,{[broker]:100});
  assert.equal(snapshot.settings.weightedAvailable,true);
 });
+
+
+test('administrators can receive weighted and round-robin leads without changing roles or bypassing first access',async t=>{
+ const db=new PGlite();t.after(()=>db.close());await db.exec('create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key);create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);');
+ for(const name of ['20260914_portal.sql','20261012_leads.sql','20261025_weighted_leads.sql'])await db.exec(readFileSync(new URL('../supabase/migrations/'+name,import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../docs/sql/ATIVAR-ADMINISTRADOR-CORRETOR.sql',import.meta.url),'utf8'));
+ const admin=randomUUID(),broker=randomUUID();for(const id of [admin,broker])await db.query('insert into auth.users values($1)',[id]);await db.query('select public.eme_bootstrap($1,$2,$3)',[admin,'Gestor corretor','admin@example.test']);
+ await db.query("insert into public.eme_profiles(id,name,email,role) values($1,'Corretor','broker@example.test','corretor')",[broker]);
+ await db.query("insert into public.eme_sessions(token_hash,user_id,expires_at) values('admin',$1,now()+interval '1 hour')",[admin]);
+ const route=(version,mode,weights)=>db.query('select public.eme_route_leads_v2($1,$2,$3,$4,$5)',['admin',version,mode,[admin,broker],JSON.stringify(weights)]);
+ await route(0,'weighted',{[admin]:60,[broker]:40});
+ const receive=async i=>{const v=leadInput({requestId:randomUUID(),name:'Teste',phone:'549'+String(i).padStart(8,'0'),interest:'Casa',consent:true});await db.query('select public.eme_receive_lead($1,$2,$3,$4)',[v.requestId,leadHash({propertyId:v.propertyId,data:v.data}),v.propertyId,JSON.stringify(v.data)]);return v.requestId;};
+ await Promise.all(Array.from({length:100},(_,i)=>receive(i)));
+ assert.equal((await db.query('select count(*)::int n from public.eme_leads where assignee_id=$1',[admin])).rows[0].n,60);
+ assert.equal((await db.query('select role from public.eme_profiles where id=$1',[admin])).rows[0].role,'admin');
+ await route(1,'round_robin',{});const ids=[await receive(200),await receive(201)];assert.equal((await db.query('select count(distinct assignee_id)::int n from public.eme_leads where id=any($1)',[ids])).rows[0].n,2);
+ await db.query('update public.eme_profiles set must_change=true where id=$1',[admin]);const last=await receive(202);assert.equal((await db.query('select assignee_id from public.eme_leads where id=$1',[last])).rows[0].assignee_id,broker);
+});

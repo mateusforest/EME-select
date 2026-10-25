@@ -11,7 +11,7 @@ test('legacy bookmarks retain their destination under the single Select route',(
 const ownerId='11111111-1111-4111-8111-111111111111',propertyId='22222222-2222-4222-8222-222222222222',documentId='33333333-3333-4333-8333-333333333333';
 function fixture(){
  let staff=null,member=null,identity={id:ownerId,email:'test@example.com',email_confirmed_at:'today',user_metadata:{intent:'owner'}};
- let profile={id:ownerId,version:1,data:{kind:'select_account',name:'Pessoa teste',intent:'owner',favorites:[],search:{},events:[]}};
+ let profile={id:ownerId,version:1,data:{kind:'select_account',approval:{status:'approved'},name:'Pessoa teste',intent:'owner',favorites:[],search:{},events:[]}};
  let property={id:propertyId,version:1,data:{title:'Imóvel em preparação',city:'Vacaria',draft:{privateAddress:'NEVER EXPOSE',ownerContact:'NEVER EXPOSE'},published:null,access:{visibility:'individual',owners:[],allowed:[]},ownerUpdates:[{id:documentId,type:'document',text:'Documento compartilhado'}]}};
  const calls=[],headers={};
  const res={setHeader:(k,v)=>headers[k]=v,getHeader:k=>headers[k],end:()=>{}};
@@ -35,7 +35,7 @@ function fixture(){
 test('login routes only authorized staff and clears the other session cookie',async()=>{
  const f=fixture();f.member({id:ownerId,role:'corretor',active:true});assert.deepEqual(await f.call('login','POST',{email:'test@example.com',password:'test-password'}),{staff:true});assert.ok(f.headers['Set-Cookie'].some(c=>c==='staff=active'));assert.ok(f.headers['Set-Cookie'].some(c=>c.includes('eme_select_token=;')&&c.includes('Max-Age=0')));
  f.member({id:ownerId,role:'admin',active:false});await assert.rejects(f.call('login','POST',{email:'test@example.com',password:'test-password'}),{status:403});
- f.member(null);assert.deepEqual(await f.call('login','POST',{email:'test@example.com',password:'test-password'}),{staff:false});assert.ok(f.headers['Set-Cookie'].includes('staff=; Max-Age=0'));assert.ok(f.headers['Set-Cookie'].some(c=>c.includes('eme_select_token=test-token')));
+ f.member(null);assert.deepEqual(await f.call('login','POST',{email:'test@example.com',password:'test-password'}),{staff:false,pending:false});assert.ok(f.headers['Set-Cookie'].includes('staff=; Max-Age=0'));assert.ok(f.headers['Set-Cookie'].some(c=>c.includes('eme_select_token=test-token')));
 });
 
 test('owner intent and ownership requests never grant access; verified links do, even before publication',async()=>{

@@ -14,6 +14,7 @@ export interface PortalNavigationItem {
 }
 
 export const portalNavigation: PortalNavigationItem[] = [
+  {id:'minha-atuacao',label:'Minha atuação',title:'Seus negócios, de perto.',description:'Seu dia, seus leads e suas comissões na mesma conta administrativa.',icon:House,group:'Operação',status:'active',adminOnly:true},
   { id: 'hoje', label: 'Visão geral', title: 'Sua operação, em perspectiva.', description: 'Acompanhe os imóveis, as publicações e os próximos passos.', icon: LayoutDashboard, group: 'Operação', status: 'active' },
   { id: 'imoveis', label: 'Imóveis e captações', title: 'Da captação ao anúncio.', description: 'Uma ficha por imóvel. Materiais, cadastro e publicação.', icon: House, group: 'Operação', status: 'active' },
   { id: 'empreendimentos', label: 'Empreendimentos', title: 'Uma experiência completa. Unidade por unidade.', description: 'Moradas da Serra / DeVille: plantas, unidades e disponibilidade publicada.', icon: House, group: 'Site e conteúdo', status: 'active', adminOnly: true },
@@ -30,7 +31,7 @@ export const portalNavigation: PortalNavigationItem[] = [
   { id: 'qualidade', label: 'Qualidade do atendimento', title: 'Um padrão que se constrói em equipe.', description: 'Evidências de atendimento para orientar e desenvolver a equipe.', icon: ShieldCheck, group: 'Equipe', status: 'active', adminOnly: true },
   { id: 'pessoas', label: 'Perfis no site', title: 'Nossa equipe.', description: 'Perfis, retratos e cargos apresentados na página inicial.', icon: Users, group: 'Site e conteúdo', status: 'active', adminOnly: true },
   { id: 'equipe', label: 'Acessos da equipe', title: 'Pessoas certas. Responsabilidades claras.', description: 'Administradores e corretores. Contas e permissões da equipe.', icon: Users, group: 'Equipe', status: 'active', adminOnly: true },
-  { id: 'clientes', label: 'Clientes e proprietários', title: 'Cada acesso, acompanhado.', description: 'Cadastros do Acesso Select, confirmações de e-mail, solicitações e vínculos de imóveis.', icon: Users, group: 'Operação', status: 'active', adminOnly: true },
+  { id: 'clientes', label: 'Clientes e proprietários', title: 'Cada acesso, acompanhado.', description: 'Cadastros do Acesso Select, aprovação, imóveis exclusivos e vínculos de proprietários.', icon: Users, group: 'Operação', status: 'active', adminOnly: true },
   {id:'envios',label:'Imóveis enviados pelo site',title:'Cada envio, um novo olhar.',description:'Fichas, fotografias e leituras preliminares reunidas para a avaliação da equipe.',icon:ClipboardCheck,group:'Operação',status:'active',adminOnly:true},
   {id:'desempenho',label:'Desempenho do site',title:'O interesse, em perspectiva.',description:'Visitas, navegação, imóveis e contatos recebidos. Os sinais do site em um só lugar.',icon:ChartNoAxesCombined,group:'Site e conteúdo',status:'active',adminOnly:true},
   {id:'oportunidades',label:'Oportunidades',title:'O que merece destaque.',description:'Escolha os imóveis publicados que ganham destaque na experiência.',icon:Gem,group:'Site e conteúdo',status:'active',adminOnly:true},

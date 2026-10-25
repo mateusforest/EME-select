@@ -1,8 +1,9 @@
+import {approvalStatus,validDocument,cleanPhone} from '../shared/select-approval.mjs';
 import {randomUUID} from 'node:crypto';
 import {fail} from './cloud/domain.mjs';
 import {propertyRecordsQuery} from '../shared/portal-content.mjs';
-export const publicAccess=(row,now=Date.now())=>!row.data.access||row.data.access.visibility==='public'||!!row.data.access.publicAt&&Date.parse(row.data.access.publicAt)<=now;
-export const canRead=(row,id,now=Date.now())=>publicAccess(row,now)||!!id&&(row.data.access?.visibility==='reserved'||row.data.access?.allowed?.includes(id)||row.data.access?.owners?.includes(id));
+export const publicAccess=(row,now=Date.now())=>!row.data.archived&&!row.data.deletedAt&&(!row.data.access||row.data.access.visibility==='public'||!!row.data.access.publicAt&&Date.parse(row.data.access.publicAt)<=now);
+export const canRead=(row,id,now=Date.now())=>!row.data.archived&&!row.data.deletedAt&&(publicAccess(row,now)||!!id&&(row.data.access?.visibility==='reserved'||row.data.access?.allowed?.includes(id)||row.data.access?.owners?.includes(id)));
 const uuid=/^[a-f0-9-]{36}$/;
 const clean=(v,max=200)=>typeof v==='string'?v.trim().slice(0,max):'';
 const cookie='eme_select_token';
@@ -13,12 +14,12 @@ export function createSelectAccess({client,rate,staffSession,openStaffSession,cl
  const token=req=>(String(req.headers.cookie||'').split(';').map(s=>s.trim()).find(s=>s.startsWith(cookie+'='))||'').slice(cookie.length+1);
  const setToken=(res,t,seconds=3600)=>appendCookie(res,`${cookie}=${t}; Path=/api; HttpOnly; Secure; SameSite=Strict; Max-Age=${seconds}`);
  async function identity(req){const t=token(req);if(!t||t.length>8192)return null;try{return await request('/auth/v1/user',{publicKey:true,headers:{Authorization:'Bearer '+t}});}catch{return null;}}
- async function rows(){return rest('eme_cases?select=*&data->published=not.is.null');}
- async function properties(){return rest('eme_cases?select=*'+propertyRecordsQuery);}
+ async function rows(){return (await rest('eme_cases?select=*&data->published=not.is.null'+propertyRecordsQuery)).filter(r=>!r.data.archived&&!r.data.deletedAt);}
+ async function properties(){return (await rest('eme_cases?select=*'+propertyRecordsQuery)).filter(r=>!r.data.archived&&!r.data.deletedAt);}
  const ownerProperty=r=>r.data.published||{id:r.id,title:r.data.title||r.data.draft?.title||'Imóvel em preparação',location:r.data.city||r.data.draft?.city||'',price:null,image:'',images:[]};
  async function account(id){let row=(await rest('eme_cases?id=eq.'+id))[0];if(row&&row.data.kind!=='select_account')fail(403,'Conta indisponível.');return row;}
  async function persist(row,data){if(Buffer.byteLength(JSON.stringify(data))>135000)fail(400,'Seu histórico atingiu o limite deste espaço. Entre em contato com a equipe.');const saved=await rest('eme_cases?id=eq.'+row.id+'&version=eq.'+row.version,'PATCH',{data,version:row.version+1,updated_at:new Date().toISOString()});if(!saved?.length)fail(409,'Seu espaço mudou. Recarregue antes de salvar.');return saved[0];}
- async function ensureAccount(u){let row=await account(u.id);if(row)return row;const admin=(await rest('eme_profiles?role=eq.admin&active=eq.true&select=id&limit=1'))[0];if(!admin)fail(503,'Cadastro temporariamente indisponível.');return (await rest('eme_cases','POST',{id:u.id,assignee_id:admin.id,data:{kind:'select_account',name:clean(u.user_metadata?.name,80)||'Meu Select',email:u.email,intent:['buyer','owner','both'].includes(u.user_metadata?.intent)?u.user_metadata.intent:'buyer',favorites:[],search:{},whatsapp:false,phone:'',events:[],consentHistory:[]}}))[0];}
+ async function ensureAccount(u,registration={}){let row=await account(u.id);if(row)return row;const admin=(await rest('eme_profiles?role=eq.admin&active=eq.true&select=id&limit=1'))[0];if(!admin)fail(503,'Cadastro temporariamente indisponível.');return (await rest('eme_cases','POST',{id:u.id,assignee_id:admin.id,data:{kind:'select_account',name:clean(u.user_metadata?.name,80)||'Meu Select',email:u.email,intent:['buyer','owner','both'].includes(u.user_metadata?.intent)?u.user_metadata.intent:'buyer',favorites:[],search:{},whatsapp:false,phone:registration.phone||'',document:registration.document||'',contactConsent:registration.contactConsent===true,privacyConsent:registration.privacyAccepted===true?{accepted:true,at:new Date().toISOString(),version:'2026-10-25',purpose:'Analisar e administrar a solicitação de Acesso Select'}:null,approval:{status:'pending',requestedAt:new Date().toISOString()},events:[],consentHistory:registration.phone?[{channel:'whatsapp',enabled:registration.contactConsent===true,at:new Date().toISOString(),purpose:'Retorno sobre a solicitação de acesso'}]:[]}}))[0];}
  // Read identity accounts as well as portal profiles: confirmation and the first login
  // must not be prerequisites for the administrator to see a registration.
  async function customerAccounts(){
@@ -30,7 +31,7 @@ export function createSelectAccess({client,rate,staffSession,openStaffSession,cl
   }
   return users.filter(u=>u.email&&!staffIds.has(u.id)&&!u.deleted_at).map(u=>{
    const row=byId.get(u.id),d=row?.data||{};
-   return {id:u.id,version:row?.version||0,name:d.name||clean(u.user_metadata?.name,80)||'Cliente',email:u.email,intent:d.intent||(['buyer','owner','both'].includes(u.user_metadata?.intent)?u.user_metadata.intent:'buyer'),whatsapp:d.whatsapp===true,events:d.events||[],confirmed:!!u.email_confirmed_at,createdAt:u.created_at,lastSignIn:u.last_sign_in_at||null};
+   return {id:u.id,version:row?.version||0,name:d.name||clean(u.user_metadata?.name,80)||'Cliente',email:u.email,intent:d.intent||(['buyer','owner','both'].includes(u.user_metadata?.intent)?u.user_metadata.intent:'buyer'),whatsapp:d.whatsapp===true,events:d.events||[],confirmed:!!u.email_confirmed_at,phone:d.phone||'',document:d.document||'',contactConsent:d.contactConsent===true,approval:{...d.approval,status:approvalStatus(d)},createdAt:u.created_at,lastSignIn:u.last_sign_in_at||null};
   });
  }
  async function handle(path,req,res,body,send){
@@ -40,20 +41,20 @@ export function createSelectAccess({client,rate,staffSession,openStaffSession,cl
   if(path==='/api/select/register'&&req.method==='POST'){
    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email||'')||typeof body.password!=='string'||body.password.length<12||body.password.length>128||!clean(body.name,80))fail(400,'Informe nome, e-mail e senha com pelo menos 12 caracteres.');
    if(body.intent!==undefined&&!['buyer','owner','both'].includes(body.intent))fail(400,'Escolha como podemos ajudar.');
+   const phone=cleanPhone(body.phone);if(!phone||typeof body.document!=='string'||!validDocument(body.document)||body.privacyAccepted!==true||typeof body.contactConsent!=='boolean')fail(400,'Informe telefone com DDD, CPF ou CNPJ válido e aceite o uso dos dados para analisar seu acesso.');
    await rate('select-register:'+String(req.headers['x-forwarded-for']||'unknown'),5);
-   const result=await request('/auth/v1/signup',{method:'POST',publicKey:true,body:{email:body.email.trim().toLowerCase(),password:body.password,data:{name:clean(body.name,80),...(body.intent?{intent:body.intent}:{})}}});
-   // Supabase can return an obfuscated user for duplicate registrations. Do not
-   // create a portal record from that response or change an existing person's data.
-   const registered=result.user||result;
-   if(registered.id&&registered.identities?.length)await ensureAccount(registered);
-   if(result.access_token)setToken(res,result.access_token,result.expires_in||3600);
-   send(200,{authenticated:!!result.access_token,message:result.access_token?'Acesso criado.':'Confira seu e-mail para confirmar o cadastro. Se já possui conta, entre com sua senha.'});return true;
+   let registered;
+   try{
+    const result=await request('/auth/v1/admin/users',{method:'POST',body:{email:body.email.trim().toLowerCase(),password:body.password,email_confirm:true,user_metadata:{name:clean(body.name,80),intent:body.intent||'buyer'}}});
+    registered=result.user||result;
+   }catch(error){if(error.code!=='account_exists')throw error;}
+   // Auth credentials do not grant the private collection. Administrative approval
+   // is checked independently on every private request, including photo requests.
+   if(registered?.id)await ensureAccount(registered,{phone,document:body.document.replace(/\D/g,''),contactConsent:body.contactConsent,privacyAccepted:body.privacyAccepted});
+   send(200,{authenticated:false,pending:true,message:'Solicitação recebida. A equipe avaliará seus dados antes de liberar o Acesso Select. Se você já tem uma conta, entre com sua senha para consultar a situação. O retorno pelo WhatsApp depende da sua autorização.'});return true;
   }
   if(path==='/api/select/resend'&&req.method==='POST'){
-   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email||''))fail(400,'Informe seu e-mail.');
-   await rate('select-resend:'+String(req.headers['x-forwarded-for']||'unknown'),3);
-   await request('/auth/v1/resend',{method:'POST',publicKey:true,body:{type:'signup',email:body.email.trim().toLowerCase()}});
-   send(200,{message:'Se houver um cadastro aguardando confirmação, você receberá um novo e-mail. Confira também o spam.'});return true;
+   send(200,{message:'O acesso agora é liberado pela equipe. Não é necessário receber um e-mail de confirmação. Entre com sua senha para consultar a situação ou fale com a EME.'});return true;
   }
   if(path==='/api/select/login'&&req.method==='POST'){
    await rate('select-login:'+String(req.headers['x-forwarded-for']||'unknown'),15);
@@ -61,17 +62,28 @@ export function createSelectAccess({client,rate,staffSession,openStaffSession,cl
    const result=await request('/auth/v1/token?grant_type=password',{method:'POST',publicKey:true,body:{email:body.email.trim().toLowerCase(),password:body.password}});
    const member=(await rest('eme_profiles?id=eq.'+result.user.id))[0];
    if(member){if(!member.active||!['admin','corretor'].includes(member.role))fail(403,'Acesso desativado.');await openStaffSession(req,res,member.id);clearSelectCookie(res);send(200,{staff:true});return true;}
+   const profile=await ensureAccount(result.user);
    await closeStaffSession(req,res);
-   setToken(res,result.access_token,result.expires_in||3600);send(200,{staff:false});return true;
+   setToken(res,result.access_token,result.expires_in||3600);send(200,{staff:false,pending:approvalStatus(profile.data)!=='approved'});return true;
   }
   if(path==='/api/select/admin'&&staff?.role==='admin'&&!staff.must_change){
    if(req.method==='GET'){const inventory=await properties();send(200,{accounts:(await customerAccounts()).map(a=>({...a,ownedCount:inventory.filter(p=>p.data.access?.owners?.includes(a.id)).length})),properties:inventory.map(r=>({id:r.id,version:r.version,title:ownerProperty(r).title,published:!!r.data.published,access:r.data.access||{visibility:'public',allowed:[],owners:[]}}))});return true;}
    if(req.method==='POST'){
-    if(body.action==='access'){
+    if(body.action==='approval'){
+     if(!['approved','rejected','suspended','pending'].includes(body.status))fail(400,'Situação inválida.');
+     const known=(await customerAccounts()).find(a=>a.id===body.id);if(!known)fail(404,'Solicitação não encontrada.');if(known.version!==body.version)fail(409,'O cadastro mudou. Atualize antes de decidir.');
+     if(body.status==='approved'&&body.reviewed!==true)fail(400,'Confirme a conferência dos dados e do canal de contato.');
+     let row=await account(body.id);if(!row){const auth=await request('/auth/v1/admin/users/'+body.id);row=await ensureAccount(auth.user||auth);}
+     // Legacy signups might still be blocked by email confirmation. The human
+     // reviewer confirms the contact before enabling credentials; no email sent.
+     if(body.status==='approved'&&!known.confirmed)await request('/auth/v1/admin/users/'+body.id,{method:'PUT',body:{email_confirm:true}});
+     const approval={status:body.status,at:new Date().toISOString(),reviewer:staff.id,note:clean(body.note,1000),requestedAt:row.data.approval?.requestedAt||null};
+     await saveCase(req,row,{...row.data,approval},'Acesso Select revisado','Situação: '+body.status);
+    }else if(body.action==='access'){
      const row=(await properties()).find(r=>r.id===body.id);if(!row||row.version!==body.version)fail(409,'Recarregue o imóvel.');
      if(!['public','reserved','individual'].includes(body.visibility))fail(400,'Visibilidade inválida.');
-     const ids=(await customerAccounts()).filter(a=>a.confirmed).map(a=>a.id);
-     for(const key of ['allowed','owners'])if(!Array.isArray(body[key])||body[key].length>100||body[key].some(id=>!ids.includes(id)))fail(400,'Selecione contas existentes.');
+     const accounts=await customerAccounts();
+     for(const key of ['allowed','owners'])if(!Array.isArray(body[key])||body[key].length>100||body[key].some(id=>!accounts.some(a=>a.id===id&&(a.approval.status==='approved'||row.data.access?.[key]?.includes(id)))))fail(400,'Novas liberações exigem contas aprovadas.');
      if(body.owners.some(id=>!row.data.access?.owners?.includes(id))&&body.ownershipVerified!==true)fail(400,'Confirme a conferência da identidade e do vínculo com o imóvel.');
      if(body.publicAt&&(!Number.isFinite(Date.parse(body.publicAt))||Date.parse(body.publicAt)<=Date.now()))fail(400,'Escolha uma data futura.');
      await saveCase(req,row,{...row.data,access:{visibility:body.visibility,allowed:body.allowed,owners:body.owners,publicAt:body.publicAt||null}},'Acesso Select atualizado','Visibilidade e vínculos revisados pela administração.');
@@ -92,9 +104,14 @@ export function createSelectAccess({client,rate,staffSession,openStaffSession,cl
    }
   }
   if(path==='/api/select/logout'&&req.method==='POST'){try{if(token(req))await request('/auth/v1/logout',{method:'POST',publicKey:true,headers:{Authorization:'Bearer '+token(req)}});}finally{await closeStaffSession(req,res);clearSelectCookie(res);}send(200,{ok:true});return true;}
-  const u=await identity(req);if(!u)fail(401,'Entre no Acesso Select.');if(!u.email_confirmed_at)fail(403,'Confirme seu e-mail antes de continuar.');
+  const u=await identity(req);if(!u)fail(401,'Entre no Acesso Select.');
   if((await rest('eme_profiles?id=eq.'+u.id+'&select=id')).length)fail(403,'Entre novamente no Acesso Select com sua conta da equipe.');
-  const row=await ensureAccount(u),inventory=await rows(),visible=inventory.filter(r=>canRead(r,u.id)),owned=(await properties()).filter(r=>r.data.access?.owners?.includes(u.id));
+  const row=await ensureAccount(u),status=approvalStatus(row.data);
+  if(status!=='approved'){
+   if(path==='/api/select/me'&&req.method==='GET'){send(200,{pending:true,status,user:{name:row.data.name,email:u.email},message:status==='pending'?'Sua solicitação está em análise. A equipe confere os dados antes de liberar os imóveis reservados.':status==='rejected'?'Seu acesso não foi aprovado. Fale com a equipe para mais informações.':'Seu acesso está suspenso. Fale com a equipe para revisar a situação.'});return true;}
+   fail(403,'O acesso aos imóveis e documentos depende da aprovação da equipe.');
+  }
+  const inventory=await rows(),visible=inventory.filter(r=>canRead(r,u.id)),owned=(await properties()).filter(r=>r.data.access?.owners?.includes(u.id));
   const documentMatch=path.match(/^\/api\/select\/documents\/([a-f0-9-]{36})$/);
   if(documentMatch&&req.method==='GET'){
    if(!owned.some(r=>(r.data.ownerUpdates||[]).some(e=>e.id===documentMatch[1]&&e.type==='document')))fail(404,'Documento não disponível para esta conta.');
@@ -103,7 +120,7 @@ export function createSelectAccess({client,rate,staffSession,openStaffSession,cl
 
   if(path==='/api/select/me'&&req.method==='GET'){
    const requests=owned.length?(await rest('eme_cases?data->>kind=eq.select_account&select=data')).flatMap(r=>r.data.events||[]):[];
-   send(200,{user:{id:u.id,name:row.data.name,email:u.email},version:row.version,profile:row.data,properties:visible.map(r=>({...r.data.published,reserved:!publicAccess(r),publicAt:r.data.access?.publicAt||null})),owned:owned.map(r=>({property:ownerProperty(r),status:!r.data.published?'Em preparação':publicAccess(r)?'Público':'Acesso restrito',updates:r.data.ownerUpdates||[],documents:(r.data.ownerUpdates||[]).filter(e=>e.type==='document'),proposals:(r.data.ownerUpdates||[]).filter(e=>e.type==='proposal'),visits:requests.filter(e=>e.type==='visit'&&e.propertyId===r.id).map(e=>({id:e.id,at:e.at,status:e.status})),contacts:(r.data.ownerUpdates||[]).filter(e=>e.type==='contact'),performance:null})),integrations:{whatsapp:false,availability:false,analytics:false}});return true;
+   send(200,{user:{id:u.id,name:row.data.name,email:u.email},version:row.version,profile:Object.fromEntries(Object.entries(row.data).filter(([key])=>!['document','approval'].includes(key))),properties:visible.map(r=>({...r.data.published,reserved:!publicAccess(r),publicAt:r.data.access?.publicAt||null})),owned:owned.map(r=>({property:ownerProperty(r),status:!r.data.published?'Em preparação':publicAccess(r)?'Público':'Acesso restrito',updates:r.data.ownerUpdates||[],documents:(r.data.ownerUpdates||[]).filter(e=>e.type==='document'),proposals:(r.data.ownerUpdates||[]).filter(e=>e.type==='proposal'),visits:requests.filter(e=>e.type==='visit'&&e.propertyId===r.id).map(e=>({id:e.id,at:e.at,status:e.status})),contacts:(r.data.ownerUpdates||[]).filter(e=>e.type==='contact'),performance:null})),integrations:{whatsapp:false,availability:false,analytics:false}});return true;
   }
   if(path==='/api/select/me'&&req.method==='PATCH'){
    if(body.version!==row.version)fail(409,'Recarregue seu espaço antes de salvar.');
@@ -124,5 +141,6 @@ export function createSelectAccess({client,rate,staffSession,openStaffSession,cl
   }
   fail(404,'Operação indisponível.');
  }
- return {handle,identity};
+ async function approvedIdentity(req){const u=await identity(req);if(!u||(await rest('eme_profiles?id=eq.'+u.id+'&select=id')).length)return null;const row=await account(u.id);return row&&approvalStatus(row.data)==='approved'?u:null;}
+ return {handle,identity:approvedIdentity};
 }

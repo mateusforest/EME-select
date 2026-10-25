@@ -72,7 +72,7 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
     if(path==='/api/listings'){
       if(req.method==='GET'){const rows=db.prepare('SELECT listings.*,evaluations.assignee_id FROM listings JOIN evaluations ON evaluations.id=listings.id WHERE evaluations.deleted_at IS NULL ORDER BY evaluations.updated_at DESC').all().filter(r=>user.role==='admin'||r.assignee_id===user.id);send(res,200,{listings:rows.map(r=>detail(r,user))});return true;}
       if(req.method==='POST'){
-        fields(body,['draft','evaluationId']);const d=validate(body.draft);const id=body.evaluationId||randomUUID();
+        if(body.visibility!==undefined)fail(503,'O cadastro exclusivo está disponível no site conectado.');fields(body,['draft','evaluationId']);const d=validate(body.draft);const id=body.evaluationId||randomUUID();
         if(body.evaluationId){const evaluation=caseFor(id,user);if(evaluation.archived)fail(409,'Restaure o imóvel antes de criar seu anúncio.');if(['Entrada aprovada','Não selecionado'].includes(evaluation.stage))requireAdmin(user);if(db.prepare('SELECT id FROM listings WHERE id=?').get(id))fail(409,'Já existe anúncio para esta avaliação.');}
         transaction(()=>{
           if(!body.evaluationId)db.prepare('INSERT INTO evaluations(id,title,city,type,operation,owner,assignee_id,stage,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)').run(id,d.title,d.city,d.type,d.operation==='comprar'?'Venda':'Locação','',user.id,'Recebido',stamp(),stamp());

@@ -8,9 +8,10 @@ export function createClient(env=process.env,fetcher=fetch){
   if(!response.ok){let error={};try{error=await response.json();}catch{}error.code=error.code||error.error_code;const message=error.message||error.msg||'';
    const authFailure=(status,text,code,retryAfter)=>{throw Object.assign(new Error(text),{status,code,...(retryAfter?{retryAfter}:{})});};
    if(path.startsWith('/auth/')){
-    if(error.code==='over_email_send_rate_limit'||/email rate limit/i.test(message))authFailure(429,'O serviço de confirmação atingiu o limite de envio de e-mails. Seu acesso não depende de aprovação da administração. Aguarde até uma hora antes de reenviar a confirmação.', 'confirmation_limit',3600);
+    if(['email_exists','user_already_exists'].includes(error.code))authFailure(409,'Já existe uma conta para este e-mail. Entre com sua senha.','account_exists');
+    if(error.code==='over_email_send_rate_limit'||/email rate limit/i.test(message))authFailure(429,'O serviço de confirmação atingiu o limite de envio de e-mails. Aguarde até uma hora antes de reenviar a confirmação.', 'confirmation_limit',3600);
     if(error.code==='email_address_not_authorized')authFailure(503,'O envio de confirmação para novos clientes ainda precisa ser configurado pela EME. Não é uma restrição da sua conta.','confirmation_unavailable');
-    if(error.code==='email_not_confirmed')authFailure(403,'Confirme seu e-mail para entrar. Confira também o spam ou solicite uma nova confirmação.','email_unconfirmed');
+    if(error.code==='email_not_confirmed')authFailure(403,'Seu cadastro anterior aguarda liberação. A equipe pode revisar sua solicitação em Clientes e proprietários.','email_unconfirmed');
     if(error.code==='signup_disabled')authFailure(503,'O cadastro está temporariamente indisponível. A equipe precisa revisar a configuração do Acesso Select.','signup_unavailable');
     if(error.code==='unexpected_failure'&&/mail|smtp/i.test(message))authFailure(503,'Não foi possível enviar o e-mail de confirmação. A EME precisa revisar o serviço de envio.','confirmation_unavailable');
    }

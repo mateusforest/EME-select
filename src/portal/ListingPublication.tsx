@@ -14,13 +14,13 @@ export default function ListingPublication({item,user,dirty,busy,confirmed,onCon
  const blockers=item.blockers;
  const photoBlockers=blockers.filter(text=>/foto|resolução/i.test(text));
  const contentBlockers=blockers.filter(text=>!/foto|resolução|curadoria/i.test(text));
- const approved=item.published;
+ const approved=item.published;const reserved=!!item.access&&item.access.visibility!=='public';
  const recommended=item.photos.filter(photo=>!photoPublicationIssue(photo)&&photoQualityIssue(photo)).length;
  async function openCuration(){setLoading(true);setError('');try{setDetail(await api<CaseDetails>('/evaluations/'+item.id));}catch(e){setError((e as Error).message);}finally{setLoading(false);}}
  async function refresh(updated:CaseDetails){setDetail(updated);setLoading(true);setError('');try{onRefresh(await api<Listing>('/listings/'+item.id));}catch(e){setError('A decisão foi salva, mas não foi possível atualizar o anúncio. Clique em Atualizar conferência antes de publicar.');}finally{setLoading(false);}}
  async function reload(){setLoading(true);setError('');try{onRefresh(await api<Listing>('/listings/'+item.id));setDetail(await api<CaseDetails>('/evaluations/'+item.id));}catch(e){setError((e as Error).message);}finally{setLoading(false);}}
  return <section className="ps-card pl-publish">
-  <span className="ps-overline">REVISAR E PUBLICAR</span><h2>{item.published?(item.hasUnpublishedChanges?'Atualização pronta para sua revisão.':'Seu anúncio está no ar.'):'Confira e publique.'}</h2>
+  <span className="ps-overline">REVISAR E PUBLICAR</span>{reserved&&<p className="ps-note">Seleção reservada: esta publicação fica disponível no Acesso Select conforme as permissões definidas pela administração.{item.access?.publicAt?' Divulgação pública programada para '+new Date(item.access.publicAt).toLocaleString('pt-BR'):' Não aparece no catálogo público.'}</p>}<h2>{item.published?(item.hasUnpublishedChanges?'Atualização pronta para sua revisão.':'Seu anúncio está no ar.'):'Confira e publique.'}</h2>
   <p className="pc-help">A prévia mostra o rascunho salvo. Seu OK publica esta versão; a curadoria pode continuar separadamente. Quando há um anúncio no ar, ele permanece disponível durante a edição.</p>
   {dirty?<div className="pl-pending" role="status"><strong>Salve as alterações no botão acima.</strong><p>A conferência abaixo usa a última versão salva.</p></div>:<>
    <div className="pl-publication-checks">
@@ -34,9 +34,9 @@ export default function ListingPublication({item,user,dirty,busy,confirmed,onCon
   <div className="pl-publication-final">
    <a className="ps-button" href={'/acesso-select/equipe/previa/'+item.id} target="_blank" rel="noopener noreferrer">Conferir prévia salva<ExternalLink size={15}/></a>
    {user.role==='admin'?<>{(!item.published||item.hasUnpublishedChanges)&&<label className="pl-confirm"><input type="checkbox" checked={confirmed} disabled={dirty||busy||loading} onChange={e=>onConfirm(e.target.checked)}/><span>Revisei o anúncio e confirmo a autorização para divulgar estas informações e fotografias.</span></label>}
-   <div className="pl-publish-actions">{(!item.published||item.hasUnpublishedChanges)&&<button className="ps-button ps-button--primary" disabled={busy||loading||!!error||dirty||!confirmed||!!blockers.length} onClick={()=>onPublish('publish')}>{busy?'Aguarde…':item.published?'Aprovar e publicar atualização':'Aprovar e publicar'}</button>}{item.published&&<button className="ps-text-button pl-secondary-withdraw" disabled={busy||loading||dirty} onClick={async()=>{if(await confirmAction('Retirar este anúncio do site? O cadastro e os materiais serão preservados.'))onPublish('unpublish');}}>Retirar anúncio do site</button>}</div>
+   <div className="pl-publish-actions">{(!item.published||item.hasUnpublishedChanges)&&<button className="ps-button ps-button--primary" disabled={busy||loading||!!error||dirty||!confirmed||!!blockers.length} onClick={()=>onPublish('publish')}>{busy?'Aguarde…':item.published?'Aprovar e publicar atualização':reserved?'Publicar na seleção reservada':'Aprovar e publicar'}</button>}{item.published&&<button className="ps-text-button pl-secondary-withdraw" disabled={busy||loading||dirty} onClick={async()=>{if(await confirmAction('Retirar este anúncio do site? O cadastro e os materiais serão preservados.'))onPublish('unpublish');}}>Retirar anúncio do site</button>}</div>
    {(!item.published||item.hasUnpublishedChanges)&&<p className="pc-help" role="status">{dirty?'Salve as alterações para continuar.':blockers.length?'Conclua os pontos indicados acima para liberar a publicação.':!confirmed?'Tudo pronto. Confirme a autorização acima e publique.':'Tudo pronto para publicar.'}</p>}</>:<p className="pc-help">Um administrador confere a prévia e dá o OK final para publicar.</p>}
-   {item.published&&<a className="ps-text-button" href={'/#/imovel/'+item.id} target="_blank" rel="noopener noreferrer">Abrir anúncio<ExternalLink size={15}/></a>}
+   {item.published&&!reserved&&<a className="ps-text-button" href={'/#/imovel/'+item.id} target="_blank" rel="noopener noreferrer">Abrir anúncio<ExternalLink size={15}/></a>}
   </div>
   <details className="pl-publication-note"><summary>O que acontece se eu alterar o anúncio?</summary><p>Alterações ficam no rascunho. A versão aprovada e suas fotos continuam no site até você publicar a atualização. Reabrir ou revisar a curadoria também preserva o anúncio. Para tirá-lo do ar, use Retirar anúncio do site.</p></details>
  </section>;

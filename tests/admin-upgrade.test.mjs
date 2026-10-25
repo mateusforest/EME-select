@@ -75,6 +75,10 @@ for(const backend of ['local','cloud'])test(backend+': administrative documents 
 
 
  if(backend==='cloud'){
+  const exclusiveDraft={title:'Resort exclusivo de teste',city:'Vacaria',type:'Casa',environment:'urbano',locationProfile:'',condominium:'',operation:'comprar'};
+  assert.equal((await req(broker,'/listings',{draft:exclusiveDraft,visibility:'reserved'})).status,403);
+  const exclusive=await req(admin,'/listings',{draft:exclusiveDraft,visibility:'reserved'});assert.equal(exclusive.status,201,JSON.stringify(exclusive.body));assert.equal(exclusive.body.access.visibility,'reserved');assert.equal(rows.get(exclusive.body.id).data.access.visibility,'reserved');assert.equal(exclusive.body.published,false);
+  const released=await req(admin,'/listings/'+exclusive.body.id+'/publish',{version:exclusive.body.version,confirmed:true,reviewMode:'simplified'});assert.equal(released.status,200,JSON.stringify(released.body));assert.equal(rows.get(exclusive.body.id).data.access.visibility,'reserved','publication preserves restriction');
   const id=randomUUID(),draft={title:'Imóvel para arquivar',city:'Vacaria',type:'Casa',operation:'comprar',features:'',reasons:'',description:''};
   rows.set(id,{id,version:1,assignee_id:profiles[1].id,data:{title:draft.title,draft,photos:[],published:{id,title:draft.title},stage:'Recebido'}});
   const endpoint='/listings/'+id+'/archive',body={version:1,archived:true,confirmed:true};
