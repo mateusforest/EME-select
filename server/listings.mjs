@@ -1,4 +1,5 @@
 import {prepareEnlargement} from './photo-preparation.mjs';
+import {staffListing} from '../shared/staff-inventory.mjs';
 import {archiveChange} from '../shared/archive.mjs';
 import {draft as validateDraft} from './cloud/domain.mjs';
 import {photoPublicationIssues} from '../shared/photo-policy.mjs';
@@ -39,7 +40,9 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
   function publicData(r){const d=JSON.parse(r.data),images=photos(r.id).map(({url,caption,room,width,height})=>({url,caption,room,width,height}));return {
     id:r.id,title:d.title,environment:d.environment,locationProfile:d.locationProfile||undefined,condominium:d.condominium||undefined,location:[d.neighborhood,d.city].filter(Boolean).join(' · '),type:d.type==='Casa em condomínio'?'Casa':d.type,operation:d.operation,price:d.price,area:d.area,bedrooms:d.bedrooms,suites:d.suites,parking:d.parking,bathrooms:d.bathrooms,totalArea:d.totalArea,yearBuilt:d.yearBuilt,
     description:d.description,tags:d.features.split('\n').map(v=>v.trim()).filter(Boolean),reasons:d.reasons.split('\n').map(v=>v.trim()).filter(Boolean),costNotes:d.costNotes,condominiumFee:d.condominiumFee,propertyTax:d.propertyTax,image:images[0]?.url||'/assets/property-placeholder.svg',images,isIllustrative:false,hasInterior:false};}
-  const detail=(r,user)=>({id:r.id,archived:!!caseFor(r.id,user).archived,version:r.version,draft:JSON.parse(r.data),photos:photos(r.id),stage:caseFor(r.id,user).stage,published:!!r.published,publishedVersion:r.published_version,hasUnpublishedChanges:!!r.published&&JSON.stringify(publicData(r))!==r.published,blockers:blockers(r,true)});
+  function readable(id){const e=db.prepare('SELECT evaluations.*,users.name AS responsible FROM evaluations JOIN users ON users.id=evaluations.assignee_id WHERE evaluations.id=? AND evaluations.deleted_at IS NULL').get(id);if(!e)fail(404,'Imóvel não encontrado.');return e;}
+  function detail(r,user){const e=readable(r.id);return staffListing({id:r.id,archived:!!e.archived,version:r.version,draft:JSON.parse(r.data),photos:photos(r.id),stage:e.stage,published:!!r.published,publishedVersion:r.published_version,hasUnpublishedChanges:!!r.published&&JSON.stringify(publicData(r))!==r.published,blockers:blockers(r,true)},user,e.assignee_id,e.responsible);}
+  function readListing(id,user){const e=readable(id),r=db.prepare('SELECT * FROM listings WHERE id=?').get(id);return r?detail(r,user):staffListing({id,legacy:true,archived:!!e.archived,version:e.version,draft:{title:e.title,city:e.city,type:e.type,operation:e.operation==='Locação'?'alugar':'comprar',ownerName:e.owner},photos:[],stage:e.stage,published:false,publishedVersion:null,blockers:[]},user,e.assignee_id,e.responsible);}
   function checkVersion(r,body){if(!Number.isInteger(body.version))fail(400,'Versão obrigatória.');if(r.version!==body.version)fail(409,'Este imóvel foi alterado. Reabra o cadastro antes de continuar.');}
   function changed(id,user,message){
     db.prepare('UPDATE listings SET version=version+1 WHERE id=?').run(id);
@@ -56,7 +59,7 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
     const p=db.prepare('SELECT listing_photos.*,listings.published,evaluations.stage FROM listing_photos JOIN listings ON listings.id=listing_photos.listing_id JOIN evaluations ON evaluations.id=listings.id WHERE listing_photos.id=?').get(match[1]);
     if(!p)fail(404,'Fotografia não encontrada.');
     const originalRequested=new URL(req.url,'https://eme.local').searchParams.get('original')==='1';const published=!originalRequested&&p.published&&JSON.parse(p.published).images.some(v=>v.url==='/api/photos/'+p.id);
-    if(!published){const user=session(req);if(!user||user.must_change)fail(404,'Fotografia não encontrada.');caseFor(p.listing_id,user);}
+    if(!published){const user=session(req);if(!user||user.must_change)fail(404,'Fotografia não encontrada.');if(originalRequested)caseFor(p.listing_id,user);else readable(p.listing_id);}
     const bytes=originalRequested&&p.original_data?p.original_data:p.data;res.writeHead(200,{'Content-Type':'image/webp','Content-Length':bytes.length,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});res.end(Buffer.from(bytes));return true;
   }
   async function handle(path,req,res,user,body){
@@ -70,7 +73,7 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
       send(res,200,{ok:true});return true;
     }
     if(path==='/api/listings'){
-      if(req.method==='GET'){const rows=db.prepare('SELECT listings.*,evaluations.assignee_id FROM listings JOIN evaluations ON evaluations.id=listings.id WHERE evaluations.deleted_at IS NULL ORDER BY evaluations.updated_at DESC').all().filter(r=>user.role==='admin'||r.assignee_id===user.id);send(res,200,{listings:rows.map(r=>detail(r,user))});return true;}
+      if(req.method==='GET'){const rows=db.prepare('SELECT id FROM evaluations WHERE deleted_at IS NULL ORDER BY updated_at DESC,id').all();send(res,200,{listings:rows.map(r=>readListing(r.id,user))});return true;}
       if(req.method==='POST'){
         if(body.visibility!==undefined)fail(503,'O cadastro exclusivo está disponível no site conectado.');fields(body,['draft','evaluationId']);const d=validate(body.draft);const id=body.evaluationId||randomUUID();
         if(body.evaluationId){const evaluation=caseFor(id,user);if(evaluation.archived)fail(409,'Restaure o imóvel antes de criar seu anúncio.');if(['Entrada aprovada','Não selecionado'].includes(evaluation.stage))requireAdmin(user);if(db.prepare('SELECT id FROM listings WHERE id=?').get(id))fail(409,'Já existe anúncio para esta avaliação.');}
@@ -88,8 +91,9 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
       if(!source)fail(404,'Fotografia não encontrada.');send(res,200,await prepareEnlargement(source.original_data||source.data));return true;
     }
     const match=path.match(/^\/api\/listings\/([a-f0-9-]{36})(?:\/(photos|publish|unpublish))?$/);if(!match)return false;
-    const id=match[1],r=row(id,user);
-    if(!match[2]&&req.method==='GET'){send(res,200,detail(r,user));return true;}
+    const id=match[1];
+    if(!match[2]&&req.method==='GET'){send(res,200,readListing(id,user));return true;}
+    const r=row(id,user);
     if(caseFor(id,user).archived)fail(409,'Restaure o imóvel antes de editar ou publicar.');
     if(req.method!=='POST'&&req.method!=='PATCH')fail(405,'Operação indisponível.');
     checkVersion(r,body);
@@ -124,5 +128,5 @@ export function attachListings({db,fail,text,fields,caseFor,transaction,audit,st
     }
     fail(405,'Operação indisponível.');
   }
-  return {handle,publicHandle};
+  return {handle,publicHandle,readListing};
 }

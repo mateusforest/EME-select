@@ -49,7 +49,7 @@ export function BrokerToday({admin=false,personalId,items,listings,onNavigate,on
   {label:'Novos leads',value:leads?pending.filter(l=>l.status==='new').length:'—',note:leads?'Aguardando primeiro atendimento':loading?'Carregando…':'Indisponível'},
   {label:'Retornos atrasados',value:leads?overdue.length:'—',note:leads?'Contatos que precisam de atenção':loading?'Carregando…':'Indisponível'},
   {label:'Próximas visitas',value:ops?visits.length:'—',note:ops?'Solicitadas ou confirmadas':loading?'Carregando…':'Indisponível'},
-  {label:'Imóveis publicados',value:listings.filter(l=>l.published).length,note:admin?'Na carteira da equipe':'Na sua carteira'},
+  {label:'Imóveis publicados',value:listings.filter(l=>l.published).length,note:'Na carteira da equipe'},
  ];
  return <div className="broker-workspace broker-overview">
   {errors.length>0&&<div role="alert" className="pt-error"><p>{errors.join(' ')}</p><button className="ps-text-button" disabled={loading} onClick={()=>setRevision(v=>v+1)}>Tentar novamente</button></div>}
@@ -65,12 +65,12 @@ export function BrokerToday({admin=false,personalId,items,listings,onNavigate,on
     {!ops?<p className="broker-empty-copy">{loading?'Carregando a agenda…':'Agenda indisponível. Tente carregar novamente.'}</p>:!visits.length?<div className="broker-empty-copy"><p>Nenhuma visita futura registrada.</p><small>Solicitações e confirmações aparecem com a data e o horário do atendimento.</small></div>:visits.slice(0,5).map(v=><a className="broker-row" key={v.id} href="/acesso-select/equipe/relacionamento"><strong>{v.visitorName}</strong><span>{items.find(i=>i.id===v.propertyId)?.title||'Imóvel da carteira'}</span><small>{date(v.startAt)} · {v.status==='confirmed'?'Confirmada':'Aguardando confirmação'}</small></a>)}
    </section>
   </div>
-  <section className="ps-card"><div className="broker-section-head"><h2><House size={19}/>{admin?'Carteira da equipe':'Minha carteira'}</h2><button className="ps-text-button" onClick={()=>onNavigate('imoveis')}>Ver imóveis<ArrowUpRight size={15}/></button></div>
-   <div className="broker-grid">{items.slice(0,6).map(item=>{const listing=listings.find(l=>l.id===item.id),photo=listing?.photos[0];return <a className="broker-property" href={'/acesso-select/equipe/imoveis?avaliacao='+item.id} key={item.id}>
+  <section className="ps-card"><div className="broker-section-head"><h2><House size={19}/>Carteira da equipe</h2><button className="ps-text-button" onClick={()=>onNavigate('imoveis')}>Ver imóveis<ArrowUpRight size={15}/></button></div>
+   <div className="broker-grid">{listings.map(listing=>{const item={id:listing.id,title:listing.draft.title,city:listing.draft.city,assignee:listing.responsible||'Equipe EME',stage:listing.stage},photo=listing.photos[0];return <a className="broker-property" href={'/acesso-select/equipe/imoveis?avaliacao='+item.id} key={item.id}>
     {photo?<img loading="lazy" src={photo.url} alt=""/>:<span className="broker-property-placeholder" aria-hidden="true"><House size={25}/></span>}
     <div><strong>{item.title}</strong><p>{item.city}</p><small>Responsável: {item.assignee}</small><span className="ps-tag">{listing?.published?'Publicado':item.stage}</span></div>
    </a>;})}</div>
-   {!items.length&&<div className="broker-empty-copy"><p>Sua carteira está pronta para começar.</p><small>Cadastre uma captação ou acompanhe os imóveis que a imobiliária atribuir a você.</small><button className="ps-text-button" onClick={onCapture}>Cadastrar primeiro imóvel<Plus size={16}/></button></div>}
+   {!listings.length&&<div className="broker-empty-copy"><p>Sua carteira está pronta para começar.</p><small>Cadastre uma captação para começar a carteira da equipe.</small><button className="ps-text-button" onClick={onCapture}>Cadastrar primeiro imóvel<Plus size={16}/></button></div>}
   </section>
   {!admin&&<div className="broker-support-grid"><button className="ps-card broker-support-link" onClick={()=>onNavigate('conversas')}><MessageSquare size={21}/><span><strong>Converse com a equipe</strong><small>Organize dúvidas e próximos passos por imóvel.</small></span><ArrowUpRight size={17}/></button><button className="ps-card broker-support-link" onClick={()=>onNavigate('inteligencia')}><Sparkles size={21}/><span><strong>Apoio para o seu trabalho</strong><small>Prepare materiais e confira as ferramentas de IA.</small></span><ArrowUpRight size={17}/></button></div>}
  </div>;

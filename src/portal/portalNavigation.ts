@@ -16,6 +16,7 @@ export interface PortalNavigationItem {
 export const portalNavigation: PortalNavigationItem[] = [
   {id:'minha-atuacao',label:'Minha atuação',title:'Seus negócios, de perto.',description:'Seu dia, seus leads e suas comissões na mesma conta administrativa.',icon:House,group:'Operação',status:'active',adminOnly:true},
   { id: 'hoje', label: 'Visão geral', title: 'Sua operação, em perspectiva.', description: 'Acompanhe os imóveis, as publicações e os próximos passos.', icon: LayoutDashboard, group: 'Operação', status: 'active' },
+  {id:'propostas',label:'Propostas em PDF',title:'Uma proposta para o próximo passo.',description:'Escolha um imóvel, prepare as condições e gere uma apresentação personalizada.',icon:FileText,group:'Operação',status:'active'},
   { id: 'imoveis', label: 'Imóveis e captações', title: 'Da captação ao anúncio.', description: 'Uma ficha por imóvel. Materiais, cadastro e publicação.', icon: House, group: 'Operação', status: 'active' },
   { id: 'empreendimentos', label: 'Empreendimentos', title: 'Uma experiência completa. Unidade por unidade.', description: 'Moradas da Serra / DeVille: plantas, unidades e disponibilidade publicada.', icon: House, group: 'Site e conteúdo', status: 'active', adminOnly: true },
   { id: 'avaliacoes', secondary: true, label: 'Avaliações', title: 'Cada imóvel começa com uma boa leitura.', description: 'Cadastro, responsável, curadoria e histórico em um só lugar.', icon: ClipboardCheck, group: 'Operação', status: 'active' },
@@ -50,7 +51,8 @@ export function portalNavigationForRole(role: 'admin' | 'corretor'): PortalNavig
   if (role === 'admin') return available;
   const presentation: Record<string, Partial<PortalNavigationItem>> = {
     hoje: {label:'Meu dia', title:'Sua carteira, em perspectiva.', description:'Seus imóveis, contatos e próximos passos, em um só lugar.'},
-    imoveis: {label:'Minha carteira', group:'Carteira', description:'Seus imóveis e captações. Prepare os materiais e acompanhe a revisão da imobiliária.'},
+    imoveis: {label:'Carteira de imóveis', group:'Carteira', description:'Todos os imóveis da imobiliária, disponíveis para o seu atendimento.'},
+    propostas: {group:'Carteira'},
     avaliacoes: {group:'Carteira'},
     documentos: {group:'Carteira'},
     locacoes: {group:'Carteira'},

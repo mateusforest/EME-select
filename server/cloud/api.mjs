@@ -1,4 +1,6 @@
 import {attachCloudInnovation} from './innovation.mjs';
+import {attachCloudProposals} from './proposals.mjs';
+import {staffListing,allRecords} from '../../shared/staff-inventory.mjs';
 import {archiveChange} from '../../shared/archive.mjs';
 import {attachCloudSubmissionFlow} from './submission-flow.mjs';
 import {attachCloudAnalytics} from './analytics.mjs';
@@ -61,6 +63,9 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
  const leads=attachCloudLeads({client,hashOf});
  const analytics=attachCloudAnalytics({client});
  const innovation=attachCloudInnovation({client,save});
+ const proposals=attachCloudProposals({client,save,property:async(id,user)=>inventoryItem(await readableCase(id),user)});
+ async function readableCase(id){const row=(await rest('eme_cases?id=eq.'+id))[0];if(!row||row.data.deletedAt||internalKinds.includes(row.data.kind))fail(404,'Imóvel não encontrado.');return row;}
+ function inventoryItem(row,user,people=[]){const d=row.data;const item=d.draft?listing(row):{id:row.id,legacy:true,archived:!!d.archived,version:row.version,draft:{title:d.title,city:d.city,type:d.type,operation:d.operation==='Locação'?'alugar':'comprar',ownerName:d.owner||''},photos:[],stage:d.stage,published:false,publishedVersion:null,blockers:[]};return staffListing(item,user,row.assignee_id,people.find(p=>p.id===row.assignee_id)?.name||'Equipe EME');}
  function setCookie(res,token,expired=false){res.setHeader('Set-Cookie',`${cookieName}=${token}; Path=/api; HttpOnly; SameSite=Strict; Secure; Max-Age=${expired?0:28800}`);}
  async function session(req){const token=tokenOf(req);if(!/^[\w-]{43}$/.test(token))return null;const rows=await rest('eme_sessions?token_hash=eq.'+digest(token)+'&select=*,eme_profiles(*)');const row=rows[0];if(!row||!row.eme_profiles.active||Date.parse(row.expires_at)<Date.now()||Date.parse(row.last_seen)<Date.now()-1800000)return null;await rest('eme_sessions?token_hash=eq.'+digest(token),'PATCH',{last_seen:new Date().toISOString()});return row.eme_profiles;}
  async function openSession(req,res,id){await rest('eme_sessions?token_hash=eq.'+hashOf(req),'DELETE');const token=randomBytes(32).toString('base64url');await rest('eme_sessions','POST',{token_hash:digest(token),user_id:id,expires_at:new Date(Date.now()+28800000).toISOString()});setCookie(res,token);}
@@ -111,7 +116,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    let user=await session(req);
    const photoMatch=path.match(/^\/api\/photos\/([a-f0-9-]{36})$/);
    if(photoMatch&&req.method==='GET'){
-    let rows=await rest('eme_cases?data->photos=cs.'+encodeURIComponent(JSON.stringify([{id:photoMatch[1]}])));if(!rows.length)rows=await rest('eme_cases?data->published->images=cs.'+encodeURIComponent(JSON.stringify([{url:'/api/photos/'+photoMatch[1]}])));const row=rows[0];if(!row)fail(404,'Foto não encontrada.');const originalRequested=new URL(req.url,'https://eme.local').searchParams.get('original')==='1';const isPublic=!originalRequested&&publicAccess(row)&&row.data.published?.images.some(p=>p.url==='/api/photos/'+photoMatch[1]);if(!isPublic&&(!user||user.must_change||user.role!=='admin'&&user.id!==row.assignee_id)){const customer=!originalRequested?await selectAccess.identity(req):null;if(!customer||!canRead(row,customer.id)||!row.data.published?.images.some(p=>p.url==='/api/photos/'+photoMatch[1]))fail(404,'Foto não encontrada.');}
+    let rows=await rest('eme_cases?data->photos=cs.'+encodeURIComponent(JSON.stringify([{id:photoMatch[1]}])));if(!rows.length)rows=await rest('eme_cases?data->published->images=cs.'+encodeURIComponent(JSON.stringify([{url:'/api/photos/'+photoMatch[1]}])));const row=rows[0];if(!row)fail(404,'Foto não encontrada.');const originalRequested=new URL(req.url,'https://eme.local').searchParams.get('original')==='1';const isPublic=!originalRequested&&publicAccess(row)&&row.data.published?.images.some(p=>p.url==='/api/photos/'+photoMatch[1]);if(!isPublic&&(!user||user.must_change||row.data.deletedAt||internalKinds.includes(row.data.kind)||originalRequested&&user.role!=='admin'&&user.id!==row.assignee_id)){const customer=!originalRequested?await selectAccess.identity(req):null;if(!customer||!canRead(row,customer.id)||!row.data.published?.images.some(p=>p.url==='/api/photos/'+photoMatch[1]))fail(404,'Foto não encontrada.');}
     const response=await request('/storage/v1/object/authenticated/eme-property-photos/'+(originalRequested?(row.data.photos.find(p=>p.id===photoMatch[1])?.originalId||photoMatch[1]):photoMatch[1])+'.webp',{raw:true});const bytes=Buffer.from(await response.arrayBuffer());res.setHeader('Content-Type','image/webp');res.end(bytes);return;
    }
    if(path==='/api/auth/session'&&req.method==='GET'){const exists=await rest('eme_profiles?select=id&limit=1');return send(200,{user:user?safe(user):null,needsSetup:exists.length===0,cloud:true,requiresActivation:true});}
@@ -140,6 +145,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    if(await submissionFlow.handle(path,req,user,send))return;
    if(await analytics.handle(path,req,user,send))return;
    if(await innovation.handle(path,req,user,body,send))return;
+   if(await proposals.handle(path,req,user,body,send))return;
    if(await leads.handle(path,req,user,body,send))return;
    if(await whatsapp.handle(path,req,res,user,body,send))return;
    if(path==='/api/assignees'&&req.method==='GET'){const people=(await members()).filter(p=>p.active&&(user.role==='admin'||p.id===user.id)).map(({id,name,role})=>({id,name,role}));return send(200,{members:people});}
@@ -165,7 +171,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
     return send(200,{ok:true,user:safe({...member,...next})});
    }
    if(['/api/evaluations','/api/listings'].includes(path)){
-    if(req.method==='GET'){const rows=(await rest('eme_cases?order=updated_at.desc'+propertyRecordsQuery+(user.role==='admin'?'':'&assignee_id=eq.'+user.id))).filter(r=>!r.data.deletedAt&&!internalKinds.includes(r.data.kind));if(path.endsWith('listings'))return send(200,{listings:rows.filter(r=>r.data.draft).map(listing)});const people=await members();return send(200,{evaluations:rows.map(r=>evaluation(r,people))});}
+    if(req.method==='GET'){const portfolio=path.endsWith('listings');const rows=(await allRecords(rest,'eme_cases?order=updated_at.desc,id'+propertyRecordsQuery+(portfolio||user.role==='admin'?'':'&assignee_id=eq.'+user.id))).filter(r=>!r.data.deletedAt&&!internalKinds.includes(r.data.kind));const people=await members();if(portfolio)return send(200,{listings:rows.map(r=>inventoryItem(r,user,people))});return send(200,{evaluations:rows.map(r=>evaluation(r,people))});}
     if(req.method==='POST'){await rate('create-case:'+user.id,100);let row,assignee=user.id,data;
      if(path.endsWith('listings')){fields(body,['draft','evaluationId','visibility']);if(body.visibility!==undefined){admin(user);if(body.visibility!=='reserved'||body.evaluationId)fail(400,'Use o cadastro de um novo imóvel exclusivo.');}const d=draft(body.draft);if(body.evaluationId){row=await caseFor(text(body.evaluationId,36,36),user);if(row.data.archived)fail(409,'Restaure o imóvel antes de criar seu anúncio.');if(row.data.draft)fail(409,'Já existe anúncio para esta avaliação.');if(closed.includes(row.data.stage))admin(user);assignee=row.assignee_id;data=changed(syncDraft(row.data,d));}else{row=newCase({});data=changed(syncDraft(row.data,d));}}
      else{fields(body,['title','city','type','operation','owner','assigneeId']);if(!types.includes(body.type)||!['Venda','Locação','Venda e locação'].includes(body.operation))fail(400,'Tipo ou finalidade inválidos.');assignee=body.assigneeId||user.id;row=newCase({title:text(body.title,1,120),city:text(body.city,1,120),owner:text(body.owner||'',0,120),type:body.type,operation:body.operation});data=row.data;}
@@ -179,7 +185,9 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
     const response=await request('/storage/v1/object/authenticated/eme-property-photos/'+(source.originalId||source.id)+'.webp',{raw:true});
     return send(200,await prepareEnlargement(Buffer.from(await response.arrayBuffer())));
    }
-   const match=path.match(/^\/api\/(evaluations|listings)\/([a-f0-9-]{36})(?:\/(curation|decision|photos|publish|unpublish|archive|delete))?$/);if(!match)fail(404,'Operação não encontrada.');let row=await caseFor(match[2],user);const action=match[3];if(match[1]==='listings'&&!row.data.draft)fail(404,'Anúncio não encontrado.');
+   const match=path.match(/^\/api\/(evaluations|listings)\/([a-f0-9-]{36})(?:\/(curation|decision|photos|publish|unpublish|archive|delete))?$/);if(!match)fail(404,'Operação não encontrada.');
+   if(match[1]==='listings'&&req.method==='GET'&&!match[3])return send(200,inventoryItem(await readableCase(match[2]),user,await members()));
+   let row=await caseFor(match[2],user);const action=match[3];if(match[1]==='listings'&&!row.data.draft)fail(404,'Anúncio não encontrado.');
    if(req.method==='GET'&&!action)return send(200,match[1]==='listings'?listing(row):await details(row));checkVersion(row,body);let data=structuredClone(row.data),label='Cadastro atualizado',note='Revisão registrada.',assignee=row.assignee_id;
    if(action==='delete'&&req.method==='POST'){admin(user);fields(body,['version','confirmed']);if(body.confirmed!==true)fail(400,'Confirme a exclusão.');data.deletedAt=new Date().toISOString();data.archived=true;data.published=null;data.publishedVersion=null;await save(req,row,data,'Imóvel excluído','Retirado do cadastro e do site. Registros vinculados e auditoria preservados.',assignee);return send(200,{ok:true});}
    if(action==='archive'&&req.method==='POST'){const archived=archiveChange(user,row.version,body);data.archived=archived;data.published=null;data.publishedVersion=null;await save(req,row,data,archived?'Imóvel arquivado':'Imóvel restaurado','Histórico preservado. Restauração não republica o anúncio.',assignee);return send(200,{ok:true});}

@@ -1,3 +1,4 @@
+import ProposalsWorkspace from './ProposalsWorkspace';
 import PersonalWorkspace from './PersonalWorkspace';
 import SubmissionsWorkspace from './SubmissionsWorkspace';
 import AnalyticsWorkspace from './AnalyticsWorkspace';
@@ -103,6 +104,7 @@ export default function TeamWorkspace({user,onSignedOut,onUserChanged}:{user:Tea
   {page==='empreendimentos'&&user.role==='admin'&&<DevelopmentsWorkspace/>}
   {page==='leads'&&<LeadsWorkspace user={user}/>}
   {page==='imoveis'&&<ListingsWorkspace user={user}/>}
+  {page==='propostas'&&<ProposalsWorkspace user={user}/>}
   {page==='padrao'&&<CurationStandard onNavigate={go}/>}
   {pageInfo&&['relacionamento','locacoes','documentos','qualidade'].includes(page)&&<OperationsWorkspace key={page} page={page as 'relacionamento'|'locacoes'|'documentos'|'qualidade'} user={user}/>}
   {page==='inteligencia'&&<IntelligenceWorkspace user={user}/>}

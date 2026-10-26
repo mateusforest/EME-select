@@ -1,4 +1,5 @@
 import {attachLocalInnovation} from './innovation-local.mjs';
+import {attachLocalProposals} from './proposals-local.mjs';
 import {attachLocalSubmissionFlow} from './submission-flow-local.mjs';
 import {attachLocalAnalytics} from './analytics-local.mjs';
 import {accessChange} from './access-management.mjs';
@@ -164,6 +165,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
   const leads=attachLocalLeads({db,transaction,stamp,consume});
  const analytics=attachLocalAnalytics({db,transaction,consume});
  const innovation=attachLocalInnovation({db,transaction,consume,audit});
+ const proposals=attachLocalProposals({db,transaction,audit,property:listings.readListing});
   let hashing = 0;
   async function passwordJob(fn) {
     if (hashing >= 2) fail(503, 'O acesso está ocupado. Tente novamente em alguns instantes.');
@@ -278,6 +280,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
       if(await submissionFlow.handle(path,req,user,(status,value)=>send(res,status,value)))return true;
       if(await analytics.handle(path,req,user,(status,value)=>send(res,status,value)))return true;
       if(await innovation.handle(path,req,user,requestBody,(status,value)=>send(res,status,value)))return true;
+      if(await proposals.handle(path,req,user,requestBody,(status,value)=>send(res,status,value)))return true;
       if(await leads.handle(path,req,user,requestBody,(status,value)=>send(res,status,value)))return true;
       if (await whatsapp.handle(path,req,res,user,requestBody)) return true;
       if (await content.handle(path,req,res,user,requestBody,(status,value)=>send(res,status,value))) return true;

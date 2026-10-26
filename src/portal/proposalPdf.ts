@@ -1,0 +1,11 @@
+import {renderAcquisitionPDF} from '../../shared/proposal-pdf.mjs';
+import type {ProposalRecord} from '../../shared/acquisition-proposal.mjs';
+let libraries:Promise<void>|undefined;
+function script(src:string,key:string){return new Promise<void>((resolve,reject)=>{if((window as any)[key]){resolve();return;}const tag=document.createElement('script');tag.src=src;tag.onload=()=>resolve();tag.onerror=()=>{tag.remove();reject(Error('Não foi possível carregar o gerador de PDF. Tente novamente.'));};document.head.append(tag);});}
+async function bytes(url:string){const res=await fetch(url,{credentials:'same-origin'});if(!res.ok)throw Error('Não foi possível carregar os materiais da proposta. Atualize a página e tente novamente.');return new Uint8Array(await res.arrayBuffer());}
+async function raster(url:string,jpeg=false){const response=await fetch(url,{credentials:'same-origin'});if(!response.ok)throw Error('A foto selecionada não está disponível. Escolha outra foto ou gere sem imagem.');const image=await createImageBitmap(await response.blob());const canvas=document.createElement('canvas');const scale=Math.min(1,1800/image.width);canvas.width=Math.round(image.width*scale);canvas.height=Math.round(image.height*scale);canvas.getContext('2d')!.drawImage(image,0,0,canvas.width,canvas.height);image.close();const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Não foi possível preparar a imagem.')),jpeg?'image/jpeg':'image/png',.92));return new Uint8Array(await blob.arrayBuffer());}
+export async function proposalPDF(record:ProposalRecord){
+ libraries||=Promise.all([script('/vendor/pdf-lib/pdf-lib.min.js','PDFLib'),script('/vendor/fontkit/fontkit.umd.min.js','fontkit')]).then(()=>{}).catch(e=>{libraries=undefined;throw e;});await libraries;
+ const [regularBytes,mediumBytes,logoBytes,photoBytes]=await Promise.all([bytes('/assets/proposals/manrope-regular.ttf'),bytes('/assets/proposals/manrope-medium.ttf'),bytes('/assets/proposals/logo.png'),record.proposal.photoId?raster('/api/photos/'+record.proposal.photoId,true):undefined]);
+ const result=await renderAcquisitionPDF(record,{PDFLib:(window as any).PDFLib,fontkit:(window as any).fontkit,regularBytes,mediumBytes,logoBytes,photoBytes});return new Blob([new Uint8Array(result)],{type:'application/pdf'});
+}
