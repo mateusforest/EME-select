@@ -66,7 +66,15 @@ test('cloud advertises migration readiness and never silently falls back from we
 test('administrators can receive weighted and round-robin leads without changing roles or bypassing first access',async t=>{
  const db=new PGlite();t.after(()=>db.close());await db.exec('create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key);create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);');
  for(const name of ['20260914_portal.sql','20261012_leads.sql','20261025_weighted_leads.sql'])await db.exec(readFileSync(new URL('../supabase/migrations/'+name,import.meta.url),'utf8'));
- await db.exec(readFileSync(new URL('../docs/sql/ATIVAR-ADMINISTRADOR-CORRETOR.sql',import.meta.url),'utf8'));
+ // Production function bodies may have different whitespace than the source files.
+ // Reproduce the mismatch that made the previous text-replacement patch abort.
+ for(const signature of ['public.eme_receive_lead(uuid,text,uuid,jsonb)','public.eme_route_leads_v2(text,bigint,text,uuid[],jsonb)']){
+  const original=(await db.query('select pg_get_functiondef($1::regprocedure) source',[signature])).rows[0].source;
+  const formatted=original.replaceAll("p.role='corretor'","p.role = 'corretor'").replaceAll("and role='corretor'","and role = 'corretor'");
+  assert.ok(!formatted.includes("role='corretor'"));await db.exec(formatted);
+ }
+ const delivery=readFileSync(new URL('../docs/sql/ATIVAR-ADMINISTRADOR-CORRETOR.sql',import.meta.url),'utf8');
+ await db.exec(delivery);
  const admin=randomUUID(),broker=randomUUID();for(const id of [admin,broker])await db.query('insert into auth.users values($1)',[id]);await db.query('select public.eme_bootstrap($1,$2,$3)',[admin,'Gestor corretor','admin@example.test']);
  await db.query("insert into public.eme_profiles(id,name,email,role) values($1,'Corretor','broker@example.test','corretor')",[broker]);
  await db.query("insert into public.eme_sessions(token_hash,user_id,expires_at) values('admin',$1,now()+interval '1 hour')",[admin]);
@@ -78,4 +86,11 @@ test('administrators can receive weighted and round-robin leads without changing
  assert.equal((await db.query('select role from public.eme_profiles where id=$1',[admin])).rows[0].role,'admin');
  await route(1,'round_robin',{});const ids=[await receive(200),await receive(201)];assert.equal((await db.query('select count(distinct assignee_id)::int n from public.eme_leads where id=any($1)',[ids])).rows[0].n,2);
  await db.query('update public.eme_profiles set must_change=true where id=$1',[admin]);const last=await receive(202);assert.equal((await db.query('select assignee_id from public.eme_leads where id=$1',[last])).rows[0].assignee_id,broker);
+ const preserved={settings:(await db.query('select * from public.eme_lead_settings')).rows,leads:(await db.query('select * from public.eme_leads order by id')).rows,profiles:(await db.query('select * from public.eme_profiles order by id')).rows};
+ await db.exec(delivery);
+ assert.deepEqual((await db.query('select * from public.eme_lead_settings')).rows,preserved.settings);
+ assert.deepEqual((await db.query('select * from public.eme_leads order by id')).rows,preserved.leads);
+ assert.deepEqual((await db.query('select * from public.eme_profiles order by id')).rows,preserved.profiles);
+ for(const role of ['anon','authenticated'])for(const signature of ['public.eme_receive_lead(uuid,text,uuid,jsonb)','public.eme_route_leads_v2(text,bigint,text,uuid[],jsonb)','public.eme_route_leads(text,bigint,text,uuid[])'])assert.equal((await db.query('select has_function_privilege($1,$2,$3) allowed',[role,signature,'execute'])).rows[0].allowed,false);
+
 });

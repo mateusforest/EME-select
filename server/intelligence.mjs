@@ -1,4 +1,5 @@
 import {requestSubmissionReview} from './submission-review-ai.mjs';
+import {requestBuyerAnalysis} from './buyer-ai.mjs';
 import {requestCapture} from './capture-ai.mjs';
 import {requestListingPreparation} from './listing-ai.mjs';
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
@@ -118,6 +119,13 @@ export function createIntelligence({ store, encryptionKey, env = process.env, fe
     send(200, await snapshot(user)); return true;
   }
   return { handle, studioStatus:status,
+    async qualifyBuyer(user,conversation){
+      const settings=resolveAISettings(await store.settings(),env);
+      const apiKey=settings.secret?openKey(settings.secret,encryptionKey):env.OPENAI_API_KEY;
+      if(!settings.enabled||!apiKey)aiFail(503,'Ative a conexão da IA na Central de IA. A ficha manual continua disponível.');
+      await store.rate(user);
+      return requestBuyerAnalysis({apiKey,model:settings.model,conversation,fetcher});
+    },
     async submissionReview(input){
       const settings=resolveAISettings(await store.settings(),env);
       if(env.EME_PUBLIC_SUBMISSION_AI_ENABLED==='false'||!settings.enabled)aiFail(503,'Análise automática indisponível.');

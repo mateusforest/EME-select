@@ -1,7 +1,9 @@
 import {createHash} from 'node:crypto';
+import {createBuyerTools} from './buyer-tools.mjs';
 import {leadInput,leadUpdate,routingInput,leadId,leadFail} from '../shared/leads.mjs';
 export const leadHash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
-export function createLeads({store,rate}){
+export function createLeads({store,rate,ai}){
+ const buyerTools=createBuyerTools({store,ai});
  async function publicHandle(path,req,body,send){
   if(path!=='/api/public/leads')return false;if(req.method!=='POST')leadFail(405,'Envie uma solicitação.');
   if(Buffer.byteLength(JSON.stringify(body))>10000)leadFail(413,'Reduza a mensagem.');
@@ -9,6 +11,7 @@ export function createLeads({store,rate}){
   send(201,{reference:input.requestId,received:true});return true;
  }
  async function handle(path,req,user,body,send){
+  if(await buyerTools(path,req,user,body,send))return true;
   if(path!=='/api/leads'&&path!=='/api/leads/settings'&&!/^\/api\/leads\/[a-f0-9-]{36}$/.test(path))return false;
   if(!user?.active||user.must_change||!['admin','corretor'].includes(user.role))leadFail(403,'Acesso não permitido.');
   if(path==='/api/leads'&&req.method==='GET'){send(200,await store.snapshot(user,new URL(req.url||path,'http://local').searchParams.get('scope')==='mine'));return true;}

@@ -2,7 +2,7 @@ import {chooseWeighted} from '../shared/lead-distribution.mjs';
 import {randomUUID} from 'node:crypto';
 import {createLeads} from './leads.mjs';
 import {leadFail} from '../shared/leads.mjs';
-export function attachLocalLeads({db,transaction,stamp,consume}){
+export function attachLocalLeads({db,transaction,stamp,consume,ai,priceProperties=async rows=>rows}){
  db.exec(`CREATE TABLE IF NOT EXISTS lead_settings(id TEXT PRIMARY KEY,version INTEGER NOT NULL DEFAULT 0,mode TEXT NOT NULL DEFAULT 'property',brokers TEXT NOT NULL DEFAULT '[]',last_assignee TEXT);
  CREATE TABLE IF NOT EXISTS leads(id TEXT PRIMARY KEY,version INTEGER NOT NULL DEFAULT 1,property_id TEXT REFERENCES evaluations(id),assignee_id TEXT REFERENCES users(id),phone TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'new',data TEXT NOT NULL,next_contact_at TEXT,first_contact_at TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
  CREATE INDEX IF NOT EXISTS leads_assignee ON leads(assignee_id,updated_at);
@@ -15,6 +15,18 @@ export function attachLocalLeads({db,transaction,stamp,consume}){
  const live=user=>{const actor=db.prepare('SELECT * FROM users WHERE id=?').get(user.id);if(!actor?.active||actor.must_change)leadFail(401,'Entre novamente.');return actor;};
  const event=(id,actor,action,detail)=>db.prepare('INSERT INTO lead_events VALUES(?,?,?,?,?,?)').run(randomUUID(),id,actor,action,JSON.stringify(detail),stamp());
  const store={
+  buyerReady:async()=>true,
+  buyerLead:(user,id)=>{const actor=live(user),row=db.prepare('SELECT * FROM leads WHERE id=?').get(id);if(!row||actor.role!=='admin'&&row.assignee_id!==actor.id)leadFail(404,'Contato não encontrado.');return {...row,data:JSON.parse(row.data)};},
+  buyerCatalog:async()=>priceProperties(db.prepare('SELECT published FROM listings JOIN evaluations ON evaluations.id=listings.id WHERE published IS NOT NULL AND evaluations.deleted_at IS NULL AND evaluations.archived=0').all().map(r=>JSON.parse(r.published))),
+  buyerSave:(_req,user,id,version,profile)=>transaction(()=>{const row=store.buyerLead(user,id);if(row.version!==version)leadFail(409,'O contato mudou. Atualize a ficha.');const qualification={profile,reviewedBy:user.name,reviewedAt:stamp()};db.prepare('UPDATE leads SET data=?,version=version+1,updated_at=? WHERE id=?').run(JSON.stringify({...row.data,qualification}),stamp(),id);event(id,user.id,'qualified',{author:user.name,note:'Perfil de busca e autorizações revisados.',permissions:{contact:profile.contactPermission,whatsapp:profile.whatsappUpdates,email:profile.emailUpdates}});}),
+  buyerCreate:(_req,user,input,hash)=>transaction(()=>{
+   const actor=live(user);consume('buyer-intake:'+actor.id,60);
+   const receipt=db.prepare('SELECT * FROM lead_receipts WHERE request_id=?').get(input.requestId);if(receipt){if(receipt.payload_hash!==hash)leadFail(409,'Esta referência já foi utilizada.');store.buyerLead(user,receipt.lead_id);return {id:receipt.lead_id,duplicate:receipt.lead_id!==input.requestId};}
+   const prior=db.prepare("SELECT * FROM leads WHERE phone=? AND status NOT IN('won','lost') ORDER BY updated_at DESC LIMIT 1").get(input.data.phone);
+   if(prior){store.buyerLead(user,prior.id);event(prior.id,actor.id,'manual_reference',{author:actor.name,note:'Nova entrada por '+input.data.source.origin+'.',source:input.data.source});}
+   else{db.prepare('INSERT INTO leads(id,assignee_id,phone,data,created_at,updated_at) VALUES(?,?,?,?,?,?)').run(input.requestId,actor.id,input.data.phone,JSON.stringify({...input.data,capturedBy:actor.name}),stamp(),stamp());event(input.requestId,actor.id,'manual_received',{author:actor.name,note:'Contato cadastrado pela equipe.',source:input.data.source});}
+   db.prepare('INSERT INTO lead_receipts VALUES(?,?,?)').run(input.requestId,hash,prior?.id||input.requestId);return {id:prior?.id||input.requestId,duplicate:!!prior};
+  }),
   receive:(input,hash)=>transaction(()=>{
    const receipt=db.prepare('SELECT * FROM lead_receipts WHERE request_id=?').get(input.requestId);if(receipt){if(receipt.payload_hash!==hash)leadFail(409,'Esta referência já foi usada.');return;}
    const config=settings(),people=members(),at=stamp();let property,assignee=null;
@@ -31,5 +43,5 @@ export function attachLocalLeads({db,transaction,stamp,consume}){
   update:(_req,user,id,value)=>transaction(()=>{const actor=live(user),row=db.prepare('SELECT * FROM leads WHERE id=?').get(id);if(!row||actor.role!=='admin'&&row.assignee_id!==actor.id)leadFail(403,'Acesso não permitido.');if(row.version!==value.version)leadFail(409,'Este lead mudou. Atualize a tela.');if(actor.role!=='admin'&&value.assigneeId!==row.assignee_id)leadFail(403,'Somente a gestão redistribui leads.');if(value.assigneeId&&!members().some(p=>p.id===value.assigneeId&&p.active&&!p.must_change))leadFail(400,'Escolha uma pessoa ativa.');db.prepare('UPDATE leads SET version=version+1,status=?,assignee_id=?,next_contact_at=?,first_contact_at=?,updated_at=? WHERE id=?').run(value.status,value.assigneeId,value.nextContactAt,['in_progress','waiting','visit','won'].includes(value.status)?row.first_contact_at||stamp():row.first_contact_at,stamp(),id);event(id,actor.id,'updated',{author:actor.name,fromStatus:row.status,status:value.status,fromAssigneeId:row.assignee_id,assigneeId:value.assigneeId,nextContactAt:value.nextContactAt,note:value.note});}),
   settings:(_req,user,value)=>transaction(()=>{const actor=live(user);if(actor.role!=='admin')leadFail(403,'Somente a gestão altera a distribuição.');if(settings().version!==value.version)leadFail(409,'A distribuição mudou. Atualize a tela.');if(value.brokers.some(id=>!members().some(p=>p.id===id&&p.active&&!p.must_change&&['admin','corretor'].includes(p.role))))leadFail(400,'Escolha corretores ativos.');db.prepare("UPDATE lead_settings SET version=version+1,mode=?,brokers=?,weights=?,distribution_state='{}',last_assignee=NULL WHERE id='company'").run(value.mode,JSON.stringify(value.brokers),JSON.stringify(value.weights));db.prepare('INSERT INTO audit(actor_id,action,detail,created_at) VALUES(?,?,?,?)').run(actor.id,'Distribuição de leads atualizada',JSON.stringify(value),stamp());}),
  };
- return createLeads({store,rate:async req=>{consume('lead:'+req.socket.remoteAddress,8);consume('lead:total',200);}});
+ return createLeads({store,ai,rate:async req=>{consume('lead:'+req.socket.remoteAddress,8);consume('lead:total',200);}});
 }

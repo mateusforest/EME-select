@@ -1,3 +1,4 @@
+import {attachLocalMaterials} from './marketing-materials-local.mjs';
 import {attachLocalInnovation} from './innovation-local.mjs';
 import {attachLocalProposals} from './proposals-local.mjs';
 import {attachLocalSubmissionFlow} from './submission-flow-local.mjs';
@@ -162,9 +163,10 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
   const spatial=attachLocalSpatial({db,transaction,stamp,ai:intelligence});
   const operations = attachOperations({db,transaction,stamp,send});
   const whatsapp = attachWhatsApp({db,transaction,consume,send});
-  const leads=attachLocalLeads({db,transaction,stamp,consume});
+  const leads=attachLocalLeads({db,transaction,stamp,consume,ai:intelligence,priceProperties:content.priceProperties});
  const analytics=attachLocalAnalytics({db,transaction,consume});
  const innovation=attachLocalInnovation({db,transaction,consume,audit});
+ const materials=attachLocalMaterials({db,transaction,audit,now});
  const proposals=attachLocalProposals({db,transaction,audit,property:listings.readListing});
   let hashing = 0;
   async function passwordJob(fn) {
@@ -187,6 +189,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
       if (await people.publicHandle(path,req,res,(status,value)=>send(res,status,value))) return true;
       if (await developments.publicHandle(path,req,res,(status,value)=>send(res,status,value))) return true;
       if (await listings.publicHandle(path,req,res)) return true;
+      if(/^\/api\/marketing-materials\/[a-f0-9-]{36}\/upload$/.test(path)){await materials.upload(path,req,res,session(req),(status,value)=>send(res,status,value));return true;}
       const isPhotoUpload = path==='/api/people/images' || path==='/api/developments/moradas-da-serra/images' || /^\/api\/listings\/[a-f0-9-]{36}\/photos$/.test(path);
       if (isPhotoUpload) { const access=session(req); if(!access||access.must_change)fail(401,'Entre para enviar fotografias.'); }
       const isDocumentUpload = path === '/api/operations/commands';
@@ -280,6 +283,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
       if(await submissionFlow.handle(path,req,user,(status,value)=>send(res,status,value)))return true;
       if(await analytics.handle(path,req,user,(status,value)=>send(res,status,value)))return true;
       if(await innovation.handle(path,req,user,requestBody,(status,value)=>send(res,status,value)))return true;
+      if(await materials.handle(path,req,res,user,requestBody,(status,value)=>send(res,status,value)))return true;
       if(await proposals.handle(path,req,user,requestBody,(status,value)=>send(res,status,value)))return true;
       if(await leads.handle(path,req,user,requestBody,(status,value)=>send(res,status,value)))return true;
       if (await whatsapp.handle(path,req,res,user,requestBody)) return true;

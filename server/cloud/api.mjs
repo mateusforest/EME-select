@@ -1,3 +1,4 @@
+import {attachCloudMaterials} from './marketing-materials.mjs';
 import {attachCloudInnovation} from './innovation.mjs';
 import {attachCloudProposals} from './proposals.mjs';
 import {staffListing,allRecords} from '../../shared/staff-inventory.mjs';
@@ -60,9 +61,10 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
  const spatial=attachCloudSpatial({client,hashOf,ai:intelligence});
  const operations=attachCloudOperations({client,hashOf});
  const whatsapp=attachCloudWhatsApp({client,env});
- const leads=attachCloudLeads({client,hashOf});
+ const leads=attachCloudLeads({client,hashOf,ai:intelligence,priceProperties:content.priceProperties});
  const analytics=attachCloudAnalytics({client});
  const innovation=attachCloudInnovation({client,save});
+ const materials=attachCloudMaterials({client,env});
  const proposals=attachCloudProposals({client,save,property:async(id,user)=>inventoryItem(await readableCase(id),user)});
  async function readableCase(id){const row=(await rest('eme_cases?id=eq.'+id))[0];if(!row||row.data.deletedAt||internalKinds.includes(row.data.kind))fail(404,'Imóvel não encontrado.');return row;}
  function inventoryItem(row,user,people=[]){const d=row.data;const item=d.draft?listing(row):{id:row.id,legacy:true,archived:!!d.archived,version:row.version,draft:{title:d.title,city:d.city,type:d.type,operation:d.operation==='Locação'?'alugar':'comprar',ownerName:d.owner||''},photos:[],stage:d.stage,published:false,publishedVersion:null,blockers:[]};return staffListing(item,user,row.assignee_id,people.find(p=>p.id===row.assignee_id)?.name||'Equipe EME');}
@@ -145,6 +147,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    if(await submissionFlow.handle(path,req,user,send))return;
    if(await analytics.handle(path,req,user,send))return;
    if(await innovation.handle(path,req,user,body,send))return;
+   if(await materials.handle(path,req,res,user,body,send))return;
    if(await proposals.handle(path,req,user,body,send))return;
    if(await leads.handle(path,req,user,body,send))return;
    if(await whatsapp.handle(path,req,res,user,body,send))return;
