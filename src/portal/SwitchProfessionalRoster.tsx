@@ -5,8 +5,9 @@ export type SwitchProfessional={id:string;name:string;business:string;creci:stri
   whatsapp_opt_in:boolean;status:'pending'|'verified'|'paused'|'rejected';version:number;created_at:string};
 export default function SwitchProfessionalRoster({changed}:{changed:(rows:SwitchProfessional[])=>void}){
  const [rows,setRows]=useState<SwitchProfessional[]>([]),[ready,setReady]=useState(false),[busy,setBusy]=useState(''),[error,setError]=useState(''),[autopilot,setAutopilot]=useState('');
+ const [delivery,setDelivery]=useState<Record<string,number>>({});
  async function load(){
-  try{const data=await api<{professionals:SwitchProfessional[];automatedWhatsAppReady:boolean}>('/switch/professionals');setRows(data.professionals);setReady(data.automatedWhatsAppReady);changed(data.professionals);}
+  try{const [data,outbox]=await Promise.all([api<{professionals:SwitchProfessional[];automatedWhatsAppReady:boolean}>('/switch/professionals'),api<{summary:Record<string,number>}>('/switch/outbox')]);setRows(data.professionals);setReady(data.automatedWhatsAppReady);changed(data.professionals);setDelivery(outbox.summary);}
   catch(e){setError((e as Error).message);}
  }
  useEffect(()=>{void load();},[]);
@@ -30,6 +31,7 @@ export default function SwitchProfessionalRoster({changed}:{changed:(rows:Switch
    <button type="button" className="ps-button" onClick={()=>void load()}><RefreshCw size={15}/>Atualizar</button>
   </div>
   <p className="sx-info">Canal automático oficial: <strong>{ready?'Configurado para envio de template':'Desativado / sem configuração completa'}</strong>. Nenhuma mensagem é disparada quando desativado.</p>
+  <p className="sx-info">Fila WhatsApp: {delivery.pending||0} aguardando · {delivery.submitted||0} submetidas à Meta · {delivery.failed||0} falhas · {delivery.skipped||0} ignoradas. Submissão não garante entrega.</p>
   <div className="sx-actions"><a className="ps-text-button" href="/switch/profissionais" target="_blank" rel="noreferrer">Abrir inscrição profissional ↗︎</a><button type="button" className="ps-button" disabled={busy==='autopilot'} onClick={()=>void runAuto()}>{busy==='autopilot'?'Verificando…':'Executar motor comercial agora'}</button></div>
   {autopilot&&<p className="sx-info" role="status">{autopilot}</p>}
   {!rows.length?<p className="sx-info">Nenhum profissional inscrito. Divulgação do formulário é aberta a profissionais habilitados que queiram receber oportunidades; não exige contato prévio com cada empresa.</p>:
