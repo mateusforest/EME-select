@@ -201,7 +201,7 @@ create table if not exists public.eme_switch_professionals(
 ),
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
- constraint switch_pro_optin check(whatsapp_opt_in and privacy_accepted)
+ constraint switch_pro_privacy check(privacy_accepted)
 );
 create index if not exists eme_switch_professionals_route_idx on public.eme_switch_professionals(status,city,property_type);
 
