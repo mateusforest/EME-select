@@ -697,7 +697,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     const back=root.querySelector('.ep-back');back.replaceChildren(element('span','','←'),document.createTextNode(propertyOriginOpportunities ? ' Voltar às oportunidades' : propertyOriginRegion ? ' Voltar a '+regionById(propertyOriginRegion).name : propertyOriginCatalog&&catalog.isSearch()?' Voltar à busca':' Voltar à coleção'));
     const property = byId(selectedId);
     propertyPage.setAttribute('aria-label',property.title);
-    root.querySelector('.ep-finance').hidden = property.operation === 'alugar';
+    root.querySelector('.ep-finance').hidden = property.operation === 'alugar' || !Number.isFinite(property.searchFacts.price);
     root.querySelector('.ep-price').previousElementSibling.textContent = property.operation === 'alugar' ? 'Para alugar' : 'À venda';
     root.querySelector('.ep-title').textContent = property.title;
     root.querySelector('.ep-location').textContent = property.location;
@@ -996,6 +996,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if (financeDialog.open) return;
     const property = byId(selectedId);
     const amount = searchFacts[selectedId].price;
+    if(!Number.isFinite(amount)||amount<=0)return;
     const draft = financingDrafts.get(selectedId)||{price:amountFormat.format(amount),down:amountFormat.format(amount*.2),rate:'10',months:'360',system:'price'};
     Object.entries(financeFields).forEach(([key,field])=>field.value=draft[key]);
     root.querySelector('.ef-property').textContent = property.title;

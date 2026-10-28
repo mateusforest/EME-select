@@ -5,5 +5,17 @@ const base={id:'87809ebd-12ed-4c69-967b-483ebe0209a8',title:'CASA EM VACARIA',ty
 test('shows only published real inventory and keeps current values',()=>{const assets={};const result=mapProperties([base,{...base,id:'demo',isIllustrative:true}],assets);assert.equal(result.length,1);assert.equal(result[0].id,base.id);assert.equal(result[0].searchFacts.price,100000);assert.equal(result[0].regionId,'vacaria');assert.match(result[0].summary,/1 vaga$/);assert.equal(assets[result[0].cover],base.images[0].url);});
 test('retains every original photo and its orientation',()=>{const p=mapProperties([{...base,images:[...base.images,{...base.images[0],width:1600,height:900}]}],{})[0];assert.equal(p.photos.length,2);assert.deepEqual(p.photos.map(f=>[f.width,f.height]),[[1200,1600],[1600,900]]);});
 test('does not substitute demo offers for an empty collection',()=>assert.deepEqual(mapProperties([],{}),[]));
+
+test('published homes without a price remain visible as on request, without fabricated discounts',()=>{
+ for(const operation of ['comprar','alugar']){
+  const [home]=mapProperties([{...base,price:null,operation,originalPrice:200000}],{});
+  assert.equal(home.id,base.id);
+  assert.equal(home.price,'Valor sob consulta');
+  assert.equal(home.searchFacts.price,null);
+  assert.equal(home.originalPrice,null);
+  assert.equal(home.dossier[2][1],'Valor sob consulta');
+  assert.equal(home.photos.length,1);
+ }
+});
 test('does not load untrusted or private image URLs',()=>{const assets={};const p=mapProperties([{...base,images:[{url:'https://malicious.example/track'},{url:'/api/photos/private?original=1'}],image:'javascript:alert(1)'}],assets)[0];assert.match(assets[p.cover],/^data:image\/svg/);});
 test('supports rentals and commercial categorization without inventing features',()=>{const p=mapProperties([{...base,operation:'alugar',type:'Sala comercial',location:'Praia de Palmas · Governador Celso Ramos, SC',description:'Sala comercial.',price:1500}],{})[0];assert.equal(p.group,'Comercial');assert.equal(p.regionId,'praia-de-palmas');assert.match(p.price,/mês/);assert.equal(p.searchFacts.features.includes('piscina'),false);});

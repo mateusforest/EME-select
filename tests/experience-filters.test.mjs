@@ -9,6 +9,16 @@ const properties=[
  {id:'unknown',title:'Casa',type:'Casa',group:'Casa',location:'Vacaria, RS',regionId:'vacaria',operation:'comprar',searchFacts:{price:200000}}
 ];
 const select=extra=>selectCatalog(properties,{...catalogDefaults,...extra},new Set(['flat']),regions).map(p=>p.id);
+
+test('on-request homes stay searchable but never match a price ceiling or sort as free',()=>{
+ const rows=[{...properties[0],id:'on-request',searchFacts:{price:null}},...properties];
+ const find=extra=>selectCatalog(rows,{...catalogDefaults,...extra}).map(p=>p.id);
+ assert.ok(find({type:'Casa',q:'patio'}).includes('on-request'));
+ assert.ok(!find({max:'2000000'}).includes('on-request'));
+ assert.ok(!find({min:'0'}).includes('on-request'));
+ assert.equal(find({sort:'price-asc'}).at(-1),'on-request');
+ assert.equal(find({sort:'price-desc'}).at(-1),'on-request');
+});
 test('all filters combine without accepting missing measurements',()=>assert.deepEqual(select({q:'patio lareira',state:'rs',region:'vacaria',type:'Casa',min:'1000000',max:'1700000',area:'100',beds:'3',parking:'2',operation:'comprar'}),['house']));
 test('commercial group, purpose and state use live inventory fields',()=>assert.deepEqual(select({state:'sc',type:'Comercial',operation:'alugar'}),['shop']));
 test('favorites and price ordering do not mutate original collection',()=>{assert.deepEqual(select({saved:true}),['flat']);assert.deepEqual(select({sort:'price-asc'}),['shop','unknown','flat','house']);assert.equal(properties[0].id,'house');});

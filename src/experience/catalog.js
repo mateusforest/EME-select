@@ -33,14 +33,18 @@ export function selectCatalog(properties, filters, savedIds = new Set(), regions
       (!filters.type || p.type === filters.type || p.group === filters.type) &&
       (!filters.state || propertyState(p,regions) === filters.state) &&
       (!filters.region || p.regionId === filters.region) &&
-      (!filters.min || price >= Number(filters.min)) && (!filters.max || price <= Number(filters.max)) &&
+      (!filters.min || Number.isFinite(price) && price >= Number(filters.min)) && (!filters.max || Number.isFinite(price) && price <= Number(filters.max)) &&
       (!filters.area || p.area >= Number(filters.area)) &&
       (!filters.beds || p.bedrooms >= Number(filters.beds)) &&
       (!filters.parking || p.parking >= Number(filters.parking)) &&
       (!filters.saved || savedIds.has(p.id));
   });
-  if (filters.sort === 'price-asc') result.sort((a,b) => a.searchFacts.price-b.searchFacts.price);
-  if (filters.sort === 'price-desc') result.sort((a,b) => b.searchFacts.price-a.searchFacts.price);
+  if (['price-asc','price-desc'].includes(filters.sort)) result.sort((a,b) => {
+    const left=a.searchFacts.price,right=b.searchFacts.price;
+    if(!Number.isFinite(left))return Number.isFinite(right)?1:0;
+    if(!Number.isFinite(right))return -1;
+    return filters.sort==='price-asc'?left-right:right-left;
+  });
   if (filters.sort === 'area-desc') result.sort((a,b) => (b.area||0)-(a.area||0));
   return result;
 }
