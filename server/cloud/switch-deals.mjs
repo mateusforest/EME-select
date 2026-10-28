@@ -1,12 +1,14 @@
 import {randomBytes,randomUUID,createHash} from 'node:crypto';
 import {switchDealQuote,switchOfferDraft,switchOfferTeaser,switchOfferAcceptance,switchDealTransition} from '../../shared/switch-deals.mjs';
+import {switchProToken} from './switch-professionals.mjs';
+import {switchSendEligibility} from '../../shared/switch-professionals.mjs';
 const err=(status,message)=>{throw Object.assign(new Error(message),{status});};
 const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 const tokenFormat=/^[a-zA-Z0-9_-]{43}$/;
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const table='eme_switch_deal_invites';
 const selected='id,public_ref,source_kind,source_id,demand_id,teaser_city,teaser_type,sale_price_cents,brokerage_bps,switch_share_bps,status,recipient_name,recipient_phone,recipient_creci,recipient_business,recipient_marketing_opt_in,acknowledged_at,contract_reference,license_checked,signed_confirmed_at,actual_sale_cents,received_cents,created_by,version,created_at,expires_at';
-export function attachCloudSwitchDeals({client,rate}){
+export function attachCloudSwitchDeals({client,rate,env=process.env}){
  const {rest,rpc}=client;
  async function publicHandle(path,req,body,send){
    const match=path.match(/^\/api\/public\/switch\/offers\/([a-zA-Z0-9_-]{43})(?:\/(interest))?$/);
@@ -52,16 +54,28 @@ export function attachCloudSwitchDeals({client,rate}){
        rest('eme_switch_requests?id=eq.'+encodeURIComponent(String(body?.demandId||''))+'&select=*')
      ]);
      const offer=source[0],demand=target[0];
-     const draft=switchOfferDraft(body,offer,demand);
+     const {professionalId,...requestInput}=body||{};
+     const draft=switchOfferDraft(requestInput,offer,demand);
      const wantedCity=demand.kind==='swap'?demand.target_city:demand.city;
      const wantedMax=Number(demand.kind==='swap'?demand.target_budget_cents:demand.asking_cents);
      const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
      if(normalize(offer.city)!==normalize(wantedCity)||normalize(offer.property_type)!==normalize(demand.property_type)||
        !Number.isSafeInteger(wantedMax)||wantedMax<draft.salePriceCents)err(409,'Confirme cidade, tipo, orçamento e condições desta combinação.');
-     const token=randomBytes(32).toString('base64url');
+     let professional=null;
+     if(professionalId!==undefined){
+       if(typeof professionalId!=='string'||!uuid.test(professionalId))err(400,'Profissional inválido.');
+       const [found]=await rest('eme_switch_professionals?id=eq.'+professionalId+'&select=id,phone,city,property_type,status,whatsapp_opt_in');
+       professional=found;
+       if(!professional||!switchSendEligibility(professional,{
+         status:'prepared',expires_at:new Date(Date.now()+86400000).toISOString(),teaser_city:offer.city,teaser_type:offer.property_type
+       }))err(403,'Profissional não verificado, sem opt-in ou fora da área da oportunidade.');
+       if((env.SWITCH_INVITE_SECRET||'').length<32)err(503,'Ative a chave de convites antes de preparar um envio automático.');
+     }
+     const dealId=randomUUID();
+     const token=professional?switchProToken(env,'deal',dealId):randomBytes(32).toString('base64url');
      const reference=randomBytes(6).toString('hex').toUpperCase();
      const entry={
-       id:randomUUID(),token_hash:hash(token),public_ref:reference,
+       id:dealId,token_hash:hash(token),public_ref:reference,
        source_kind:draft.sourceKind,source_id:draft.sourceId,demand_id:draft.demandId,
        teaser_city:offer.city,teaser_type:offer.property_type,
        sale_price_cents:draft.salePriceCents,brokerage_bps:draft.brokerageBps,
@@ -69,7 +83,20 @@ export function attachCloudSwitchDeals({client,rate}){
        created_by:user.id,status:'prepared'
      };
      const rows=await rest(table,'POST',entry);
-     send(201,{deal:rows[0],invitePath:'/switch/convite/'+token,notice:'Link individual. Copie agora; o token não é gravado em texto aberto.'});
+     let queued=false;
+     if(professional){
+       try{
+         await rest('eme_switch_outbox','POST',{
+           id:randomUUID(),deal_id:dealId,professional_id:professional.id,phone:professional.phone,status:'pending'
+         });
+         queued=true;
+       }catch(e){
+         // O convite já foi criado. Não inventar sucesso do envio nem excluir registros auditáveis.
+         console.error('M Switch outbox creation failed:',e?.code||e?.name||'error');
+       }
+     }
+     send(201,{deal:rows[0],invitePath:'/switch/convite/'+token,queued,
+       notice:queued?'Notificação registrada na fila. Será tentada apenas após ativação da Meta e da rotina agendada.':'Link individual pronto; nenhum WhatsApp foi enviado.'});
      return true;
    }
    if(match[1]&&req.method==='PATCH'){
