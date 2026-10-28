@@ -46,7 +46,7 @@ export default function SwitchPage(){
     finally{setBusy(false);}
   }
   return <main className="sw-page">
-    <header className="sw-header"><a href="/" className="sw-brand" aria-label="M Select · início"><span>M</span><span>SELECT<small>SWITCH</small></span></a><a className="sw-back" href="/"><ArrowLeft size={17}/>Voltar ao site</a></header>
+    <header className="sw-header"><a href="/" className="sw-brand" aria-label="M Select · início"><span>M</span><span>SELECT<small>SWITCH</small></span></a><a className="sw-back" href="/switch/profissionais">Sou profissional · receber oportunidades <ArrowRight size={15}/></a></header>
     <div className="sw-shell">
       <section className="sw-intro">
         <span className="sw-eyebrow">M SELECT / NOVAS POSSIBILIDADES</span>
