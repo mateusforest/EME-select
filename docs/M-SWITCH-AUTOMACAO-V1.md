@@ -58,14 +58,29 @@ Cada evento deve ter `event_id`, `source`, `occurred_at` e chave de idempotênci
 
 Autorização no servidor e políticas RLS por corretor/empresa; anexos privados. Não expor dados do investidor para proprietário antes de autorização. Estabelecer retenção e eliminação conforme a política de privacidade e a LGPD.
 
-## Primeira implementação nesta branch
+## Implementação entregue nesta branch — piloto funcional para revisão
 
-`shared/switch-matching.mjs`:
-- `rankSwitchInvestors(asset, investors)`: só considera imóvel disponível, com titularidade revisada e autorização expressa de compartilhamento, e perfis ativos e opt-in; cruza cidade, tipo e orçamento; explica pendências; devolve **candidatos** para revisão humana.
-- `simulateSwitchUpgrade(...)`: simula necessidade financeira líquida, sem confundir pré-análise de crédito com financiamento aprovado.
-- `tests/switch-matching.test.mjs`: testes de autorização, compatibilidade, classificação, orçamento, ordenação e contas.
+**Frontend público:**
+- `/switch` (via `src/main.tsx` e `vercel.json`) com formulário responsivo para troca, venda e investimento.
+- Consentimento para responder à solicitação separado da autorização opcional para alertas; nota de privacidade e aviso de não garantia.
+- Link na seção de proprietários do site M Select. Origem UTM opcional, `requestId` idempotente e estado de sucesso/erro.
 
-É um **núcleo isolado**, sem API, interface, banco, mensagens, dados reais ou deployment. Não realiza avaliação de imóvel, concessão de crédito, proposta, anúncio nem transação.
+**API de produção (Supabase/Vercel):**
+- `POST /api/public/switch`: validação de entrada, limites por IP/global, deduplicação por identificador de envio, persistência **sem acesso público de leitura**.
+- `GET /api/switch`: carteira de solicitações privada; administrador acessa as entradas gerais e corretor acessa apenas as atribuídas.
+- `PATCH /api/switch/:id`: gestão de etapa, responsável e conferências documentais e financeiras reservadas a administradores, versão otimista.
+- `GET /api/switch/matches`: combinações de investidor/ativo e destinos de upgrade (somente gestão); nenhum envio a terceiros, oferta automática ou avaliação de crédito.
+
+**Banco:** `supabase/migrations/20261028_switch_pilot.sql` com RLS, privilégios exclusivos do servidor, restrições e histórico via trigger. Cópia de ativação `docs/sql/ATIVAR-M-SWITCH.sql`.
+
+**Portal:** nova área `M Switch` em `/acesso-select/equipe/switch`, fichas, filtros, atribuição, avanço de etapas e candidatos de correspondência carregados automaticamente. Corretores só veem seus registros.
+
+**Núcleo:** `shared/switch-matching.mjs`, `shared/switch-intake.mjs`, `shared/switch-trades.mjs`.
+
+**Teste:** `npm run test:switch`; cenários com `node:test` para permissões, entrada, matching, revisão e simulações. Foram executados 22 cenários de funções em avaliador isolado (22/22), **não** o build completo ou teste real contra o Supabase. A integração de API e o SQL precisam ser testados em ambiente de prévia antes do merge.
+
+**Não implementado:** atendimento autônomo via WhatsApp, coleta de dados por IA no novo formulário, importações externas, avaliação automática, aprovação de propostas, aviso em background, importação de bases e deploy em produção. Essas etapas devem ser construídas só após validação de segurança e do fluxo com dados sintéticos.
+
 
 ## Sprint de integração sem construir um SaaS novo
 
@@ -92,3 +107,13 @@ Autorização no servidor e políticas RLS por corretor/empresa; anexos privados
 ## Meta comercial que decide se vale escalar
 
 Operação de teste: 30 solicitações qualificadas, 10 investidores/parceiros autorizados e revisão humana de pelo menos 10 matches relevantes. Registrar por que cada match fracassa. **A métrica de validação é proposta real e transação fechada com margem positiva**, não número de cadastros. Evitar automações adicionais se não houver evidência de demanda e oferta.
+
+## Checklist de ativação segura (obrigatória antes de abrir ao público)
+
+1. Criar backup/revisar os dados Supabase, aplicar `docs/sql/ATIVAR-M-SWITCH.sql` no projeto correto. Verificar tabelas, RLS e privilégios — **não foram aplicados aqui**.
+2. Criar deployment de preview desta branch e executar `npm run test:switch`, `npm run build` e teste de navegação mobile/desktop.
+3. Testar com dados **sintéticos**: um vendedor, um comprador em upgrade e um investidor, sem contatos reais. Validar POST, idempotência, GET restrito por corretor, qualificação, matching e PATCH de versão concorrente.
+4. Testar que nenhum dado pessoal fica publicamente acessível e que a alteração de etapa não dispara mensagem.
+5. Preparar canal de atendimento para pedidos LGPD/opt-out e definir responsáveis.
+6. Somente depois autorizar merge/deploy. Não promover a branch diretamente a produção antes do banco estar pronto.
+
