@@ -66,8 +66,8 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
  const whatsapp=attachCloudWhatsApp({client,env});
  const leads=attachCloudLeads({client,hashOf,ai:intelligence,priceProperties:content.priceProperties});
  const switchOps=attachCloudSwitch({client,rate:(key,max)=>rpc('eme_limit',{p_key:key,p_max:max})});
- const switchDeals=attachCloudSwitchDeals({client,env,rate:(key,max)=>rpc('eme_limit',{p_key:key,p_max:max})});
  const switchProfessionals=attachCloudSwitchProfessionals({client,env,rate:(key,max)=>rpc('eme_limit',{p_key:key,p_max:max})});
+ const switchDeals=attachCloudSwitchDeals({client,env,notifyNow:switchProfessionals.dispatchDeal,rate:(key,max)=>rpc('eme_limit',{p_key:key,p_max:max})});
  const analytics=attachCloudAnalytics({client});
  const innovation=attachCloudInnovation({client,save});
  const materials=attachCloudMaterials({client,env});
