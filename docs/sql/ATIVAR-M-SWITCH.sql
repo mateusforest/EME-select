@@ -73,4 +73,26 @@ grant select,insert,update on public.eme_switch_requests to service_role;
 grant select,insert on public.eme_switch_events to service_role;
 revoke all on sequence public.eme_switch_events_id_seq from public,anon,authenticated,service_role;
 grant usage,select on sequence public.eme_switch_events_id_seq to service_role;
+
+-- Inventário privado de ofertas encaminhadas por parceiros com autorização escrita.
+create table if not exists public.eme_switch_partner_offers(
+ id uuid primary key,
+ partner text not null check(char_length(partner) between 3 and 100),
+ ref text not null check(char_length(ref) between 1 and 80),
+ title text not null check(char_length(title) between 3 and 120),
+ city text not null check(char_length(city) between 2 and 100),
+ property_type text not null check(char_length(property_type) between 2 and 60),
+ price_cents bigint not null check(price_cents between 1000000 and 1000000000000),
+ offer_url text not null check(char_length(offer_url) between 12 and 500),
+ available boolean not null default false,
+ authorization_confirmed boolean not null default false,
+ reviewed_by uuid references public.eme_profiles(id) on delete set null,
+ updated_at timestamptz not null default now(),
+ unique(partner,ref)
+);
+create index if not exists eme_switch_partner_city_idx on public.eme_switch_partner_offers(city,property_type,available);
+alter table public.eme_switch_partner_offers enable row level security;
+revoke all on public.eme_switch_partner_offers from public,anon,authenticated,service_role;
+grant select,insert,update on public.eme_switch_partner_offers to service_role;
+
 commit;
