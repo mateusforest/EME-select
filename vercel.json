@@ -13,6 +13,14 @@
       "destination": "/index.html"
     },
     {
+      "source": "/switch/sair/:token",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/switch/profissionais",
+      "destination": "/index.html"
+    },
+    {
       "source": "/switch/convite/:token",
       "destination": "/index.html"
     },
