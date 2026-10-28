@@ -1,0 +1,60 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {switchAutopilotSettings,attachSwitchAutopilot} from '../server/cloud/switch-autopilot.mjs';
+const env={
+ SWITCH_AUTOPILOT_ENABLED:'true',SWITCH_WHATSAPP_ENABLED:'true',
+ SWITCH_INVITE_SECRET:'chave-sintetica-com-muito-mais-de-trinta-e-dois-caracteres',
+ SWITCH_DEFAULT_BROKERAGE_BPS:'500',SWITCH_DEFAULT_SHARE_BPS:'3000'
+};
+test('autopiloto comercial é bloqueado por padrão e sem percentuais válidos',()=>{
+ assert.equal(switchAutopilotSettings({}).enabled,false);
+ assert.equal(switchAutopilotSettings({...env,SWITCH_AUTOPILOT_ENABLED:'false'}).enabled,false);
+ assert.equal(switchAutopilotSettings({...env,SWITCH_DEFAULT_SHARE_BPS:'20000'}).enabled,false);
+ assert.equal(switchAutopilotSettings(env).enabled,true);
+});
+test('gera no máximo uma proposta idempotente para demanda qualificada e oferta parceira revisada',async()=>{
+ const buyer={id:'4da1ca67-d938-47ee-9d4a-0d53cd2d0a89',kind:'buy',status:'qualified',city:'Vacaria',property_type:'Casa',asking_cents:65000000};
+ const offer={id:'3e6ddfa5-8aaa-4e10-b6ac-d155c52f8476',partner:'Construtora Demo',ref:'COD100',title:'Casa modelo',
+   city:'Vacaria',property_type:'Casa',price_cents:58000000,authorization_confirmed:true,
+   available:true,updated_at:new Date().toISOString()};
+ const pro={id:'e2e945d3-0e4d-4d6e-83cb-ecf876538d3c',city:'Vacaria',property_type:'Casa',
+   phone:'5554999999999',status:'verified',whatsapp_opt_in:true};
+ const saved=[],jobs=[];
+ const client={
+  rest:async(path,method='GET',body)=>{
+   if(path.startsWith('eme_switch_requests?'))return [buyer];
+   if(path.startsWith('eme_switch_partner_offers?'))return [offer];
+   if(path.startsWith('eme_switch_professionals?'))return [pro];
+   if(path.startsWith('eme_switch_outbox?'))return jobs.filter(j=>j.professional_id===pro.id);
+   if(path==='eme_switch_outbox'&&method==='POST'){jobs.push(body);return [body];}
+   throw Error('Unexpected DB query: '+path);
+  },
+  request:async(_path,{body})=>{
+   if(saved.some(row=>row.source_id===body.source_id&&row.demand_id===body.demand_id))return [];
+   saved.push(body);return [body];
+  }
+ };
+ const service=attachSwitchAutopilot({client,env});
+ const first=await service.run();
+ assert.equal(first.created,1);
+ assert.equal(saved[0].status,'prepared');
+ assert.equal(saved[0].origin,'autopilot');
+ assert.equal(saved[0].created_by,null);
+ assert.equal(saved[0].brokerage_bps,500);
+ assert.equal(saved[0].switch_share_bps,3000);
+ assert.ok(saved[0].token_hash.length===64);
+ assert.equal(saved[0].buyer_phone,undefined);
+ assert.equal(jobs.length,1);
+ const second=await service.run();
+ assert.equal(second.created,0);
+});
+test('não gera ofertas de estoque sem atualização recente ou autorização',async()=>{
+ const client={
+  rest:async path=>path.startsWith('eme_switch_requests?')?[{id:'b',kind:'buy',status:'qualified',city:'Vacaria',property_type:'Casa',asking_cents:65000000}]:
+  path.startsWith('eme_switch_partner_offers?')?[{id:'o',partner:'Demo',ref:'1',city:'Vacaria',property_type:'Casa',price_cents:50000000,
+   available:true,authorization_confirmed:false,updated_at:'2026-01-01T00:00:00.000Z'}]:[],
+  request:async()=>{throw Error('Nunca deve publicar');}
+ };
+ const result=await attachSwitchAutopilot({client,env}).run();
+ assert.equal(result.created,0);
+});
