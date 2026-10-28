@@ -2,6 +2,7 @@ import {useEffect,useMemo,useState,type FormEvent} from 'react';
 import {ArrowUpRight,Check,RefreshCw,Search,ShieldCheck,Sparkles} from 'lucide-react';
 import {api,type TeamUser,type Assignee} from './api';
 import SwitchPartnerImport from './SwitchPartnerImport';
+import SwitchProfessionalRoster,{type SwitchProfessional} from './SwitchProfessionalRoster';
 import SwitchDealDesk from './SwitchDealDesk';
 import './switch-workspace.css';
 
@@ -63,6 +64,7 @@ function SwitchEditor({item,admin,members,done}:{item:Request;admin:boolean;memb
 export default function SwitchWorkspace({user}:{user:TeamUser}){
  const [snapshot,setSnapshot]=useState<Snapshot|null>(null),[members,setMembers]=useState<Assignee[]>([]);
  const [offers,setOffers]=useState<PartnerOffer[]>([]);
+ const [professionals,setProfessionals]=useState<SwitchProfessional[]>([]);
  const [matches,setMatches]=useState<Match[]>([]),[loading,setLoading]=useState(true),[matching,setMatching]=useState(false);
  const [selected,setSelected]=useState(''),[query,setQuery]=useState(''),[kind,setKind]=useState('all'),[error,setError]=useState('');
  async function load(){
@@ -104,7 +106,8 @@ export default function SwitchWorkspace({user}:{user:TeamUser}){
     <section className="ps-card sx-detail">{current?<SwitchEditor key={current.id+'-'+current.version} item={current} admin={user.role==='admin'} members={members} done={item=>{setSnapshot(s=>s?{...s,requests:s.requests.map(r=>r.id===item.id?item:r)}:s);void findMatches();}}/>:<p className="sx-info">Selecione uma solicitação para acompanhar.</p>}</section>
    </div>
    {user.role==='admin'&&<section className="ps-card sx-partner-card"><span className="ps-overline">OFERTA EM ESCALA</span><h2>Parceiros e inventário compartilhado</h2><p className="sx-info">{offers.length} ofertas de parceiros no painel, {offers.filter(o=>o.available).length} disponíveis conforme última atualização. A disponibilidade precisa ser reconfirmada em cada negociação.</p><SwitchPartnerImport onImported={()=>{void load();}}/></section>}
-   {user.role==='admin'&&<SwitchDealDesk matches={matches} requests={requests} offers={offers}/>}
+   {user.role==='admin'&&<SwitchProfessionalRoster changed={setProfessionals}/>}
+   {user.role==='admin'&&<SwitchDealDesk matches={matches} requests={requests} offers={offers} professionals={professionals}/>}
    {user.role==='admin'&&<section className="ps-card sx-matches">
     <div className="sx-match-heading"><div><span className="ps-overline">M SWITCH / INTELIGÊNCIA COMERCIAL</span><h2>Cruzamentos de oportunidades</h2><p>Combinações sugeridas com base em cidade, tipo e orçamento. Apenas fichas qualificadas e autorizadas entram no cálculo.</p></div><button className="ps-button ps-button--primary" onClick={()=>void findMatches()} disabled={matching}>{matching?'Calculando…':'Cruzar investidores'}<Sparkles size={16}/></button></div>
     {!matches.length?<p className="sx-info">Nenhuma combinação disponível agora. Qualifique imóveis, pedidos de troca e investidores para gerar candidatos automaticamente; cada oportunidade exige análise humana.</p>:<div className="sx-match-grid">{matches.map(m=>{const asset=requests.find(x=>x.id===m.assetId),external=offers.find(x=>x.id===m.assetId),investor=requests.find(x=>x.id===m.investorId);return <article key={m.assetId+'-'+m.investorId}><span className="ps-overline">{m.kind==='investor'?'INVESTIDOR':m.kind==='upgrade-target'?'UPGRADE / DESTINO':m.kind==='partner-offer'?'CARTEIRA PARCEIRA':'COMPRA / IMÓVEL'} · CANDIDATO · {m.score}/100</span><h3>{external?.title||asset?.name||'Imóvel'} ↔ {investor?.name||(m.kind==='investor'?'Investidor':'Comprador')}</h3><p>{external?.city||asset?.city} · {external?.property_type||asset?.property_type} · Valor: {brl(external?.price_cents||asset?.min_acceptable_cents)}</p><p>{m.kind==='investor'?'Investidor:':'Comprador interessado:'} {investor?.city} · Orçamento informado: {brl(m.kind==='investor'||m.kind==='partner-offer'&&investor?.kind!=='swap'||m.kind==='internal-offer'?investor?.asking_cents:investor?.target_budget_cents)}</p>{m.flags.map(f=><small key={f}>{f}</small>)}{external&&<a className="ps-text-button" href={external.offer_url} target="_blank" rel="noreferrer">Conferir anúncio do parceiro<ArrowUpRight size={14}/></a>}<strong>Revisar antes de apresentar.</strong></article>;})}</div>}
