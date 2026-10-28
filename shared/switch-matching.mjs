@@ -40,7 +40,7 @@ export function rankSwitchInvestors(asset, investors, { limit = 20 } = {}) {
     const maxPurchase = optAmount(investor.maxPurchaseCents, 'Orçamento máximo do investidor');
     if (maxPurchase == null || maxPurchase < minAcceptable) continue;
     const minPurchase = investor.minPurchaseCents == null ? 0 : amount(investor.minPurchaseCents, 'Orçamento mínimo do investidor');
-    if (minPurchase > maxPurchase || minPurchase > (referencePrice ?? minAcceptable)) continue;
+    if (minPurchase > maxPurchase) continue;
     const pct = investor.desiredDiscountPercent == null ? null : investor.desiredDiscountPercent;
     if (pct != null && (typeof pct !== 'number' || !Number.isFinite(pct) || pct < 0 || pct > 100)) continue;
     const flags = [];
