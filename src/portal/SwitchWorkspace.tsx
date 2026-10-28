@@ -12,7 +12,7 @@ type Request = {
   updates_opt_in:boolean;ownership_reviewed:boolean;sharing_authorized:boolean;
   funds_verified:boolean;min_acceptable_cents:number|null;review_note:string;version:number;created_at:string;
 };
-type Match = {assetId:string;investorId:string;score:number;stage:string;requiresBrokerReview:boolean;reasons:string[];flags:string[]};
+type Match = {kind:'investor'|'upgrade-target';assetId:string;investorId:string;score:number;stage:string;requiresBrokerReview:boolean;reasons:string[];flags:string[]};
 type Snapshot={requests:Request[];admin:boolean};
 const statuses:Record<Status,string>={new:'Nova entrada',reviewing:'Em análise',qualified:'Qualificada',negotiating:'Em negociação',closed:'Concluída',archived:'Arquivada'};
 const kinds:Record<Kind,string>={sell:'Venda',swap:'Troca / upgrade',invest:'Investimento'};
@@ -69,6 +69,8 @@ export default function SwitchWorkspace({user}:{user:TeamUser}){
    if(user.role==='admin') {
     const people=await api<{members:Assignee[]}>('/assignees');
     setMembers(people.members);
+    const found=await api<{matches:Match[]}>('/switch/matches');
+    setMatches(found.matches);
    }
   }catch(e){setError((e as Error).message);}finally{setLoading(false);}
  }
@@ -93,11 +95,11 @@ export default function SwitchWorkspace({user}:{user:TeamUser}){
     <section className="ps-card sx-list"><div className="sx-filters"><label><Search size={16}/><input aria-label="Buscar solicitações" placeholder="Nome, região, tipo…" value={query} onChange={e=>setQuery(e.target.value)}/></label><select aria-label="Filtrar operação" value={kind} onChange={e=>setKind(e.target.value)}><option value="all">Todas</option><option value="swap">Trocas</option><option value="sell">Vendas</option><option value="invest">Investidores</option></select></div>
      {loading&&!snapshot?<p role="status">Carregando solicitações…</p>:visible.length===0?<p className="sx-info">Nenhuma solicitação nesta seleção. Compartilhe o link de captação para receber as primeiras entradas.</p>:<div className="sx-items">{visible.map(r=><button type="button" key={r.id} className={'sx-item'+(r.id===current?.id?' is-active':'')} onClick={()=>setSelected(r.id)}><span><strong>{r.name}</strong><small>{kinds[r.kind]} · {r.city}</small></span><span className="sx-item-end"><b>{brl(r.asking_cents)}</b><small>{statuses[r.status]}</small></span></button>)}</div>}
     </section>
-    <section className="ps-card sx-detail">{current?<SwitchEditor key={current.id+'-'+current.version} item={current} admin={user.role==='admin'} members={members} done={item=>{setSnapshot(s=>s?{...s,requests:s.requests.map(r=>r.id===item.id?item:r)}:s);setMatches([]);}}/>:<p className="sx-info">Selecione uma solicitação para acompanhar.</p>}</section>
+    <section className="ps-card sx-detail">{current?<SwitchEditor key={current.id+'-'+current.version} item={current} admin={user.role==='admin'} members={members} done={item=>{setSnapshot(s=>s?{...s,requests:s.requests.map(r=>r.id===item.id?item:r)}:s);void findMatches();}}/>:<p className="sx-info">Selecione uma solicitação para acompanhar.</p>}</section>
    </div>
    {user.role==='admin'&&<section className="ps-card sx-matches">
     <div className="sx-match-heading"><div><span className="ps-overline">M SWITCH / INTELIGÊNCIA COMERCIAL</span><h2>Cruzamentos de oportunidades</h2><p>Combinações sugeridas com base em cidade, tipo e orçamento. Apenas fichas qualificadas e autorizadas entram no cálculo.</p></div><button className="ps-button ps-button--primary" onClick={()=>void findMatches()} disabled={matching}>{matching?'Calculando…':'Cruzar investidores'}<Sparkles size={16}/></button></div>
-    {!matches.length?<p className="sx-info">Nenhum cruzamento exibido. Qualifique um imóvel e um investidor para buscar combinações; cada candidato exige análise humana.</p>:<div className="sx-match-grid">{matches.map(m=>{const asset=requests.find(x=>x.id===m.assetId),investor=requests.find(x=>x.id===m.investorId);return <article key={m.assetId+'-'+m.investorId}><span className="ps-overline">CANDIDATO · {m.score}/100</span><h3>{asset?.name||'Imóvel'} ↔ {investor?.name||'Investidor'}</h3><p>{asset?.city} · {asset?.property_type} · Mínimo revisado: {brl(asset?.min_acceptable_cents)}</p><p>{investor?.city} · Orçamento informado: {brl(investor?.asking_cents)}</p>{m.flags.map(f=><small key={f}>{f}</small>)}<strong>Revisar antes de apresentar.</strong></article>;})}</div>}
+    {!matches.length?<p className="sx-info">Nenhuma combinação disponível agora. Qualifique imóveis, pedidos de troca e investidores para gerar candidatos automaticamente; cada oportunidade exige análise humana.</p>:<div className="sx-match-grid">{matches.map(m=>{const asset=requests.find(x=>x.id===m.assetId),investor=requests.find(x=>x.id===m.investorId);return <article key={m.assetId+'-'+m.investorId}><span className="ps-overline">{m.kind==='investor'?'INVESTIDOR':'UPGRADE / DESTINO'} · CANDIDATO · {m.score}/100</span><h3>{asset?.name||'Imóvel'} ↔ {investor?.name||(m.kind==='investor'?'Investidor':'Comprador')}</h3><p>{asset?.city} · {asset?.property_type} · Mínimo revisado: {brl(asset?.min_acceptable_cents)}</p><p>{m.kind==='investor'?'Investidor:':'Comprador interessado:'} {investor?.city} · Orçamento informado: {brl(m.kind==='investor'?investor?.asking_cents:investor?.target_budget_cents)}</p>{m.flags.map(f=><small key={f}>{f}</small>)}<strong>Revisar antes de apresentar.</strong></article>;})}</div>}
    </section>}
  </div>;
 }
