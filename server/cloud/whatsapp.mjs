@@ -10,7 +10,7 @@ export function attachCloudWhatsApp({client,env=process.env,fetcher}){
       // já foi autenticada via assinatura Meta em createWhatsApp(). Jamais responder automaticamente.
       for(const event of events){
         if(event.kind!=='message'||!['sair','parar','stop','cancelar'].includes(String(event.data?.text||'').trim().toLocaleLowerCase('pt-BR')))continue;
-        if(!/^55[1-9]{2}9?\\d{8}$/.test(String(event.contact_phone||'')))continue;
+        if(!/^55[1-9]{2}9?\d{8}$/.test(String(event.contact_phone||'')))continue;
         await client.rest('eme_switch_professionals?phone=eq.'+event.contact_phone,'PATCH',{
           status:'paused',whatsapp_opt_in:false,updated_at:new Date().toISOString()
         }).catch(error=>{
