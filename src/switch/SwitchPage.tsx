@@ -1,5 +1,5 @@
 import {useState,type FormEvent} from 'react';
-import {ArrowLeft,ArrowRight,CheckCircle2,House,Repeat2,TrendingUp} from 'lucide-react';
+import {ArrowRight,CheckCircle2,House,Repeat2,TrendingUp} from 'lucide-react';
 import './switch.css';
 
 type Kind = 'swap' | 'sell' | 'buy' | 'invest';
