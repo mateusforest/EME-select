@@ -77,7 +77,7 @@ Autorização no servidor e políticas RLS por corretor/empresa; anexos privados
 
 **Núcleo:** `shared/switch-matching.mjs`, `shared/switch-intake.mjs`, `shared/switch-trades.mjs`.
 
-**Teste:** `npm run test:switch`; cenários com `node:test` para permissões, entrada, matching, revisão e simulações. Foram executados 22 cenários de funções em avaliador isolado (22/22), **não** o build completo ou teste real contra o Supabase. A integração de API e o SQL precisam ser testados em ambiente de prévia antes do merge.
+**Teste:** `npm run test:switch`; cenários com `node:test` para permissões, entrada, matching, revisão e simulações. Foram executados 22 cenários de funções em avaliador isolado (22/22). O GitHub Actions validou com sucesso **npm ci, npm run test:switch e npm run build** nesta branch em 28/10/2026, e a Vercel informou build de preview aprovado. **Ainda não houve teste real contra o Supabase ou validação de fluxos com banco ativo.** A integração de API e o SQL precisam ser testados em ambiente de prévia antes do merge.
 
 **Não implementado:** atendimento autônomo via WhatsApp, coleta de dados por IA no novo formulário, importações externas, avaliação automática, aprovação de propostas, aviso em background, importação de bases e deploy em produção. Essas etapas devem ser construídas só após validação de segurança e do fluxo com dados sintéticos.
 
