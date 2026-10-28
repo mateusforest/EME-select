@@ -95,4 +95,89 @@ alter table public.eme_switch_partner_offers enable row level security;
 revoke all on public.eme_switch_partner_offers from public,anon,authenticated,service_role;
 grant select,insert,update on public.eme_switch_partner_offers to service_role;
 
+
+-- Oferta comercial privada: o link só mostra um teaser sem nomes, telefone ou origem identificável.
+create table if not exists public.eme_switch_deal_invites(
+ id uuid primary key,
+ token_hash text not null unique check(token_hash ~ '^[a-f0-9]{64}
+),
+ public_ref text not null unique check(char_length(public_ref) between 6 and 24),
+ source_kind text not null check(source_kind in ('switch_request','partner_offer')),
+ source_id uuid not null,
+ demand_id uuid not null references public.eme_switch_requests(id) on delete restrict,
+ teaser_city text not null check(char_length(teaser_city) between 2 and 100),
+ teaser_type text not null check(char_length(teaser_type) between 2 and 60),
+ sale_price_cents bigint not null check(sale_price_cents between 1000000 and 1000000000000),
+ brokerage_bps integer not null check(brokerage_bps between 1 and 1000),
+ switch_share_bps integer not null check(switch_share_bps between 1 and 10000),
+ status text not null default 'prepared' check(status in ('prepared','acknowledged','contracted','introduced','closed','paid','cancelled')),
+ recipient_name text not null default '',
+ recipient_business text not null default '',
+ recipient_phone text not null default '',
+ recipient_creci text not null default '',
+ recipient_marketing_opt_in boolean not null default false,
+ recipient_privacy_accepted boolean not null default false,
+ acknowledged_at timestamptz,
+ contract_reference text not null default '',
+ license_checked boolean not null default false,
+ signed_confirmed_at timestamptz,
+ actual_sale_cents bigint check(actual_sale_cents between 1000000 and 1000000000000),
+ received_cents bigint not null default 0 check(received_cents>=0),
+ created_by uuid not null references public.eme_profiles(id),
+ updated_by uuid references public.eme_profiles(id),
+ version integer not null default 1 check(version>=1),
+ expires_at timestamptz not null,
+ created_at timestamptz not null default now(),
+ updated_at timestamptz not null default now(),
+ constraint switch_invite_unique_source_demand unique(source_kind,source_id,demand_id)
+);
+create table if not exists public.eme_switch_deal_audit(
+ id bigint generated always as identity primary key,
+ deal_id uuid not null references public.eme_switch_deal_invites(id) on delete restrict,
+ actor_id uuid references public.eme_profiles(id),
+ old_status text,
+ new_status text not null,
+ created_at timestamptz not null default now()
+);
+create or replace function public.eme_switch_deal_audit_write()
+returns trigger language plpgsql security definer set search_path='' as $
+begin
+ if tg_op='UPDATE' and new.version<>old.version+1 then raise exception 'DEAL_STALE_VERSION'; end if;
+ insert into public.eme_switch_deal_audit(deal_id,actor_id,old_status,new_status)
+ values(new.id,new.updated_by,case when tg_op='INSERT' then null else old.status end,new.status);
+ return new;
+end;$;
+drop trigger if exists eme_switch_deal_audit_trigger on public.eme_switch_deal_invites;
+create trigger eme_switch_deal_audit_trigger after insert or update on public.eme_switch_deal_invites
+for each row execute function public.eme_switch_deal_audit_write();
+
+-- Atualização atômica de interesse: o token só permite registrar ciência/interesse.
+-- Não divulga partes nem equivale a assinatura de contrato.
+create or replace function public.eme_switch_acknowledge(
+ p_token_hash text,p_name text,p_phone text,p_creci text,p_business text,p_marketing_opt_in boolean
+) returns uuid language plpgsql security invoker set search_path='' as $
+declare v_id uuid;
+begin
+ if p_token_hash is null or p_token_hash !~ '^[a-f0-9]{64}
+ then raise exception 'DEAL_INVALID_TOKEN'; end if;
+ update public.eme_switch_deal_invites
+ set status='acknowledged',recipient_name=p_name,recipient_phone=p_phone,
+ recipient_creci=p_creci,recipient_business=p_business,
+ recipient_marketing_opt_in=p_marketing_opt_in,recipient_privacy_accepted=true,
+ acknowledged_at=now(),updated_at=now(),version=version+1
+ where token_hash=p_token_hash and status='prepared' and expires_at>now()
+ returning id into v_id;
+ if v_id is null then raise exception 'DEAL_NOT_AVAILABLE'; end if;
+ return v_id;
+end;$;
+alter table public.eme_switch_deal_invites enable row level security;
+alter table public.eme_switch_deal_audit enable row level security;
+revoke all on public.eme_switch_deal_invites,public.eme_switch_deal_audit from public,anon,authenticated,service_role;
+grant select,insert,update on public.eme_switch_deal_invites to service_role;
+grant select,insert on public.eme_switch_deal_audit to service_role;
+revoke all on sequence public.eme_switch_deal_audit_id_seq from public,anon,authenticated,service_role;
+grant usage,select on sequence public.eme_switch_deal_audit_id_seq to service_role;
+revoke all on function public.eme_switch_acknowledge(text,text,text,text,text,boolean) from public,anon,authenticated;
+grant execute on function public.eme_switch_acknowledge(text,text,text,text,text,boolean) to service_role;
+
 commit;
