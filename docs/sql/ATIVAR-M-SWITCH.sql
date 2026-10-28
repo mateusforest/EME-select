@@ -180,4 +180,49 @@ grant usage,select on sequence public.eme_switch_deal_audit_id_seq to service_ro
 revoke all on function public.eme_switch_acknowledge(text,text,text,text,text,boolean) from public,anon,authenticated;
 grant execute on function public.eme_switch_acknowledge(text,text,text,text,text,boolean) to service_role;
 
+
+-- Profissionais que espontaneamente solicitam oportunidades. Nunca usar para listas compradas.
+create table if not exists public.eme_switch_professionals(
+ id uuid primary key,
+ request_id uuid not null unique,
+ name text not null check(char_length(name) between 3 and 100),
+ business text not null default '' check(char_length(business)<=100),
+ creci text not null check(char_length(creci) between 4 and 40),
+ phone text not null unique check(phone ~ '^55[1-9]{2}9?[0-9]{8}
+),
+ city text not null check(char_length(city) between 2 and 100),
+ property_type text not null check(char_length(property_type) between 2 and 60),
+ whatsapp_opt_in boolean not null default false,
+ privacy_accepted boolean not null default false,
+ status text not null default 'pending' check(status in ('pending','verified','paused','rejected')),
+ verified_by uuid references public.eme_profiles(id),
+ verified_at timestamptz,
+ optout_token_hash text not null unique check(optout_token_hash ~ '^[a-f0-9]{64}
+),
+ created_at timestamptz not null default now(),
+ updated_at timestamptz not null default now(),
+ constraint switch_pro_optin check(whatsapp_opt_in and privacy_accepted)
+);
+create index if not exists eme_switch_professionals_route_idx on public.eme_switch_professionals(status,city,property_type);
+
+-- Fila preparada por sistema, não disparos em massa sem consentimento.
+create table if not exists public.eme_switch_outbox(
+ id uuid primary key,
+ deal_id uuid not null references public.eme_switch_deal_invites(id) on delete restrict,
+ professional_id uuid not null references public.eme_switch_professionals(id) on delete restrict,
+ phone text not null,
+ status text not null default 'pending' check(status in ('pending','sending','submitted','failed','skipped')),
+ attempts integer not null default 0 check(attempts between 0 and 3),
+ provider_message_id text,
+ error_detail text,
+ created_at timestamptz not null default now(),
+ updated_at timestamptz not null default now(),
+ unique(deal_id,professional_id)
+);
+create index if not exists eme_switch_outbox_status_idx on public.eme_switch_outbox(status,created_at);
+alter table public.eme_switch_professionals enable row level security;
+alter table public.eme_switch_outbox enable row level security;
+revoke all on public.eme_switch_professionals,public.eme_switch_outbox from public,anon,authenticated,service_role;
+grant select,insert,update on public.eme_switch_professionals,public.eme_switch_outbox to service_role;
+
 commit;
