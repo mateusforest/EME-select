@@ -75,7 +75,7 @@ export function switchRevision(body, prior, isAdmin) {
   if (!Object.keys(out).length) fail('Nenhuma alteração informada.');
   if (out.status==='qualified') {
     if (prior.kind==='invest' && !(out.funds_verified ?? prior.funds_verified)) fail('Confirme a verificação do investidor antes de qualificar.');
-    if (prior.kind!=='invest' && (!(out.ownership_reviewed??prior.ownership_reviewed)||!(out.sharing_authorized??prior.sharing_authorized)||!(out.min_acceptable_cents??prior.min_acceptable_cents))) fail('Confira titularidade, autorização e mínimo aceito antes de qualificar.');
+    if (prior.kind!=='invest' && (!(out.ownership_reviewed??prior.ownership_reviewed)||!(out.sharing_authorized??prior.sharing_authorized)||!(Object.hasOwn(out,'min_acceptable_cents')?out.min_acceptable_cents:prior.min_acceptable_cents))) fail('Confira titularidade, autorização e mínimo aceito antes de qualificar.');
   }
   return out;
 }
