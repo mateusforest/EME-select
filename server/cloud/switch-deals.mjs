@@ -121,7 +121,7 @@ export function attachCloudSwitchDeals({client,rate,env=process.env,notifyNow}){
      if(body.action==='paid'){
        const actualCommission=Math.round(Number(row.actual_sale_cents)*row.brokerage_bps/10000);
        const expectedShare=Math.round(actualCommission*row.switch_share_bps/10000);
-       if(body.receivedCents>expectedShare)err(400,'Recebimento acima da participação calculada. Revise o contrato.');
+       if(body.receivedCents!==expectedShare)err(400,'Para marcar como pago, registre o recebimento integral da participação contratada. Recebimentos parciais exigem conciliação específica.');
        updates.received_cents=body.receivedCents;
      }
      const rows=await rest(table+'?id=eq.'+row.id+'&version=eq.'+row.version,'PATCH',updates);
