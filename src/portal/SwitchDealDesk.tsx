@@ -2,6 +2,7 @@ import {useEffect,useMemo,useState,type FormEvent} from 'react';
 import {ArrowUpRight,CheckCircle2,Copy,FileSignature,RefreshCw} from 'lucide-react';
 import {api} from './api';
 import {switchDealQuote} from '../../shared/switch-deals.mjs';
+import type {SwitchProfessional} from './SwitchProfessionalRoster';
 
 type Match={kind:string;assetId:string;investorId:string};
 type Request={id:string;name:string;kind:string;asking_cents:number;min_acceptable_cents:number|null;city:string;property_type:string};
@@ -10,8 +11,8 @@ type Deal={id:string;public_ref:string;source_kind:string;source_id:string;deman
 const money=(v:number)=>(v/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
 const pct=(bps:number)=>(bps/100).toLocaleString('pt-BR',{maximumFractionDigits:2})+'%';
 const labels:Record<string,string>={prepared:'Aguardando interesse',acknowledged:'Interesse recebido',contracted:'Contrato conferido',introduced:'Conexão autorizada',closed:'Venda registrada',paid:'Comissão recebida',cancelled:'Cancelada'};
-const draftEmpty={sourceKind:'partner_offer',sourceId:'',demandId:'',salePrice:'',brokeragePct:'5',switchSharePct:'30'};
-export default function SwitchDealDesk({matches,requests,offers}:{matches:Match[];requests:Request[];offers:Partner[]}){
+const draftEmpty={sourceKind:'partner_offer',sourceId:'',demandId:'',professionalId:'',salePrice:'',brokeragePct:'5',switchSharePct:'30'};
+export default function SwitchDealDesk({matches,requests,offers,professionals}:{matches:Match[];requests:Request[];offers:Partner[];professionals:SwitchProfessional[]}){
  const [draft,setDraft]=useState(draftEmpty),[deals,setDeals]=useState<Deal[]>([]);
  const [link,setLink]=useState(''),[error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false);
  const [contract,setContract]=useState(''),[license,setLicense]=useState(false),[actual,setActual]=useState(''),[received,setReceived]=useState('');
@@ -36,13 +37,14 @@ export default function SwitchDealDesk({matches,requests,offers}:{matches:Match[
    event.preventDefault();if(busy||!quote)return;
    setBusy(true);setError('');setNotice('');setLink('');
    try{
-    const result=await api<{deal:Deal;invitePath:string}>('/switch/deals','POST',{
+    const result=await api<{deal:Deal;invitePath:string;queued?:boolean;notice?:string}>('/switch/deals','POST',{
       sourceKind:draft.sourceKind,sourceId:draft.sourceId,demandId:draft.demandId,
+      ...(draft.professionalId?{professionalId:draft.professionalId}:{}),
       salePriceCents:quote.salePriceCents,brokerageBps:quote.brokerageBps,
       switchShareBps:quote.switchShareBps,expiresDays:7
     });
     setLink(location.origin+result.invitePath);
-    setNotice('Convite gerado. Copie o link individual agora. Nenhum contato foi enviado ou divulgado.');
+    setNotice(result.notice||'Convite gerado. Nenhum contato foi divulgado.');
     await refresh();
    }catch(e){setError((e as Error).message);}finally{setBusy(false);}
  }
@@ -85,6 +87,9 @@ export default function SwitchDealDesk({matches,requests,offers}:{matches:Match[
     <label>Corretagem estimada (%)<input required type="number" min=".01" max="10" step=".01" value={draft.brokeragePct} onChange={e=>setDraft(d=>({...d,brokeragePct:e.target.value}))}/></label>
     <label>Participação M Switch sobre a corretagem (%)<input required type="number" min=".01" max="100" step=".01" value={draft.switchSharePct} onChange={e=>setDraft(d=>({...d,switchSharePct:e.target.value}))}/></label>
    </div>
+   <label>Enviar convite a um profissional habilitado e com opt-in (opcional)<select value={draft.professionalId} onChange={e=>setDraft(d=>({...d,professionalId:e.target.value}))}>
+     <option value="">Somente gerar link privado</option>{professionals.filter(p=>p.status==='verified'&&p.whatsapp_opt_in).map(p=><option key={p.id} value={p.id}>{p.name} · {p.city} · {p.property_type}</option>)}
+    </select></label>
    {quote&&<div className="sx-fee-preview"><span>Corretagem bruta estimada <strong>{money(quote.grossCommissionCents)}</strong></span><span>M Switch ({pct(quote.switchShareBps)} da comissão) <strong>{money(quote.switchShareCents)}</strong></span><span>Parceiro <strong>{money(quote.partnerShareCents)}</strong></span></div>}
    <p className="sx-info">Estimativa, não cobrança. As partes precisam ter habilitação e instrumento escrito de participação antes de serem apresentadas; o preço final e o recebimento real podem mudar.</p>
    <button className="ps-button ps-button--primary" disabled={busy||!quote||!draft.sourceId||!draft.demandId}>Gerar convite com condições <FileSignature size={16}/></button>
