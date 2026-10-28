@@ -12,7 +12,7 @@ export function switchDealQuote(input){
  const grossCommissionCents=Math.round(price*brokerageBps/10000);
  const switchShareCents=Math.round(grossCommissionCents*shareBps/10000);
  return {
-  salePriceCents:price,brokerageBps,switchShareBps,
+  salePriceCents:price,brokerageBps,switchShareBps:shareBps,
   grossCommissionCents,switchShareCents,
   partnerShareCents:grossCommissionCents-switchShareCents,
   contingent:true,requiresSignedAgreement:true,
