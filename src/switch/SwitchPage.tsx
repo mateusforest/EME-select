@@ -2,7 +2,7 @@ import {useState,type FormEvent} from 'react';
 import {ArrowLeft,ArrowRight,CheckCircle2,House,Repeat2,TrendingUp} from 'lucide-react';
 import './switch.css';
 
-type Kind = 'swap' | 'sell' | 'invest';
+type Kind = 'swap' | 'sell' | 'buy' | 'invest';
 type SwitchForm = {
   name:string;phone:string;city:string;propertyType:string;asking:string;
   targetCity:string;targetBudget:string;notes:string;contactConsent:boolean;
@@ -11,6 +11,7 @@ type SwitchForm = {
 const kinds:{id:Kind;name:string;detail:string}[]=[
   {id:'swap',name:'Quero trocar',detail:'Tenho um imóvel e procuro outro.'},
   {id:'sell',name:'Quero vender',detail:'Quero avaliar possibilidades de venda.'},
+  {id:'buy',name:'Quero comprar',detail:'Busco um imóvel para comprar.'},
   {id:'invest',name:'Quero investir',detail:'Busco oportunidades para analisar.'}
 ];
 const empty:SwitchForm={name:'',phone:'',city:'Vacaria',propertyType:'Casa',asking:'',
@@ -25,7 +26,7 @@ export default function SwitchPage(){
   const [requestId,setRequestId]=useState(()=>crypto.randomUUID());
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[sent,setSent]=useState(false);
   const change=(key:keyof SwitchForm,value:string|boolean)=>setForm(current=>({...current,[key]:value}));
-  const label=kind==='invest'?'Orçamento máximo disponível para avaliar (R$)':'Valor aproximado do seu imóvel (R$)';
+  const label=['invest','buy'].includes(kind)?'Orçamento máximo previsto (R$)':'Valor aproximado do seu imóvel (R$)';
   async function submit(e:FormEvent){
     e.preventDefault();if(busy)return;
     setBusy(true);setError('');
@@ -62,13 +63,13 @@ export default function SwitchPage(){
             <div className="sw-two">
               <label>Seu nome<input required maxLength={100} autoComplete="name" value={form.name} onChange={e=>change('name',e.target.value)} placeholder="Nome completo"/></label>
               <label>WhatsApp com DDD<input required type="tel" inputMode="tel" maxLength={25} autoComplete="tel" value={form.phone} onChange={e=>change('phone',e.target.value)} placeholder="(54) 99999-9999"/></label>
-              <label>{kind==='invest'?'Cidade onde deseja investir':'Cidade do seu imóvel'}<input required maxLength={100} value={form.city} onChange={e=>change('city',e.target.value)} placeholder="Cidade / estado"/></label>
+              <label>{kind==='invest'?'Cidade onde deseja investir':kind==='buy'?'Cidade onde deseja comprar':'Cidade do seu imóvel'}<input required maxLength={100} value={form.city} onChange={e=>change('city',e.target.value)} placeholder="Cidade / estado"/></label>
               <label>Tipo de imóvel<select required value={form.propertyType} onChange={e=>change('propertyType',e.target.value)}><option>Casa</option><option>Apartamento</option><option>Terreno</option><option>Comercial</option><option>Área rural</option><option>Outro</option></select></label>
               <label>{label}<input required type="number" min="10000" max="10000000000" step="1000" inputMode="numeric" value={form.asking} onChange={e=>change('asking',e.target.value)} placeholder="Ex.: 450000"/></label>
               {kind==='swap'&&<label>Onde deseja comprar?<input maxLength={100} value={form.targetCity} onChange={e=>change('targetCity',e.target.value)} placeholder="Cidade ou região desejada"/></label>}
               {kind==='swap'&&<label>Orçamento do imóvel desejado (R$)<input type="number" min="10000" max="10000000000" step="1000" value={form.targetBudget} onChange={e=>change('targetBudget',e.target.value)} placeholder="Ex.: 700000"/></label>}
             </div>
-            <label>O que você procura? <small>Opcional</small><textarea rows={3} maxLength={1200} value={form.notes} onChange={e=>change('notes',e.target.value)} placeholder={kind==='invest'?'Região, prazo, tipo de oportunidade…':'Fale um pouco sobre a situação e os objetivos da negociação…'}/></label>
+            <label>O que você procura? <small>Opcional</small><textarea rows={3} maxLength={1200} value={form.notes} onChange={e=>change('notes',e.target.value)} placeholder={kind==='invest'?'Região, prazo, tipo de oportunidade…':kind==='buy'?'Bairros, dormitórios, condições e prazo para comprar…':'Fale um pouco sobre a situação e os objetivos da negociação…'}/></label>
             <details className="sw-data-note"><summary>Como usamos seus dados</summary><p>Nome, telefone, informações do imóvel e sua intenção de negociação são utilizados para organizar o atendimento e analisar compatibilidades. O acesso é restrito à equipe responsável. Não compartilhamos seu imóvel ou contato com investidores sem conferência e autorização específicas. Avisos de novas oportunidades são opcionais e podem ser cancelados pelo canal de atendimento da M Select. Você pode solicitar acesso, revisão ou exclusão de dados pelos canais de contato do site.</p></details>
             <div className="sw-consents">
               <label><input type="checkbox" required checked={form.privacyAccepted} onChange={e=>change('privacyAccepted',e.target.checked)}/><span>Li e concordo com o uso dos dados informados para analisar e administrar esta solicitação.</span></label>
