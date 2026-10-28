@@ -11,7 +11,7 @@ const proId='fa0e52f5-ff1c-4788-9364-6cd45e4b9999';
 test('M Switch SQL: instala, protege dados, audita e registra ciência do convite',async()=>{
  const db=new PGlite();
  try{
-  await db.exec('create table public.eme_profiles(id uuid primary key);');
+  await db.exec('create role anon;create role authenticated;create role service_role;create table public.eme_profiles(id uuid primary key);');
   await db.query('insert into public.eme_profiles(id) values ($1)',[staffId]);
   await db.exec(sql);
   const rls=await db.query("select relname,relrowsecurity from pg_class where relname like 'eme_switch_%' and relkind='r'");
