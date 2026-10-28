@@ -3,7 +3,11 @@ on:
   pull_request:
     paths:
       - 'shared/switch-*.mjs'
-      - 'server/cloud/switch.mjs'
+      - 'server/cloud/switch*.mjs'
+      - 'server/cloud/whatsapp.mjs'
+      - 'src/portal/Switch*.tsx'
+      - 'vercel.json'
+      - 'package.json'
       - 'src/switch/**'
       - 'src/portal/SwitchWorkspace.tsx'
       - 'tests/switch-*.test.mjs'
