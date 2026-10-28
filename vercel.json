@@ -13,6 +13,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/switch/convite/:token",
+      "destination": "/index.html"
+    },
+    {
       "source": "/switch",
       "destination": "/index.html"
     },
