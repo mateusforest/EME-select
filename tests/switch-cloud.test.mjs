@@ -49,11 +49,12 @@ test('sem permissão não é possível consultar matches',async()=>{
   );
 });
 test('corretor não vê solicitação sem atribuição e não revisa a titularidade',async()=>{
-  const {service,send,records}=setup();
+  const {service,send,records,events}=setup();
   await service.publicHandle('/api/public/switch',{method:'POST',headers:{}},seller,send);
   await service.handle('/api/switch',{method:'GET'},broker,null,send);
   assert.equal(records.length,1);
-  assert.equal(send,send); // presença de handler sem vazamento é verificada no evento abaixo
+  assert.deepEqual(events.at(-1).data.requests,[]);
+  await assert.rejects(service.handle('/api/switch/'+leadId,{method:'PATCH'},broker,{version:1,status:'qualified'},send),e=>e.status===404);
 });
 test('gestão qualifica após conferências e versão é incrementada',async()=>{
   const {service,send,records}=setup();
