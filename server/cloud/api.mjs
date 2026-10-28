@@ -13,6 +13,7 @@ import {attachCloudLeads} from './leads.mjs';
 import {attachCloudSwitch} from './switch.mjs';
 import {attachCloudSwitchDeals} from './switch-deals.mjs';
 import {attachCloudSwitchProfessionals} from './switch-professionals.mjs';
+import {attachSwitchAutopilot} from './switch-autopilot.mjs';
 import {createPublicChat} from '../public-chat.mjs';
 import {createPeopleApi,peopleRecordId} from '../people.mjs';
 import {prepareEnlargement} from '../photo-preparation.mjs';
@@ -66,7 +67,8 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
  const whatsapp=attachCloudWhatsApp({client,env});
  const leads=attachCloudLeads({client,hashOf,ai:intelligence,priceProperties:content.priceProperties});
  const switchOps=attachCloudSwitch({client,rate:(key,max)=>rpc('eme_limit',{p_key:key,p_max:max})});
- const switchProfessionals=attachCloudSwitchProfessionals({client,env,rate:(key,max)=>rpc('eme_limit',{p_key:key,p_max:max})});
+ const switchAuto=attachSwitchAutopilot({client,env});
+ const switchProfessionals=attachCloudSwitchProfessionals({client,env,autoMatch:switchAuto.run,rate:(key,max)=>rpc('eme_limit',{p_key:key,p_max:max})});
  const switchDeals=attachCloudSwitchDeals({client,env,notifyNow:switchProfessionals.dispatchDeal,rate:(key,max)=>rpc('eme_limit',{p_key:key,p_max:max})});
  const analytics=attachCloudAnalytics({client});
  const innovation=attachCloudInnovation({client,save});
