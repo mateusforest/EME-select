@@ -89,5 +89,11 @@
       "destination": "/acesso-select/equipe/:path*",
       "permanent": true
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/switch/cron",
+      "schedule": "0 12 * * *"
+    }
   ]
 }
