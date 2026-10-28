@@ -40,7 +40,7 @@ export async function sendSwitchWhatsAppTemplate(env,{phone,city,inviteUrl,optou
  if(!data.messages?.[0]?.id)fail(502,'A Meta não retornou identificador de envio.');
  return {messageId:data.messages[0].id}; // enviado à Meta, ainda não entregue ao destinatário.
 }
-export function attachCloudSwitchProfessionals({client,rate,env=process.env,fetcher=fetch}){
+export function attachCloudSwitchProfessionals({client,rate,env=process.env,fetcher=fetch,autoMatch}){
  const {rest,request}=client;
  async function publicHandle(path,req,body,send){
    if(path==='/api/public/switch/professionals'&&req.method==='POST'){
@@ -77,6 +77,15 @@ export function attachCloudSwitchProfessionals({client,rate,env=process.env,fetc
    return false;
  }
  async function handle(path,req,user,body,send){
+   if(path==='/api/switch/autopilot/run'){
+     if(!user?.active||user.must_change||user.role!=='admin')fail(403,'Somente a gestão pode executar a automação.');
+     if(req.method!=='POST')fail(405,'Operação indisponível.');
+     await rate('switch:autopilot:'+user.id,10);
+     const generated=typeof autoMatch==='function'?await autoMatch():{enabled:false,created:0};
+     const deliveries=await dispatchPending();
+     send(200,{generated,deliveries});
+     return true;
+   }
    const m=path.match(/^\/api\/switch\/professionals(?:\/([a-f0-9-]{36}))?$/);
    if(!m)return false;
    if(!user?.active||user.must_change||user.role!=='admin')fail(403,'Apenas a gestão pode consultar os profissionais.');
@@ -141,8 +150,9 @@ export function attachCloudSwitchProfessionals({client,rate,env=process.env,fetc
    if(path!=='/api/switch/cron')return false;
    const secret=env.CRON_SECRET||'',provided=String(req.headers.authorization||'');
    if(req.method!=='GET'||secret.length<20||!matches('Bearer '+secret,provided))fail(403,'Execução não autorizada.');
+   const generated=typeof autoMatch==='function'?await autoMatch():{enabled:false,created:0};
    const result=await dispatchPending();
-   send(200,result);
+   send(200,{...result,generated});
    return true;
  }
  return {publicHandle,handle,cronHandle,dispatchDeal:id=>dispatchPending(id)};
