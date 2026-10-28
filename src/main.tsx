@@ -10,6 +10,8 @@ if (canonicalPath !== window.location.pathname) history.replaceState(history.sta
 
 const isSelect = /^\/acesso-select(?:\/|$)/.test(window.location.pathname);
 const isSwitch = /^\/switch\/?$/.test(window.location.pathname);
+const isSwitchInvite = /^\/switch\/convite\/[a-zA-Z0-9_-]{43}\/?$/.test(window.location.pathname);
+const SwitchInvitePage = lazy(() => import('./switch/SwitchInvitePage'));
 const SwitchPage = lazy(() => import('./switch/SwitchPage'));
 const SelectApp = lazy(() => import('./select/SelectPortal'));
 const isSubmission = /^\/enviar-imovel\/?$/.test(window.location.pathname);
@@ -17,10 +19,10 @@ const isPresentation = /^\/apresentar\/(g400|cenario)\/?$/.test(window.location.
 const Presentation = lazy(() => import('./presentation/Presentation'));
 const PublicApp = lazy(() => import('./PublicApp'));
 const SubmissionPage = lazy(() => import('./SubmissionPage'));
-const App = isSwitch ? SwitchPage : isSelect ? SelectApp : isPresentation ? Presentation : isSubmission ? SubmissionPage : PublicApp;
+const App = isSwitchInvite ? SwitchInvitePage : isSwitch ? SwitchPage : isSelect ? SelectApp : isPresentation ? Presentation : isSubmission ? SubmissionPage : PublicApp;
 
 const legacyPublic = /^#\/(?:empreendimentos|curadoria|comparar|equipe|pessoas|perfil)(?:\/|\?|$)/.test(window.location.hash);
-if (!isSwitch && !isSelect && !isPresentation && !isSubmission && !legacyPublic) {
+if (!isSwitchInvite && !isSwitch && !isSelect && !isPresentation && !isSubmission && !legacyPublic) {
   void import('./experience/bootstrap.js').then(module => module.startExperience());
 } else {
 ReactDOM.createRoot(document.getElementById('root')!).render(
