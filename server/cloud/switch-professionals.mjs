@@ -99,13 +99,11 @@ export function attachCloudSwitchProfessionals({client,rate,env=process.env,fetc
    }
    fail(405,'Operação indisponível.');
  }
- async function cronHandle(path,req,send){
-   if(path!=='/api/switch/cron')return false;
-   const secret=env.CRON_SECRET||'',provided=String(req.headers.authorization||'');
-   if(req.method!=='GET'||secret.length<20||!matches('Bearer '+secret,provided))fail(403,'Execução não autorizada.');
-   if(!whatsappSwitchReady(env)){send(200,{ready:false,processed:0,reason:'WhatsApp M Switch desativado ou incompleto.'});return true;}
+ async function dispatchPending(dealId=null){
+   if(!whatsappSwitchReady(env))return {ready:false,processed:0,submitted:0,skipped:0,failed:0};
+   if(dealId!==null&&!uuid.test(dealId))fail(400,'Oportunidade inválida.');
    // Não há disparo para uma lista fria: só convites já preparados e vinculados a perfil verificado/opt-in.
-   const jobs=await rest(outboxTable+'?status=eq.pending&select=*&order=created_at.asc&limit=10');
+   const jobs=await rest(outboxTable+'?status=eq.pending&select=*&order=created_at.asc&limit='+(dealId?1:5)+(dealId?'&deal_id=eq.'+dealId:''));
    let submitted=0,skipped=0,failed=0;
    for(const job of jobs){
      const [deal]=await rest(inviteTable+'?id=eq.'+job.deal_id+'&select=id,teaser_city,teaser_type,status,expires_at');
@@ -137,8 +135,15 @@ export function attachCloudSwitchProfessionals({client,rate,env=process.env,fetc
        failed++;
      }
    }
-   send(200,{ready:true,processed:submitted+skipped+failed,submitted,skipped,failed,deliveryConfirmed:false});
+   return {ready:true,processed:submitted+skipped+failed,submitted,skipped,failed,deliveryConfirmed:false};
+ }
+ async function cronHandle(path,req,send){
+   if(path!=='/api/switch/cron')return false;
+   const secret=env.CRON_SECRET||'',provided=String(req.headers.authorization||'');
+   if(req.method!=='GET'||secret.length<20||!matches('Bearer '+secret,provided))fail(403,'Execução não autorizada.');
+   const result=await dispatchPending();
+   send(200,result);
    return true;
  }
- return {publicHandle,handle,cronHandle};
+ return {publicHandle,handle,cronHandle,dispatchDeal:id=>dispatchPending(id)};
 }
