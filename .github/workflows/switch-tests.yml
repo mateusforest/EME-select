@@ -1,0 +1,27 @@
+name: M Switch Checks
+on:
+  pull_request:
+    paths:
+      - 'shared/switch-*.mjs'
+      - 'server/cloud/switch.mjs'
+      - 'src/switch/**'
+      - 'src/portal/SwitchWorkspace.tsx'
+      - 'tests/switch-*.test.mjs'
+      - 'supabase/migrations/*switch*'
+      - '.github/workflows/switch-tests.yml'
+  push:
+    branches:
+      - feat/m-switch-matching-v1
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run test:switch
+      - run: npm run build
