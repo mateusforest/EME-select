@@ -4,12 +4,22 @@ import {api} from './api';
 export type SwitchProfessional={id:string;name:string;business:string;creci:string;phone:string;city:string;property_type:string;
   whatsapp_opt_in:boolean;status:'pending'|'verified'|'paused'|'rejected';version:number;created_at:string};
 export default function SwitchProfessionalRoster({changed}:{changed:(rows:SwitchProfessional[])=>void}){
- const [rows,setRows]=useState<SwitchProfessional[]>([]),[ready,setReady]=useState(false),[busy,setBusy]=useState(''),[error,setError]=useState('');
+ const [rows,setRows]=useState<SwitchProfessional[]>([]),[ready,setReady]=useState(false),[busy,setBusy]=useState(''),[error,setError]=useState(''),[autopilot,setAutopilot]=useState('');
  async function load(){
   try{const data=await api<{professionals:SwitchProfessional[];automatedWhatsAppReady:boolean}>('/switch/professionals');setRows(data.professionals);setReady(data.automatedWhatsAppReady);changed(data.professionals);}
   catch(e){setError((e as Error).message);}
  }
  useEffect(()=>{void load();},[]);
+ async function runAuto(){
+  setBusy('autopilot');setError('');setAutopilot('');
+  try{
+   const result=await api<{generated:{enabled:boolean;created:number;skipped?:number};deliveries:{submitted:number;failed:number;ready:boolean}}>('/switch/autopilot/run','POST',{});
+   setAutopilot(result.generated.enabled?
+     result.generated.created+' oportunidades preparadas, '+result.deliveries.submitted+' convites submetidos à Meta. Entrega ainda não confirmada.':
+     'A criação automática está desativada. Configure as condições e credenciais privadas no servidor para habilitá-la.');
+   await load();
+  }catch(e){setError((e as Error).message);}finally{setBusy('');}
+ }
  async function decide(row:SwitchProfessional,status:'verified'|'paused'|'rejected'){
   setBusy(row.id);setError('');
   try{await api('/switch/professionals/'+row.id,'PATCH',{status,version:row.version,licenseChecked:status==='verified'});await load();}
@@ -20,7 +30,8 @@ export default function SwitchProfessionalRoster({changed}:{changed:(rows:Switch
    <button type="button" className="ps-button" onClick={()=>void load()}><RefreshCw size={15}/>Atualizar</button>
   </div>
   <p className="sx-info">Canal automático oficial: <strong>{ready?'Configurado para envio de template':'Desativado / sem configuração completa'}</strong>. Nenhuma mensagem é disparada quando desativado.</p>
-  <a className="ps-text-button" href="/switch/profissionais" target="_blank" rel="noreferrer">Abrir inscrição profissional ↗︎</a>
+  <div className="sx-actions"><a className="ps-text-button" href="/switch/profissionais" target="_blank" rel="noreferrer">Abrir inscrição profissional ↗︎</a><button type="button" className="ps-button" disabled={busy==='autopilot'} onClick={()=>void runAuto()}>{busy==='autopilot'?'Verificando…':'Executar motor comercial agora'}</button></div>
+  {autopilot&&<p className="sx-info" role="status">{autopilot}</p>}
   {!rows.length?<p className="sx-info">Nenhum profissional inscrito. Divulgação do formulário é aberta a profissionais habilitados que queiram receber oportunidades; não exige contato prévio com cada empresa.</p>:
    <div className="sx-pro-list">{rows.map(row=><article key={row.id}>
     <strong>{row.name}</strong><small>{row.city} · {row.property_type} · CRECI informado: {row.creci}</small>
