@@ -52,3 +52,46 @@ Uma transação de R$ 500.000 a 5% = R$ 25.000 **brutos**; descontar participaç
 - O imóvel anunciado requer autorização escrita quando aplicável; o vínculo da M Select com o corretor/representante deve ser revisado juridicamente.
 - LGPD: tratar dados só para finalidade informada, controle de acesso, atendimento aos direitos do titular, retenção definida, auditabilidade e opt-out. Privacidade e marketing devem ter regras distintas.
 - Em produção, **ainda falta** aplicar a migração Supabase, testar formulários contra o banco e confirmar os fluxos com dados sintéticos antes do primeiro cliente.
+
+## Evolução V2 — intermediação condicionada e ofertas automáticas (28/10/2026)
+
+### Modelo comercial: primeiro as condições, depois o contato
+
+Exemplo **hipotético**, não uma tabela de preços obrigatória: imóvel de R$ 600 mil, corretagem contratada de 5% = R$ 30 mil brutos. Proposta de dividir 30% da corretagem com a operação M Switch = R$ 9 mil **antes de custos/impostos**; os outros R$ 21 mil caberiam ao parceiro, conforme os contratos e participantes habilitados. A plataforma não deve declarar a comissão "ganha" antes da conclusão e do recebimento real.
+
+A apresentação é uma mensagem com **teaser sem dados pessoais**: cidade, tipo, preço de referência e divisão da corretagem. O profissional opt-in vê as condições, informa CRECI, manifesta ciência e aguarda a conferência da equipe. Não aparecem nome, telefone, contato do proprietário/comprador ou link original. Um aceite do formulário **não equivale** à assinatura contratual.
+
+O fluxo do deal usa `prepared → acknowledged → contracted → introduced → closed → paid` (cancelamento possível). O operador só autoriza a introdução após conferir CRECI e referência a contrato assinado. A simulação de honorários é atualizada por valores efetivos após a venda. A operação jurídica deve confirmar o compartilhamento de corretagem e os instrumentos apropriados antes de usar remuneração percentual.
+
+### Rede opt-in sem pedir parceria porta a porta
+
+O formulário público `/switch/profissionais` recebe nome, CRECI informado, cidade, especialidade e autorização expressa para mensagens da M Select. A administração confere a inscrição profissional antes de habilitar convites. Não há compra, importação nem disparo para números de terceiros sem autorização.
+
+O destinatário recebe link `/switch/convite/:token` e pode registrar interesse e conhecer as condições. Para cancelar mensagens, há `/switch/sair/:token` e também a palavra **SAIR** pelo canal oficial, processada a partir do webhook autenticado por assinatura da Meta.
+
+### Automação comercial com limites e verificações
+
+A função `attachSwitchAutopilot` cruza **demanda qualificada** com **estoque autorizado de parceiros atualizado nos últimos 7 dias**, seleciona um profissional cadastrado/verificado com opt-in e prepara convite privado com remuneração estimada. Configurada e ativada, cria até **3 novos convites por execução**, no máximo **1 por profissional nas últimas 24 horas**, sem duplicar pares de oferta/demanda.
+
+Condições automáticas vêm das variáveis privadas `SWITCH_DEFAULT_BROKERAGE_BPS` e `SWITCH_DEFAULT_SHARE_BPS`; **não** são aplicadas sem `SWITCH_AUTOPILOT_ENABLED=true`, chave privada e configuração Meta. Não gera contrato nem revela identidade das partes; apenas uma oportunidade preliminar com condições. O matching automático não atribui certeza de venda nem aprova crédito.
+
+A rotina `GET /api/switch/cron` exige `Authorization: Bearer CRON_SECRET`. A Vercel foi configurada para execução diária às 12h UTC (9h em Brasília) para ser compatível inclusive com Hobby. O portal permite execução administrativa autenticada em `POST /api/switch/autopilot/run`. Convites gerados manualmente para profissionais aprovados também tentam envio imediato quando a Meta está pronta. Uma chamada de envio aceita pela Meta significa *submetida*, não entregue.
+
+### Envios e controles
+
+Mensagens saem exclusivamente por WhatsApp Business Platform oficial **quando configurado**. Exige credenciais do número e conta, `SWITCH_INVITE_SECRET` seguro (>=32 chars), `CRON_SECRET`, `SWITCH_WHATSAPP_TEMPLATE` previamente aprovado na Meta (pt_BR, 3 variáveis: cidade, link de condições, link de cancelamento), `SWITCH_WHATSAPP_ENABLED=true`. O padrão é **desligado**. Não use QR code não oficial em produção crítica.
+
+A fila `eme_switch_outbox` deduplica por convite/profissional, exige opt-in e elegibilidade no momento de cada envio, registra `pending/sending/submitted/failed/skipped` e não reenvia automaticamente erros ambíguos. O painel exibe contagens; confirmação de entrega por status do provedor ainda não foi implementada. O opt-out bloqueia novas notificações mesmo após fila criada.
+
+### Operação financeira e requisitos antes de vender
+
+1. Registrar a habilitação CRECI da estrutura jurídica, a autorização de mediação e política de comissões assinada por quem participa.
+2. Revisar/aplicar o arquivo `docs/sql/ATIVAR-M-SWITCH.sql` no ambiente Supabase correto e confirmar segurança/RLS por perfil.
+3. Testar com dados sintéticos em preview: cadastro comprador/profissional, verificação CRECI, importação de estoque, encontro de demanda, convite, ciência, contrato, introdução, venda, recebimento, opt-out e não duplicação.
+4. Configurar domínio e credenciais oficiais do WhatsApp, aprovar o template, confirmar envio em ambiente controlado e só então ativar `SWITCH_WHATSAPP_ENABLED`.
+5. Em seguida definir a tabela comercial/participação em contrato e ativar `SWITCH_AUTOPILOT_ENABLED` (opcional). Nunca marcar vendas/receitas como reais automaticamente.
+6. Criar distribuição orgânica do formulário: indicação comercial por clientes/empreendimentos, redes sociais e presença regional. O software **não gera demanda sozinho sem aquisição**.
+
+**Não implementado:** integrações de telefone, e-mail automático, feeds remotos agendados, contratos assinados no próprio portal, pagamento/boleto automático, conciliação financeira ou entrega automática de telefone e dados de comprador. Essas ações dependem de provedores, regras e segurança adicionais.
+
+**Qualidade:** `npm run test:switch` cobre testes de cálculo, consentimento, empresa, tokens, API, banco (PGlite), remetente Meta falso e autopiloto; `npm run build` no CI. A validação de build não comprova integração real com Meta nem Supabase de produção.
