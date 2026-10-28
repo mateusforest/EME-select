@@ -1,5 +1,6 @@
 import {randomUUID,createHash} from 'node:crypto';
 import {rankSwitchInvestors} from '../../shared/switch-matching.mjs';
+import {rankSwitchUpgradeTargets} from '../../shared/switch-trades.mjs';
 import {switchIntake,switchRevision} from '../../shared/switch-intake.mjs';
 
 const error = (status,message) => {throw Object.assign(new Error(message),{status});};
@@ -49,14 +50,15 @@ export function attachCloudSwitch({client,rate}) {
         id:r.id,active:true,alertsOptIn:r.updates_opt_in===true,fundsVerified:r.funds_verified===true,
         cities:[r.city],propertyTypes:[r.property_type],maxPurchaseCents:Number(r.asking_cents)
       }));
-      const results=requests.filter(r=>r.kind!=='invest'&&r.status==='qualified').flatMap(r=>
+      const investorMatches=requests.filter(r=>r.kind!=='invest'&&r.status==='qualified').flatMap(r=>
         rankSwitchInvestors({
           id:r.id,city:r.city,propertyType:r.property_type,status:'available',
           ownershipReviewed:r.ownership_reviewed===true,sharingAuthorized:r.sharing_authorized===true,
           minAcceptableCents:r.min_acceptable_cents==null?0:Number(r.min_acceptable_cents),
           referencePriceCents:r.asking_cents==null?null:Number(r.asking_cents)
-        },investors,{limit:20})
+        },investors,{limit:20}).map(match=>({...match,kind:'investor'}))
       );
+      const results=[...investorMatches,...rankSwitchUpgradeTargets(requests,{limit:200})];
       results.sort((a,b)=>b.score-a.score);
       send(200,{matches:results.slice(0,200),total:results.length,reviewRequired:true});
       return true;
