@@ -4,7 +4,7 @@ begin;
 create table if not exists public.eme_switch_requests (
   id uuid primary key,
   request_id uuid not null unique,
-  kind text not null check(kind in ('sell','swap','invest')),
+  kind text not null check(kind in ('sell','swap','buy','invest')),
   name text not null check(char_length(name) between 2 and 100),
   phone text not null check(phone ~ '^55[1-9]{2}9?[0-9]{8}$'),
   city text not null check(char_length(city) between 2 and 100),
@@ -30,7 +30,7 @@ create table if not exists public.eme_switch_requests (
   updated_at timestamptz not null default now(),
   constraint switch_contact_permission check(contact_opt_in and privacy_accepted),
   constraint switch_investor_fields check(
-    kind <> 'invest' or (not ownership_reviewed and not sharing_authorized and min_acceptable_cents is null)
+    kind not in ('invest','buy') or (not ownership_reviewed and not sharing_authorized and min_acceptable_cents is null)
   ),
   constraint switch_asset_fields check(kind = 'invest' or not funds_verified)
 );
