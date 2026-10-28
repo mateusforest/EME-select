@@ -10,6 +10,7 @@ import {accessChange} from '../access-management.mjs';
 import {createPortalContent} from '../portal-content.mjs';
 import {internalKinds,propertyRecordsQuery} from '../../shared/portal-content.mjs';
 import {attachCloudLeads} from './leads.mjs';
+import {attachCloudSwitch} from './switch.mjs';
 import {createPublicChat} from '../public-chat.mjs';
 import {createPeopleApi,peopleRecordId} from '../people.mjs';
 import {prepareEnlargement} from '../photo-preparation.mjs';
@@ -62,6 +63,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
  const operations=attachCloudOperations({client,hashOf});
  const whatsapp=attachCloudWhatsApp({client,env});
  const leads=attachCloudLeads({client,hashOf,ai:intelligence,priceProperties:content.priceProperties});
+ const switchOps=attachCloudSwitch({client,rate:(key,max)=>rpc('eme_limit',{p_key:key,p_max:max})});
  const analytics=attachCloudAnalytics({client});
  const innovation=attachCloudInnovation({client,save});
  const materials=attachCloudMaterials({client,env});
@@ -107,6 +109,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    if(await analytics.publicHandle(path,req,body,send))return;
    if(await innovation.publicHandle(path,req,body,send))return;
    if(await leads.publicHandle(path,req,body,send))return;
+    if(await switchOps.publicHandle(path,req,body,send))return;
    if(await publicChat.handle(path,req,body,send))return;
    if(path==='/api/public/properties'&&req.method==='GET'){const rows=await rest('eme_cases?select=id,data->published,data->access&data->published=not.is.null');return send(200,{properties:await content.priceProperties(rows.filter(r=>publicAccess({data:r})).map(r=>r.published).filter(Boolean))});}
    if(path==='/api/public/submissions'&&req.method==='POST'){
@@ -150,6 +153,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    if(await materials.handle(path,req,res,user,body,send))return;
    if(await proposals.handle(path,req,user,body,send))return;
    if(await leads.handle(path,req,user,body,send))return;
+   if(await switchOps.handle(path,req,user,body,send))return;
    if(await whatsapp.handle(path,req,res,user,body,send))return;
    if(path==='/api/assignees'&&req.method==='GET'){const people=(await members()).filter(p=>p.active&&(user.role==='admin'||p.id===user.id)).map(({id,name,role})=>({id,name,role}));return send(200,{members:people});}
    if(path==='/api/users'){
