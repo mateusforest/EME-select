@@ -8,7 +8,7 @@ const tokenFormat=/^[a-zA-Z0-9_-]{43}$/;
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const table='eme_switch_deal_invites';
 const selected='id,public_ref,source_kind,source_id,demand_id,teaser_city,teaser_type,sale_price_cents,brokerage_bps,switch_share_bps,status,recipient_name,recipient_phone,recipient_creci,recipient_business,recipient_marketing_opt_in,acknowledged_at,contract_reference,license_checked,signed_confirmed_at,actual_sale_cents,received_cents,created_by,version,created_at,expires_at';
-export function attachCloudSwitchDeals({client,rate,env=process.env}){
+export function attachCloudSwitchDeals({client,rate,env=process.env,notifyNow}){
  const {rest,rpc}=client;
  async function publicHandle(path,req,body,send){
    const match=path.match(/^\/api\/public\/switch\/offers\/([a-zA-Z0-9_-]{43})(?:\/(interest))?$/);
@@ -95,8 +95,13 @@ export function attachCloudSwitchDeals({client,rate,env=process.env}){
          console.error('M Switch outbox creation failed:',e?.code||e?.name||'error');
        }
      }
+     let notification={ready:false,submitted:0};
+     if(queued&&typeof notifyNow==='function'){
+       try{notification=await notifyNow(dealId);}catch(e){console.error('M Switch notify failed:',e?.name||'error');}
+     }
      send(201,{deal:rows[0],invitePath:'/switch/convite/'+token,queued,
-       notice:queued?'Notificação registrada na fila. Será tentada apenas após ativação da Meta e da rotina agendada.':'Link individual pronto; nenhum WhatsApp foi enviado.'});
+       notifiedToMeta:notification.submitted>0,
+       notice:notification.submitted>0?'Convite submetido à Meta. Entrega ao destino ainda precisa ser confirmada.':queued?'Convite registrado na fila; envio depende da configuração da Meta.':'Link individual pronto; nenhum WhatsApp foi enviado.'});
      return true;
    }
    if(match[1]&&req.method==='PATCH'){
