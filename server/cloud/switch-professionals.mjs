@@ -77,6 +77,14 @@ export function attachCloudSwitchProfessionals({client,rate,env=process.env,fetc
    return false;
  }
  async function handle(path,req,user,body,send){
+   if(path==='/api/switch/outbox'){
+     if(!user?.active||user.must_change||user.role!=='admin')fail(403,'Acesso da gestão obrigatório.');
+     if(req.method!=='GET')fail(405,'Operação indisponível.');
+     const entries=await rest(outboxTable+'?select=id,deal_id,professional_id,status,attempts,created_at,updated_at,error_detail,provider_message_id&order=created_at.desc&limit=200');
+     const summary=Object.fromEntries(['pending','sending','submitted','failed','skipped'].map(status=>[status,entries.filter(item=>item.status===status).length]));
+     send(200,{summary,entries,deliveryVerified:false});
+     return true;
+   }
    if(path==='/api/switch/autopilot/run'){
      if(!user?.active||user.must_change||user.role!=='admin')fail(403,'Somente a gestão pode executar a automação.');
      if(req.method!=='POST')fail(405,'Operação indisponível.');
