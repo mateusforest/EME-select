@@ -99,7 +99,7 @@ grant select,insert,update on public.eme_switch_partner_offers to service_role;
 -- Oferta comercial privada: o link só mostra um teaser sem nomes, telefone ou origem identificável.
 create table if not exists public.eme_switch_deal_invites(
  id uuid primary key,
- token_hash text not null unique check(token_hash ~ '^[a-f0-9]{64}
+ token_hash text not null unique check(length(token_hash)=64 and translate(token_hash,'0123456789abcdef','')=''),
  public_ref text not null unique check(char_length(public_ref) between 6 and 24),
  source_kind text not null check(source_kind in ('switch_request','partner_offer')),
  source_id uuid not null,
@@ -139,13 +139,14 @@ create table if not exists public.eme_switch_deal_audit(
  created_at timestamptz not null default now()
 );
 create or replace function public.eme_switch_deal_audit_write()
-returns trigger language plpgsql security definer set search_path='' as $
+returns trigger language plpgsql security definer set search_path='' as '
 begin
- if tg_op='UPDATE' and new.version<>old.version+1 then raise exception 'DEAL_STALE_VERSION'; end if;
+ if tg_op=''UPDATE'' and new.version<>old.version+1 then raise exception ''DEAL_STALE_VERSION''; end if;
  insert into public.eme_switch_deal_audit(deal_id,actor_id,old_status,new_status)
- values(new.id,new.updated_by,case when tg_op='INSERT' then null else old.status end,new.status);
+ values(new.id,new.updated_by,case when tg_op=''INSERT'' then null else old.status end,new.status);
  return new;
-end;$;
+end;
+';
 drop trigger if exists eme_switch_deal_audit_trigger on public.eme_switch_deal_invites;
 create trigger eme_switch_deal_audit_trigger after insert or update on public.eme_switch_deal_invites
 for each row execute function public.eme_switch_deal_audit_write();
@@ -154,20 +155,22 @@ for each row execute function public.eme_switch_deal_audit_write();
 -- Não divulga partes nem equivale a assinatura de contrato.
 create or replace function public.eme_switch_acknowledge(
  p_token_hash text,p_name text,p_phone text,p_creci text,p_business text,p_marketing_opt_in boolean
-) returns uuid language plpgsql security invoker set search_path='' as $
+) returns uuid language plpgsql security invoker set search_path='' as '
 declare v_id uuid;
 begin
- if p_token_hash is null or p_token_hash !~ '^[a-f0-9]{64} raise exception 'DEAL_INVALID_TOKEN'; end if;
+ if p_token_hash is null or length(p_token_hash)<>64 or translate(p_token_hash,''0123456789abcdef'','''')<>''''
+ then raise exception ''DEAL_INVALID_TOKEN''; end if;
  update public.eme_switch_deal_invites
- set status='acknowledged',recipient_name=p_name,recipient_phone=p_phone,
+ set status=''acknowledged'',recipient_name=p_name,recipient_phone=p_phone,
  recipient_creci=p_creci,recipient_business=p_business,
  recipient_marketing_opt_in=p_marketing_opt_in,recipient_privacy_accepted=true,
  acknowledged_at=now(),updated_at=now(),version=version+1
- where token_hash=p_token_hash and status='prepared' and expires_at>now()
+ where token_hash=p_token_hash and status=''prepared'' and expires_at>now()
  returning id into v_id;
- if v_id is null then raise exception 'DEAL_NOT_AVAILABLE'; end if;
+ if v_id is null then raise exception ''DEAL_NOT_AVAILABLE''; end if;
  return v_id;
-end;$;
+end;
+';
 alter table public.eme_switch_deal_invites enable row level security;
 alter table public.eme_switch_deal_audit enable row level security;
 revoke all on public.eme_switch_deal_invites,public.eme_switch_deal_audit from public,anon,authenticated,service_role;
@@ -186,7 +189,7 @@ create table if not exists public.eme_switch_professionals(
  name text not null check(char_length(name) between 3 and 100),
  business text not null default '' check(char_length(business)<=100),
  creci text not null check(char_length(creci) between 4 and 40),
- phone text not null unique check(phone ~ '^55[1-9]{2}9?[0-9]{8}
+ phone text not null unique check(length(phone) between 12 and 13 and phone ~ '^55[1-9]{2}9?[0-9]{8}'),
  city text not null check(char_length(city) between 2 and 100),
  property_type text not null check(char_length(property_type) between 2 and 60),
  whatsapp_opt_in boolean not null default false,
@@ -194,7 +197,7 @@ create table if not exists public.eme_switch_professionals(
  status text not null default 'pending' check(status in ('pending','verified','paused','rejected')),
  verified_by uuid references public.eme_profiles(id),
  verified_at timestamptz,
- optout_token_hash text not null unique check(optout_token_hash ~ '^[a-f0-9]{64}
+ optout_token_hash text not null unique check(length(optout_token_hash)=64 and translate(optout_token_hash,'0123456789abcdef','')=''),
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
  constraint switch_pro_privacy check(privacy_accepted)
