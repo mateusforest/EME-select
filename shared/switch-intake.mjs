@@ -44,11 +44,11 @@ export function switchIntake(body) {
 }
 export function switchRevision(body, prior, isAdmin) {
   if (!body || typeof body!=='object' || Array.isArray(body)) fail('Alteração inválida.');
-  const allowed=['version','status','ownerId','ownershipReviewed','sharingAuthorized','fundsVerified','minAcceptableCents','note'];
+  const allowed=['version','status','ownerId','ownershipReviewed','sharingAuthorized','fundsVerified','demandReviewed','minAcceptableCents','note'];
   if (Object.keys(body).some(x=>!allowed.includes(x))) fail('Campos inválidos.');
   if (!Number.isSafeInteger(body.version) || body.version!==prior.version) throw Object.assign(new Error('A ficha mudou. Atualize antes de salvar.'),{status:409});
   if (body.status!==undefined && !switchStatuses.includes(body.status)) fail('Etapa inválida.');
-  if (!isAdmin && ['ownerId','ownershipReviewed','sharingAuthorized','fundsVerified','minAcceptableCents'].some(k=>Object.hasOwn(body,k))) throw Object.assign(new Error('A revisão documental e financeira exige a gestão.'),{status:403});
+  if (!isAdmin && ['ownerId','ownershipReviewed','sharingAuthorized','fundsVerified','demandReviewed','minAcceptableCents'].some(k=>Object.hasOwn(body,k))) throw Object.assign(new Error('A revisão documental e financeira exige a gestão.'),{status:403});
   const out = {};
   if (body.status!==undefined) out.status=body.status;
   if (body.ownerId!==undefined) {
@@ -63,6 +63,10 @@ export function switchRevision(body, prior, isAdmin) {
     if (typeof body.sharingAuthorized!=='boolean'||['invest','buy'].includes(prior.kind)) fail('Autorização inválida.');
     out.sharing_authorized=body.sharingAuthorized;
   }
+  if (body.demandReviewed!==undefined) {
+    if (typeof body.demandReviewed!=='boolean'||prior.kind!=='buy') fail('Conferência da demanda inválida.');
+    out.demand_reviewed=body.demandReviewed;
+  }
   if (body.fundsVerified!==undefined) {
     if (typeof body.fundsVerified!=='boolean'||prior.kind!=='invest') fail('Conferência financeira inválida.');
     out.funds_verified=body.fundsVerified;
@@ -74,6 +78,7 @@ export function switchRevision(body, prior, isAdmin) {
   if (body.note!==undefined)out.review_note=t(body.note,'a nota interna',0,1000);
   if (!Object.keys(out).length) fail('Nenhuma alteração informada.');
   if (out.status==='qualified') {
+    if (prior.kind==='buy' && !(out.demand_reviewed ?? prior.demand_reviewed)) fail('Confirme com o comprador a intenção, o orçamento declarado e a forma de pagamento antes de qualificar.');
     if (prior.kind==='invest' && !(out.funds_verified ?? prior.funds_verified)) fail('Confirme a verificação do investidor antes de qualificar.');
     if (['sell','swap'].includes(prior.kind) && (!(out.ownership_reviewed??prior.ownership_reviewed)||!(out.sharing_authorized??prior.sharing_authorized)||!(Object.hasOwn(out,'min_acceptable_cents')?out.min_acceptable_cents:prior.min_acceptable_cents))) fail('Confira titularidade, autorização e mínimo aceito antes de qualificar.');
   }
