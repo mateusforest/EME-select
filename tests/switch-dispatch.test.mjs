@@ -5,9 +5,9 @@ import {attachCloudSwitchProfessionals} from '../server/cloud/switch-professiona
 const env={
  SWITCH_WHATSAPP_ENABLED:'true',
  SWITCH_INVITE_SECRET:'synthetic-very-long-secret-which-is-not-production',
- WHATSAPP_ACCESS_TOKEN:'fake_nonproduction_access_token_123456789',
- WHATSAPP_PHONE_NUMBER_ID:'1234567890123',
- WHATSAPP_GRAPH_VERSION:'v22.0',
+ SWITCH_WHATSAPP_ACCESS_TOKEN:'fake_nonproduction_access_token_123456789',
+ SWITCH_WHATSAPP_PHONE_NUMBER_ID:'1234567890123',
+ SWITCH_WHATSAPP_GRAPH_VERSION:'v22.0',
  SWITCH_WHATSAPP_TEMPLATE:'m_switch_convite'
 };
 const dealId='8c43ee32-d668-4493-b251-aa22a08df956';
@@ -44,7 +44,7 @@ function fixture(portfolio){
    throw Error('unexpected table: '+path);
   }
  };
- const fetcher=async()=>{state.transmissions++;return {ok:true,json:async()=>({messages:[{id:'wamid.test'}]})};};
+ const fetcher=async(_url,options)=>{if(!options.method)return {ok:true,json:async()=>({id:env.SWITCH_WHATSAPP_PHONE_NUMBER_ID,display_phone_number:'+55 85 99448-8338'})};state.transmissions++;return {ok:true,json:async()=>({messages:[{id:'wamid.test'}]})};};
  return {state,service:attachCloudSwitchProfessionals({client,env,rate:async()=>{},fetcher,portfolio})};
 }
 test('aceita envio somente após revalidar estoque, comprador e opt-in no instante do disparo',async()=>{

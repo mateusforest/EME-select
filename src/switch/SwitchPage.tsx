@@ -1,6 +1,6 @@
 import {SWITCH_CONSENT_VERSION,switchConsentText} from '../../shared/switch-consent.mjs';
-import {useEffect,useState,type FormEvent} from 'react';
-import {ArrowRight,ArrowUpRight,CheckCircle2,House,Repeat2,TrendingUp,ShieldCheck} from 'lucide-react';
+import {useEffect,useRef,useState,type FormEvent} from 'react';
+import {ArrowRight,ArrowUpRight,CheckCircle2,House,Repeat2,TrendingUp,ShieldCheck,KeyRound,ChevronDown,X} from 'lucide-react';
 import SwitchHeader from './SwitchHeader';
 import './switch.css';
 import './switch-refinement.css';
@@ -17,6 +17,13 @@ const kinds:{id:Kind;name:string;detail:string}[]=[
   {id:'buy',name:'Quero comprar',detail:'Busco um imóvel para comprar.'},
   {id:'invest',name:'Quero investir',detail:'Busco oportunidades para analisar.'}
 ];
+const explanations:Record<Kind,{title:string;text:string;steps:string[]}>= {
+  swap:{title:'Seu imóvel pode abrir o próximo caminho.',text:'Conte o que você tem e para onde quer ir. A EME avalia alternativas de troca e conexões de venda e compra.',steps:['Entendemos os dois imóveis.','Buscamos interesses compatíveis.','Um consultor acompanha a negociação.']},
+  sell:{title:'Encontre quem procura o que você tem.',text:'Apresente seu imóvel. Após a revisão da equipe, buscamos compradores e investidores com interesses compatíveis.',steps:['Você apresenta o imóvel.','A equipe confere as condições.','Conectamos interessados autorizados.']},
+  buy:{title:'Sua busca, com mais possibilidades.',text:'Diga onde e como você quer morar. Cruzamos seu perfil com imóveis da EME e ofertas autorizadas de parceiros.',steps:['Entendemos seu momento.','Selecionamos imóveis compatíveis.','Você avalia com um consultor.']},
+  invest:{title:'Oportunidades que fazem sentido para você.',text:'Compartilhe região, faixa de valor e objetivo. A equipe analisa possíveis conexões, sem prometer retorno ou aprovação automática.',steps:['Você conta seu objetivo.','Analisamos as possibilidades.','Condições e riscos são revisados juntos.']}
+};
+const kindIcons={swap:Repeat2,sell:House,buy:KeyRound,invest:TrendingUp};
 const empty:SwitchForm={name:'',phone:'',city:'Vacaria',propertyType:'Casa',asking:'',
   targetCity:'',targetBudget:'',notes:'',contactConsent:false,updatesOptIn:false,privacyAccepted:false,website:''};
 function cents(value:string) {
@@ -29,6 +36,16 @@ export default function SwitchPage(){
   const [kind,setKind]=useState<Kind>('swap'),[form,setForm]=useState<SwitchForm>(empty);
   const [requestId,setRequestId]=useState(()=>crypto.randomUUID());
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[sent,setSent]=useState(false);
+  const [opened,setOpened]=useState(false),[details,setDetails]=useState(false);
+  const explanationRef=useRef<HTMLHeadingElement>(null),firstField=useRef<HTMLInputElement>(null);
+  useEffect(()=>{if(opened)explanationRef.current?.focus({preventScroll:true});},[opened,kind]);
+  useEffect(()=>{if(details)firstField.current?.focus({preventScroll:true});},[details]);
+  function choose(next:Kind){
+    if(busy)return;
+    if(next!==kind)setForm(current=>({...current,privacyAccepted:false,contactConsent:false,updatesOptIn:false}));
+    setKind(next);setOpened(true);setDetails(false);setSent(false);setError('');
+  }
+  function close(){if(busy)return;setOpened(false);setDetails(false);document.getElementById('switch-choice-'+kind)?.focus({preventScroll:true});}
   const change=(key:keyof SwitchForm,value:string|boolean)=>setForm(current=>({...current,[key]:value}));
   const label=['invest','buy'].includes(kind)?'Orçamento máximo previsto (R$)':'Valor aproximado do seu imóvel (R$)';
   async function submit(e:FormEvent){
@@ -49,26 +66,32 @@ export default function SwitchPage(){
     }catch(e){setError((e as Error).message);}
     finally{setBusy(false);}
   }
-  return <main className="sw-page">
-    <a className="sw-skip" href="#switch-form">Ir para o formulário</a>
+  return <main className="sw-page sw-guided">
+    <a className="sw-skip" href="#switch-choices">Escolher meu próximo passo</a>
     <SwitchHeader/>
-    <div className="sw-shell">
-      <section className="sw-intro">
+    <div className="sw-guided-shell">
+      <section className="sw-guided-hero">
+       <div className="sw-intro">
         <span className="sw-eyebrow"><Repeat2 size={16}/> M SWITCH · CONEXÕES IMOBILIÁRIAS</span>
         <h1>Seu próximo imóvel.<br/><em>Um novo caminho.</em></h1>
-        <p>O que você tem e o que procura podem se conectar. Encontramos possibilidades de compra, venda e troca, com a atenção da EME em cada etapa.</p>
-        <figure className="sw-scene"><img src="/assets/experience/hero-casas-detail.webp" width="1536" height="1024" alt="Arquitetura contemporânea em tons claros"/><figcaption>Cenário conceitual · novas possibilidades</figcaption></figure>
-        <div className="sw-benefits"><span><Repeat2 size={17}/>Trocar</span><span><House size={17}/>Comprar e vender</span><span><TrendingUp size={17}/>Investir</span></div>
-        <a className="sw-professional-link" href="/switch/profissionais">É corretor ou parceiro? Conheça a rede<ArrowUpRight size={16}/></a>
+        <p>Quem quer vender. Quem quer comprar. Quem vê uma oportunidade.<br/>A EME aproxima os caminhos.</p>
+       </div>
+       <figure className="sw-guided-scene"><img src="/assets/experience/hero-casas-detail.webp" alt="Arquitetura contemporânea em tons claros"/><figcaption>Cenário conceitual</figcaption></figure>
       </section>
-      <section className="sw-card" id="switch-form" aria-label="Solicitar análise M Switch">
-        {sent?<div className="sw-success" role="status"><CheckCircle2 size={40}/><span className="sw-eyebrow">SOLICITAÇÃO RECEBIDA</span><h2>Agora temos um ponto de partida.</h2><p>Sua ficha foi encaminhada à equipe M Select. Vamos analisar seu interesse e entrar em contato pelos dados informados. O envio não constitui proposta ou compromisso de compra.</p><button type="button" className="sw-submit" onClick={()=>{setForm(empty);setKind('swap');setSent(false);}}>Enviar outra solicitação<ArrowRight size={17}/></button></div>:<>
-          <div className="sw-card-head"><span>VAMOS ENTENDER SEU MOMENTO</span><h2>Qual é o seu próximo passo?</h2><p>Conte um pouco sobre você. A equipe cuida da conexão.</p></div>
+      <section id="switch-choices" className="sw-choice-section" aria-labelledby="switch-choice-title">
+        <div className="sw-choice-heading"><h2 id="switch-choice-title">O que você quer fazer?</h2><span>Escolha um caminho para começar.</span></div>
+        <div className="sw-choice-bar" role="group" aria-label="Tipo de operação">{kinds.map(item=>{const Icon=kindIcons[item.id];return <button type="button" id={'switch-choice-'+item.id} key={item.id} aria-expanded={opened&&kind===item.id} aria-controls="switch-panel" disabled={busy} className={opened&&kind===item.id?'is-active':''} onClick={()=>choose(item.id)}><div><Icon size={22}/><ChevronDown size={16}/></div><strong>{item.name}</strong><small>{item.detail}</small></button>;})}</div>
+      </section>
+      {opened&&<section className="sw-guided-panel" id="switch-panel" aria-label="Solicitar análise M Switch" onKeyDown={e=>{if(e.key==='Escape')close();}}>
+        <button type="button" className="sw-panel-close" onClick={close} disabled={busy} aria-label="Fechar explicação"><X size={19}/></button>
+        {sent?<div className="sw-success" role="status"><CheckCircle2 size={40}/><span className="sw-eyebrow">SOLICITAÇÃO RECEBIDA</span><h2>Agora temos um ponto de partida.</h2><p>Sua ficha foi encaminhada à equipe M Select. Vamos analisar seu interesse e entrar em contato pelos dados informados. O envio não constitui proposta ou compromisso de compra.</p><button type="button" className="sw-submit" onClick={()=>{setForm(empty);setSent(false);close();}}>Escolher outro caminho<ArrowRight size={17}/></button></div>:<>
+          <div className="sw-explanation"><div><span className="sw-eyebrow">{kinds.find(x=>x.id===kind)?.name} · COMO FUNCIONA</span><h2 ref={explanationRef} tabIndex={-1}>{explanations[kind].title}</h2><p>{explanations[kind].text}</p></div><ol>{explanations[kind].steps.map((step,i)=><li key={step}><span>0{i+1}</span>{step}</li>)}</ol></div>
+          {!details?<button type="button" className="sw-submit sw-continue" onClick={()=>setDetails(true)}>Continuar com {kind==='swap'?'minha troca':kind==='sell'?'minha venda':kind==='buy'?'minha busca':'meu investimento'}<ArrowRight size={18}/></button>:<>
+          <div className="sw-details-heading"><h3>Vamos conhecer seu momento.</h3><p>Preencha seus dados para a equipe analisar.</p></div>
           {import.meta.env.VITE_SWITCH_VISUAL_PREVIEW&&<p className="sw-preview-note">Prévia local · cadastros e envios desativados</p>}
-          <div className="sw-kinds" role="group" aria-label="Tipo de operação">{kinds.map(item=><button type="button" key={item.id} aria-pressed={kind===item.id} className={kind===item.id?'is-active':''} onClick={()=>setKind(item.id)}><strong>{item.name}</strong><small>{item.detail}</small></button>)}</div>
           <form className="sw-form" onSubmit={submit}>
             <div className="sw-two">
-              <label>Seu nome<input required maxLength={100} autoComplete="name" value={form.name} onChange={e=>change('name',e.target.value)} placeholder="Nome completo"/></label>
+              <label>Seu nome<input ref={firstField} required maxLength={100} autoComplete="name" value={form.name} onChange={e=>change('name',e.target.value)} placeholder="Nome completo"/></label>
               <label>WhatsApp com DDD<input required type="tel" inputMode="tel" maxLength={25} autoComplete="tel" value={form.phone} onChange={e=>change('phone',e.target.value)} placeholder="(54) 99999-9999"/></label>
               <label>{kind==='invest'?'Cidade onde deseja investir':kind==='buy'?'Cidade onde deseja comprar':'Cidade do seu imóvel'}<input required maxLength={100} value={form.city} onChange={e=>change('city',e.target.value)} placeholder="Cidade / estado"/></label>
               <label>Tipo de imóvel<select required value={form.propertyType} onChange={e=>change('propertyType',e.target.value)}><option>Casa</option><option>Apartamento</option><option>Terreno</option><option>Comercial</option><option>Área rural</option><option>Outro</option></select></label>
@@ -87,9 +110,10 @@ export default function SwitchPage(){
             {error&&<p className="sw-error" role="alert">{error}</p>}
             <button type="submit" className="sw-submit" disabled={busy}>{busy?'Enviando…':'Solicitar análise'}<ArrowRight size={18}/></button>
             <small className="sw-disclaimer">Sem compromisso de negociação. Nenhum imóvel será anunciado ou compartilhado com investidores sem revisão e autorização.</small>
-          </form>
+          </form></>}
         </>}
-      </section>
+      </section>}
+      <div className="sw-guided-note"><span><ShieldCheck size={16}/> Conexões analisadas pela equipe, com sua autorização.</span><a className="sw-professional-link" href="/switch/profissionais">É corretor ou parceiro? Conheça a rede<ArrowUpRight size={16}/></a></div>
     </div>
     <section className="sw-process" aria-label="Como funciona"><div><span className="sw-eyebrow">CONEXÕES COM CRITÉRIO</span><h2>Possibilidades reais.<br/>Pessoas por perto.</h2></div><ol><li><span>01</span><div><h3>Você conta.</h3><p>Entendemos seu imóvel, sua busca e o seu momento.</p></div></li><li><span>02</span><div><h3>A gente conecta.</h3><p>Cruzamos interesses com a carteira e oportunidades de parceiros.</p></div></li><li><span>03</span><div><h3>Decidimos juntos.</h3><p>Um consultor confere as condições e acompanha os próximos passos.</p></div></li></ol></section>
     <p className="sw-safety"><ShieldCheck size={19}/>As conexões dependem de análise e autorização. Não há garantia de venda, permuta ou crédito.</p>

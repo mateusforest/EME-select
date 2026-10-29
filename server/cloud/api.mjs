@@ -1,3 +1,4 @@
+import {attachSwitchChannel} from './switch-channel.mjs';
 import {attachCloudMaterials} from './marketing-materials.mjs';
 import {attachCloudInnovation} from './innovation.mjs';
 import {attachCloudProposals} from './proposals.mjs';
@@ -67,6 +68,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
  const operations=attachCloudOperations({client,hashOf});
  const whatsapp=attachCloudWhatsApp({client,env});
  const leads=attachCloudLeads({client,hashOf,ai:intelligence,priceProperties:content.priceProperties});
+ const switchChannel=attachSwitchChannel({client,env});
  const switchPortfolio=attachSwitchPortfolio({client,priceProperties:content.priceProperties});
  const switchOps=attachCloudSwitch({client,portfolio:switchPortfolio,rate:(key,max)=>rpc('eme_limit',{p_key:key,p_max:max})});
  const switchAuto=attachSwitchAutopilot({client,env,portfolio:switchPortfolio});
@@ -164,6 +166,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    if(await materials.handle(path,req,res,user,body,send))return;
    if(await proposals.handle(path,req,user,body,send))return;
    if(await leads.handle(path,req,user,body,send))return;
+   if(await switchChannel.handle(path,req,res,user,body,send))return;
    if(await switchPortfolio.handle(path,req,user,body,send))return;
    if(await switchOps.handle(path,req,user,body,send))return;
    if(await switchDeals.handle(path,req,user,body,send))return;

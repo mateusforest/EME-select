@@ -1,5 +1,5 @@
 import {createWhatsApp} from '../whatsapp.mjs';
-export function attachCloudWhatsApp({client,env=process.env,fetcher}){
+export function attachCloudWhatsApp({client,env=process.env,fetcher,callbackUrl}){
   const store={
     ready:async()=>{try{await client.rest('eme_whatsapp_events?select=event_key&limit=0');return true;}catch{return false;}},
     ingest:async events=>{
@@ -19,7 +19,7 @@ export function attachCloudWhatsApp({client,env=process.env,fetcher}){
         });
       }
     },
-    list:()=>client.rest('eme_whatsapp_events?select=event_key,kind,message_id,contact_phone,occurred_at,received_at,data&order=received_at.desc&limit=50'),
+    list:()=>client.rest('eme_whatsapp_events?phone_number_id=eq.'+encodeURIComponent(env.WHATSAPP_PHONE_NUMBER_ID||'unconfigured')+'&select=event_key,kind,message_id,contact_phone,occurred_at,received_at,data&order=received_at.desc&limit=50'),
   };
-  return createWhatsApp({store,env,fetcher,rate:user=>client.rpc('eme_limit',{p_key:'whatsapp-check:'+user.id,p_max:6})});
+  return createWhatsApp({store,env,fetcher,callbackUrl,rate:user=>client.rpc('eme_limit',{p_key:'whatsapp-check:'+user.id,p_max:6})});
 }

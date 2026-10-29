@@ -1,5 +1,7 @@
+import {switchWhatsAppEnv} from './switch-channel.mjs';
 // Read-only operational readiness; no secrets, contact data or service URLs are exposed.
 export async function switchReadiness({client,env=process.env}){
+  env=switchWhatsAppEnv(env);
   const tables=[
     ['Solicitações','eme_switch_requests','id,consent_version,consent_recorded_at,demand_reviewed'],
     ['Carteiras autorizadas','eme_switch_partner_offers'],
@@ -39,7 +41,7 @@ export async function switchReadiness({client,env=process.env}){
     providerTemplateApproved:false // Must be confirmed in Meta; env var alone is insufficient.
   };
   return {
-    checks,workflow,
+    checks,workflow,channel:{expectedNumber:env.WHATSAPP_EXPECTED_NUMBER,directCustomerNotifications:false},
     pilotCanBeTested:databaseReady,
     externalMessagesMayBeSent:databaseReady&&whatsappConfigured,
     needsHumanSignoff:['Confirmação da habilitação profissional e condições de corretagem.',

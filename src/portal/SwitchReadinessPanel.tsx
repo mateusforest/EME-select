@@ -4,7 +4,7 @@ import {api} from './api';
 
 type Check={label:string;key:string;ready:boolean};
 type Status={
- checks:Check[];
+ checks:Check[];channel?:{expectedNumber:string;directCustomerNotifications:boolean};
  workflow:{
   databaseReady:boolean;crmReady:boolean;whatsappConfigured:boolean;
   inboundWebhookEnabled:boolean;schedulerSecretConfigured:boolean;
@@ -31,7 +31,7 @@ export default function SwitchReadinessPanel(){
   {name:'Autopiloto',ready:checks.autopilotEnabled,detail:'Gatilhos explicitamente liberados'},
  ]:[];
  return <section className="ps-card sx-readiness" aria-label="Prontidão M Switch">
-  <div className="sx-match-heading"><div><span className="ps-overline">M SWITCH / ATIVAÇÃO CONTROLADA</span><h2>Estado técnico da operação</h2><p>O código compilado não significa que o banco, a Meta e os contratos estão prontos. Aqui estão os bloqueios reais.</p></div>
+  <div className="sx-match-heading"><div><span className="ps-overline">M SWITCH / ATIVAÇÃO CONTROLADA</span><h2>Ativação e funcionamento</h2><p>Acompanhe o recebimento das fichas, a conexão do número comercial e os convites da rede.</p></div>
    <button className="ps-button" disabled={loading} onClick={()=>void refresh()}><RefreshCw size={15}/>{loading?'Conferindo…':'Verificar'}</button>
   </div>
   {error&&<p role="alert" className="pt-error">{error}</p>}
@@ -40,7 +40,7 @@ export default function SwitchReadinessPanel(){
     <b>{row.ready?'Configurado':'Pendente'}</b>
     <small>{row.detail}</small>
    </article>)}</div>
-   <details className="sx-partner-import"><summary>Checagens das tabelas</summary><div className="sx-readiness-tables">{result.checks.map(check=><p key={check.key}>{check.ready?'✓':'✕'} {check.label}</p>)}</div></details>
+   <p className="sx-info"><strong>Como as conexões funcionam:</strong> as fichas chegam aqui para revisão. O sistema sugere combinações entre imóveis, compradores e investidores. Os convites automáticos atuais atendem corretores e parceiros verificados. Avisos diretos aos clientes ainda estão pendentes; não há envio automático nem criação de grupos entre as partes.</p><details className="sx-partner-import"><summary>Checagens das tabelas</summary><div className="sx-readiness-tables">{result.checks.map(check=><p key={check.key}>{check.ready?'✓':'✕'} {check.label}</p>)}</div></details>
    <p className="sx-info"><strong>Validação humana pendente:</strong> regularidade profissional, contratos, autorização do imóvel e aprovação do template na Meta. Este painel não certifica esses pontos.</p>
   </>}
  </section>;

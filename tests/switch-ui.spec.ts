@@ -9,7 +9,10 @@ test('cadastro público de comprador mantém opt-in separado e confirma recebime
  });
  await page.goto('/switch');
  await expect(page.getByRole('heading',{level:1})).toContainText('Seu próximo imóvel');
+ await expect(page.getByLabel('Seu nome')).toHaveCount(0);
  await page.getByRole('button',{name:/Quero comprar/}).click();
+ await expect(page.getByLabel('Seu nome')).toHaveCount(0);
+ await page.getByRole('button',{name:'Continuar com minha busca'}).click();
  await page.getByLabel('Seu nome').fill('Compradora Sintética');
  await page.getByLabel('WhatsApp com DDD').fill('(54) 99999-9999');
  await page.getByLabel('Cidade onde deseja comprar').fill('Caxias do Sul');
@@ -87,4 +90,20 @@ test('cancelamento de avisos fica disponível sem exigir outro cadastro',async({
  await page.getByRole('button',{name:'Interromper mensagens'}).click();
  await expect(page.getByRole('heading',{name:'Avisos interrompidos.'})).toBeVisible();
  expect(sent).toBe(true);
+});
+
+test('escolha guiada preserva dados, troca explicação e fecha pelo teclado',async({page})=>{
+ await page.goto('/switch');
+ await page.getByRole('button',{name:/Quero vender/}).click();
+ await expect(page.getByRole('heading',{name:'Encontre quem procura o que você tem.'})).toBeVisible();
+ await page.getByRole('button',{name:'Continuar com minha venda'}).click();
+ await page.getByLabel('Seu nome').fill('Pessoa sintética');
+ await page.getByRole('button',{name:'Fechar explicação'}).click();
+ await expect(page.getByLabel('Seu nome')).toHaveCount(0);
+ await page.getByRole('button',{name:/Quero investir/}).click();
+ await page.getByRole('button',{name:'Continuar com meu investimento'}).click();
+ await expect(page.getByLabel('Seu nome')).toHaveValue('Pessoa sintética');
+ await page.getByLabel('Seu nome').press('Escape');
+ await expect(page.getByLabel('Seu nome')).toHaveCount(0);
+ await expect(page.getByRole('button',{name:/Quero investir/})).toBeFocused();
 });

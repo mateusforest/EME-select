@@ -6,10 +6,10 @@ const liveEnv={
  SWITCH_INVITE_SECRET:'a'.repeat(64),
  SWITCH_WHATSAPP_ENABLED:'true',
  SWITCH_WHATSAPP_TEMPLATE:'m_switch_convite',
- WHATSAPP_ACCESS_TOKEN:'fake_token_more_than_twenty_chars',
- WHATSAPP_PHONE_NUMBER_ID:'12345678912',
- WHATSAPP_GRAPH_VERSION:'v22.0',
- WHATSAPP_WEBHOOK_ENABLED:'true',
+ SWITCH_WHATSAPP_ACCESS_TOKEN:'fake_token_more_than_twenty_chars',
+ SWITCH_WHATSAPP_PHONE_NUMBER_ID:'12345678912',
+ SWITCH_WHATSAPP_GRAPH_VERSION:'v22.0',
+ SWITCH_WHATSAPP_WEBHOOK_ENABLED:'true',
  CRON_SECRET:'fake_cron_secret_long_enough',
  SWITCH_AUTOPILOT_ENABLED:'true',
  SWITCH_DEFAULT_BROKERAGE_BPS:'500',
@@ -26,7 +26,7 @@ test('prontidão reprova tabela ausente e não presume contrato/Meta aprovados',
   assert.equal(res.workflow.commercialContractReviewed,false);
   assert.equal(res.workflow.providerTemplateApproved,false);
   assert.ok(res.checks.some(c=>c.key==='eme_switch_professionals'&&!c.ready));
-  assert.equal(JSON.stringify(res).includes(liveEnv.WHATSAPP_ACCESS_TOKEN),false);
+  assert.equal(JSON.stringify(res).includes(liveEnv.SWITCH_WHATSAPP_ACCESS_TOKEN),false);
   assert.equal(JSON.stringify(res).includes(liveEnv.CRON_SECRET),false);
 });
 test('prontidão verifica separadamente banco, env e habilitação explícita',async()=>{

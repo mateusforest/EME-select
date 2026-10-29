@@ -1,3 +1,4 @@
+import {switchWhatsAppEnv} from './switch-channel.mjs';
 import {randomUUID,createHash,createHmac,timingSafeEqual} from 'node:crypto';
 import {switchProfessionalEnrollment,switchProfessionalReview,switchSendEligibility} from '../../shared/switch-professionals.mjs';
 import {switchReadiness} from './switch-readiness.mjs';
@@ -16,6 +17,7 @@ export function switchProToken(env,scope,id){
 }
 const matches=(a,b)=>{const x=Buffer.from(a),y=Buffer.from(b);return x.length===y.length&&timingSafeEqual(x,y);};
 export function whatsappSwitchReady(env){
+ env=switchWhatsAppEnv(env);
  return env.SWITCH_WHATSAPP_ENABLED==='true'&&
    typeof env.WHATSAPP_ACCESS_TOKEN==='string'&&env.WHATSAPP_ACCESS_TOKEN.length>20&&
    /^\d{5,30}$/.test(env.WHATSAPP_PHONE_NUMBER_ID||'')&&
@@ -25,6 +27,13 @@ export function whatsappSwitchReady(env){
 }
 export async function sendSwitchWhatsAppTemplate(env,{phone,city,inviteUrl,optoutUrl},fetcher=fetch){
  if(!whatsappSwitchReady(env))fail(503,'A integração Meta M Switch não está pronta.');
+ env=switchWhatsAppEnv(env);
+ const identity=await fetcher('https://graph.facebook.com/'+env.WHATSAPP_GRAPH_VERSION+'/'+env.WHATSAPP_PHONE_NUMBER_ID+'?fields=id,display_phone_number',{
+   headers:{Authorization:'Bearer '+env.WHATSAPP_ACCESS_TOKEN},signal:AbortSignal.timeout(15000)
+ });
+ if(!identity.ok)fail(502,'Não foi possível conferir o remetente M Switch.');
+ const sender=await identity.json();
+ if(String(sender.id)!==env.WHATSAPP_PHONE_NUMBER_ID||String(sender.display_phone_number||'').replace(/\D/g,'')!==env.WHATSAPP_EXPECTED_NUMBER.replace(/\D/g,''))fail(409,'O remetente difere do número comercial definido para o M Switch.');
  const payload={
    messaging_product:'whatsapp',to:phone,type:'template',
    template:{name:env.SWITCH_WHATSAPP_TEMPLATE,language:{code:'pt_BR'},

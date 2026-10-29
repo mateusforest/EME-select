@@ -7,8 +7,8 @@ import {switchProToken,whatsappSwitchReady,sendSwitchWhatsAppTemplate} from '../
 const input={requestId:'8c43ee32-d668-4493-b251-aa22a08df956',name:'Corretor de exemplo',
  phone:'(54) 99999-9999',creci:'RS 12345',business:'Imobiliária Exemplo',city:'Vacaria',
  propertyType:'Casa',whatsappOptIn:true,privacyAccepted:true,consentVersion:SWITCH_CONSENT_VERSION};
-const env={SWITCH_WHATSAPP_ENABLED:'true',WHATSAPP_ACCESS_TOKEN:'token-de-teste-somente-fake',
- WHATSAPP_PHONE_NUMBER_ID:'1234567891011',WHATSAPP_GRAPH_VERSION:'v22.0',
+const env={SWITCH_WHATSAPP_ENABLED:'true',SWITCH_WHATSAPP_ACCESS_TOKEN:'token-de-teste-somente-fake',
+ SWITCH_WHATSAPP_PHONE_NUMBER_ID:'1234567891011',SWITCH_WHATSAPP_GRAPH_VERSION:'v22.0',
  SWITCH_WHATSAPP_TEMPLATE:'m_switch_convite_profissional',
  SWITCH_INVITE_SECRET:'uma-chave-aleatoria-sintetica-testes-com-mais-de-32'};
 test('cadastra somente voluntários com aceite explícito para receber ofertas no WhatsApp',()=>{
@@ -48,11 +48,12 @@ test('WhatsApp envia template aprovado apenas com configuração completa e reto
  },async(url,options)=>{
    called++;
    assert.ok(url.startsWith('https://graph.facebook.com/'));
-   assert.equal(options.headers.Authorization,'Bearer '+env.WHATSAPP_ACCESS_TOKEN);
+   assert.equal(options.headers.Authorization,'Bearer '+env.SWITCH_WHATSAPP_ACCESS_TOKEN);
+   if(!options.method)return {ok:true,json:async()=>({id:env.SWITCH_WHATSAPP_PHONE_NUMBER_ID,display_phone_number:'+55 85 99448-8338'})};
    const data=JSON.parse(options.body);
    assert.equal(data.type,'template');assert.equal(data.template.components[0].parameters.length,3);
    return {ok:true,json:async()=>({messages:[{id:'wamid.FAKE'}]})};
  });
  assert.deepEqual(response,{messageId:'wamid.FAKE'});
- assert.equal(called,1);
+ assert.equal(called,2);
 });

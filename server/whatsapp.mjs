@@ -44,8 +44,8 @@ export function extractWhatsAppEvents(payload, env) {
   return [...new Map(events.map(event=>[event.event_key,event])).values()];
 }
 
-export function createWhatsApp({store,env=process.env,fetcher=fetch,rate=async()=>{}}){
-  async function status(){const configuration=whatsappConfiguration(env);const storageReady=await store.ready();return {...configuration,storageReady,receivingReady:configuration.configured&&configuration.enabled&&storageReady};}
+export function createWhatsApp({store,env=process.env,fetcher=fetch,rate=async()=>{},callbackUrl=WHATSAPP_CALLBACK}){
+  async function status(){const configuration=whatsappConfiguration(env);const storageReady=await store.ready();return {...configuration,callbackUrl,storageReady,receivingReady:configuration.configured&&configuration.enabled&&storageReady};}
   async function checkConnection(){
     const config=whatsappConfiguration(env);
     if(!config.configured)fail(400,'Complete as credenciais na hospedagem antes de testar.');

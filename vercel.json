@@ -5,6 +5,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/api/webhooks/switch-whatsapp",
+      "destination": "/api/switchWhatsappWebhook"
+    },
+    {
       "source": "/inovacao",
       "destination": "/index.html"
     },
@@ -70,6 +74,9 @@
       "maxDuration": 120
     },
     "api/whatsappWebhook.js": {
+      "maxDuration": 30
+    },
+    "api/switchWhatsappWebhook.js": {
       "maxDuration": 30
     }
   },
