@@ -20,7 +20,7 @@ function fixture(){
   sale_price_cents:50000000,expires_at:new Date(Date.now()+86400000).toISOString()};
  const offer={id:sourceId,available:true,authorization_confirmed:true,
   price_cents:50000000,updated_at:new Date().toISOString()};
- const demand={id:demandId,kind:'buy',status:'qualified',city:'Caxias do Sul',
+ const demand={id:demandId,kind:'buy',status:'qualified',demand_reviewed:true,city:'Caxias do Sul',
   property_type:'Casa',asking_cents:55000000};
  const pro={id:professionalId,status:'verified',whatsapp_opt_in:true,city:'Caxias do Sul',
   property_type:'Casa',phone:'5554999999999'};
@@ -74,4 +74,13 @@ test('interesse encerrado e opt-out impedem disparos, mesmo com fila antiga',asy
   assert.equal(state.transmissions,0,change);
   assert.equal(state.job.status,'skipped',change);
  }
+});
+
+test('reverifica a confirmação humana do comprador antes de disparar mensagem',async()=>{
+ const {state,service}=fixture();
+ state.demand.demand_reviewed=false;
+ const result=await service.dispatchDeal(dealId);
+ assert.equal(result.submitted,0);
+ assert.equal(state.job.status,'skipped');
+ assert.equal(state.transmissions,0);
 });
