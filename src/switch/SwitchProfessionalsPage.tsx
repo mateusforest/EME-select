@@ -1,7 +1,9 @@
 import {SWITCH_CONSENT_VERSION,switchConsentText} from '../../shared/switch-consent.mjs';
 import {useState,type FormEvent} from 'react';
-import {ArrowLeft,ArrowRight,CheckCircle2,ShieldCheck} from 'lucide-react';
+import {ArrowRight,CheckCircle2,ShieldCheck} from 'lucide-react';
 import './switch.css';
+import './switch-refinement.css';
+import SwitchHeader from './SwitchHeader';
 export default function SwitchProfessionalsPage(){
  const isOptOut=/^\/switch\/sair\/[a-zA-Z0-9_-]{43}\/?$/.test(location.pathname);
  const token=location.pathname.split('/').pop()||'';
@@ -23,10 +25,7 @@ export default function SwitchProfessionalsPage(){
    setDone(true);
   }catch(e){setError((e as Error).message);}finally{setBusy(false);}
  }
- return <main className="sw-page"><header className="sw-header">
-  <a href="/" className="sw-brand"><span>M</span><span>SELECT<small>SWITCH</small></span></a>
-  <a href="/switch" className="sw-back"><ArrowLeft size={16}/>M Switch</a>
- </header><div className="sw-shell sw-invite-shell">
+ return <main className="sw-page"><SwitchHeader/><div className="sw-shell sw-invite-shell">
   <section className="sw-intro"><span className="sw-eyebrow">M SELECT / REDE DE OPORTUNIDADES</span>
    <h1>{isOptOut?'Você controla seus avisos.':'Receba oportunidades com condições claras.'}</h1>
    <p>{isOptOut?'Você pode interromper o recebimento de novos convites pelo WhatsApp.':'Profissionais do mercado podem receber oportunidades relevantes conforme sua área de atuação. Antes de qualquer contato comercial entre as partes, apresentamos condições de remuneração, verificamos o CRECI e exigimos acordo escrito.'}</p>

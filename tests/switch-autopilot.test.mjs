@@ -30,6 +30,7 @@ test('gera no máximo uma proposta idempotente para demanda qualificada e oferta
    throw Error('Unexpected DB query: '+path);
   },
   request:async(_path,{body})=>{
+   if(_path.includes('/eme_switch_outbox?')){if(jobs.some(j=>j.id===body.id))return [];jobs.push(body);return [body];}
    if(saved.some(row=>row.source_id===body.source_id&&row.demand_id===body.demand_id))return [];
    saved.push(body);return [body];
   }
@@ -77,7 +78,7 @@ test('capta negócio de proprietário direto sem depender de carteira parceira',
    if(path==='eme_switch_outbox'&&method==='POST'){jobs.push(body);return [body];}
    throw Error('Unexpected: '+path);
   },
-  request:async(_path,{body})=>{saved.push(body);return [body];}
+  request:async(_path,{body})=>{if(_path.includes('/eme_switch_outbox?'))jobs.push(body);else saved.push(body);return [body];}
  };
  const result=await attachSwitchAutopilot({client,env}).run();
  assert.equal(result.created,1);

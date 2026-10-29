@@ -23,7 +23,7 @@ function clientFor(db){
   assert.match(table,/^eme_(switch_[a-z_]+|profiles)$/);
   const params=new URLSearchParams(query),values=[],where=[];
   for(const [key,value] of params){
-   if(['select','order','limit','on_conflict'].includes(key))continue;
+   if(['select','order','limit','offset','on_conflict'].includes(key))continue;
    assert.match(key,/^[a-z_]+$/);assert.ok(value.startsWith('eq.'));
    values.push(value.slice(3));where.push(`${key}=$${values.length}`);
   }

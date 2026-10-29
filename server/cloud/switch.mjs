@@ -3,6 +3,7 @@ import {rankSwitchInvestors} from '../../shared/switch-matching.mjs';
 import {rankSwitchUpgradeTargets} from '../../shared/switch-trades.mjs';
 import {switchIntake,switchRevision} from '../../shared/switch-intake.mjs';
 import {validateSwitchPartnerImport,matchSwitchDemand} from '../../shared/switch-partners.mjs';
+import {allRecords} from '../../shared/staff-inventory.mjs';
 
 const error = (status,message) => {throw Object.assign(new Error(message),{status});};
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
@@ -12,9 +13,9 @@ const partnerDb = 'eme_switch_partner_offers';
 const offerColumns = 'id,partner,ref,title,city,property_type,price_cents,offer_url,available,authorization_confirmed,updated_at';
 const columns = 'id,kind,name,phone,city,property_type,asking_cents,target_city,target_budget_cents,notes,source,status,owner_id,contact_opt_in,updates_opt_in,ownership_reviewed,sharing_authorized,funds_verified,demand_reviewed,min_acceptable_cents,review_note,version,created_at,updated_at';
 
-export function attachCloudSwitch({client,rate}) {
+export function attachCloudSwitch({client,rate,portfolio}) {
   const {rest,request}=client;
-  const rows = async (filter='') => rest(db+'?select='+columns+'&order=created_at.desc&limit=300'+filter);
+  const rows = async (filter='') => allRecords(rest,db+'?select='+columns+'&order=created_at.desc,id'+filter);
   async function publicHandle(path,req,body,send) {
     if(path!=='/api/public/switch')return false;
     if(req.method!=='POST')error(405,'Envie o formulário para iniciar.');
@@ -49,7 +50,7 @@ export function attachCloudSwitch({client,rate}) {
     }
     if(path==='/api/switch/partners'&&req.method==='GET'){
       if(user.role!=='admin')error(403,'Somente a gestão acessa a carteira de parceiros.');
-      send(200,{offers:await rest(partnerDb+'?select='+offerColumns+'&order=updated_at.desc&limit=500')});
+      send(200,{offers:[...await allRecords(rest,partnerDb+'?select='+offerColumns+'&order=updated_at.desc,id'),...(portfolio?await portfolio.offers():[])]});
       return true;
     }
     if(path==='/api/switch/partners/import'&&req.method==='POST'){
@@ -65,7 +66,7 @@ export function attachCloudSwitch({client,rate}) {
       }));
       // Não alterar o id de um registro pré-existente em reimportações.
       // Upsert faz merge; os vínculos são por (partner, ref), não por UUID arbitrário.
-      const existing=await rest(partnerDb+'?select=id,partner,ref&partner=eq.'+encodeURIComponent(input.partner)+'&limit=500');
+      const existing=await allRecords(rest,partnerDb+'?select=id,partner,ref&partner=eq.'+encodeURIComponent(input.partner)+'&order=id');
       const oldIds=new Map(existing.map(e=>[e.ref,e.id]));
       for(const record of records)if(oldIds.has(record.ref))record.id=oldIds.get(record.ref);
       await request('/rest/v1/'+partnerDb+'?on_conflict=partner,ref',{
@@ -76,7 +77,8 @@ export function attachCloudSwitch({client,rate}) {
     }
     if(path==='/api/switch/matches'&&req.method==='GET'){
       if(user.role!=='admin')error(403,'Somente a gestão pode consultar os cruzamentos de perfis.');
-      const requests=await rows('');
+      const loaded=await rows('');
+      const requests=portfolio?(await Promise.all(loaded.map(portfolio.checkDemand))).filter(Boolean):loaded;
       const investors=requests.filter(r=>r.kind==='invest'&&r.status==='qualified').map(r=>({
         id:r.id,active:true,alertsOptIn:r.updates_opt_in===true,fundsVerified:r.funds_verified===true,
         cities:[r.city],propertyTypes:[r.property_type],maxPurchaseCents:Number(r.asking_cents)
@@ -89,7 +91,7 @@ export function attachCloudSwitch({client,rate}) {
           referencePriceCents:r.asking_cents==null?null:Number(r.asking_cents)
         },investors,{limit:20}).map(match=>({...match,kind:'investor'}))
       );
-      const offers=await rest(partnerDb+'?select='+offerColumns+'&available=is.true&order=updated_at.desc&limit=500');
+      const offers=[...await allRecords(rest,partnerDb+'?select='+offerColumns+'&available=is.true&order=updated_at.desc,id'),...(portfolio?await portfolio.offers():[])];
       const partnerMatches=matchSwitchDemand(requests,offers,{limit:200});
       const internalOffers=requests.filter(r=>['sell','swap'].includes(r.kind)&&r.status==='qualified'&&r.ownership_reviewed&&r.sharing_authorized&&Number(r.min_acceptable_cents)>=1000000)
         .map(r=>({id:r.id,partner:'EME Select',ref:r.id,city:r.city,property_type:r.property_type,price_cents:r.min_acceptable_cents,available:true,authorization_confirmed:true}));

@@ -2,13 +2,14 @@ import {randomBytes,randomUUID,createHash} from 'node:crypto';
 import {switchDealQuote,switchOfferDraft,switchIntroductionReview,switchOfferTeaser,switchOfferAcceptance,switchDealTransition} from '../../shared/switch-deals.mjs';
 import {switchProToken} from './switch-professionals.mjs';
 import {switchSendEligibility} from '../../shared/switch-professionals.mjs';
+import {allRecords} from '../../shared/staff-inventory.mjs';
 const err=(status,message)=>{throw Object.assign(new Error(message),{status});};
 const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 const tokenFormat=/^[a-zA-Z0-9_-]{43}$/;
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const table='eme_switch_deal_invites';
 const selected='id,public_ref,source_kind,source_id,demand_id,teaser_city,teaser_type,sale_price_cents,brokerage_bps,switch_share_bps,status,recipient_name,recipient_phone,recipient_creci,recipient_business,recipient_marketing_opt_in,acknowledged_at,contract_reference,license_checked,signed_confirmed_at,actual_sale_cents,received_cents,closing_reference,payment_reference,created_by,version,created_at,expires_at';
-export function attachCloudSwitchDeals({client,rate,env=process.env,notifyNow}){
+export function attachCloudSwitchDeals({client,rate,env=process.env,notifyNow,portfolio}){
  const {rest,rpc}=client;
  async function publicHandle(path,req,body,send){
    const match=path.match(/^\/api\/public\/switch\/offers\/([a-zA-Z0-9_-]{43})(?:\/(interest))?$/);
@@ -43,7 +44,7 @@ export function attachCloudSwitchDeals({client,rate,env=process.env,notifyNow}){
    if(!match)return false;
    if(!user?.active||user.must_change||user.role!=='admin')err(403,'Apenas a gestão acompanha condições comerciais.');
    if(!match[1]&&req.method==='GET'){
-     const rows=await rest(table+'?select='+selected+'&order=created_at.desc&limit=200');
+     const rows=await allRecords(rest,table+'?select='+selected+'&order=created_at.desc,id');
      send(200,{deals:rows.map(row=>({...row,quote:switchDealQuote({salePriceCents:Number(row.sale_price_cents),brokerageBps:row.brokerage_bps,switchShareBps:row.switch_share_bps})}))});
      return true;
    }
@@ -53,7 +54,8 @@ export function attachCloudSwitchDeals({client,rate,env=process.env,notifyNow}){
        rest((body?.sourceKind==='partner_offer'?'eme_switch_partner_offers':'eme_switch_requests')+'?id=eq.'+encodeURIComponent(String(body?.sourceId||''))+'&select=*'),
        rest('eme_switch_requests?id=eq.'+encodeURIComponent(String(body?.demandId||''))+'&select=*')
      ]);
-     const offer=source[0],demand=target[0];
+     const offer=body?.sourceKind==='partner_offer'&&portfolio?await portfolio.resolve(String(body.sourceId)):source[0];
+     const demand=portfolio?await portfolio.checkDemand(target[0]):target[0];
      const {professionalId,...requestInput}=body||{};
      const draft=switchOfferDraft(requestInput,offer,demand);
      const wantedCity=demand.kind==='swap'?demand.target_city:demand.city;
@@ -116,7 +118,8 @@ export function attachCloudSwitchDeals({client,rate,env=process.env,notifyNow}){
          rest((row.source_kind==='partner_offer'?'eme_switch_partner_offers':'eme_switch_requests')+'?id=eq.'+row.source_id+'&select=*'),
          rest('eme_switch_requests?id=eq.'+row.demand_id+'&select=*')
        ]);
-       switchIntroductionReview(row,source,demand);
+       const currentSource=row.source_kind==='partner_offer'&&portfolio?await portfolio.resolve(row.source_id):source;
+       switchIntroductionReview(row,currentSource,portfolio?await portfolio.checkDemand(demand):demand);
      }
      const updates={...transition,version:row.version+1,updated_by:user.id,updated_at:new Date().toISOString()};
      if(body.action==='contract'){

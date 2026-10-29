@@ -14,7 +14,7 @@ const dealId='8c43ee32-d668-4493-b251-aa22a08df956';
 const sourceId='abe6eed0-99e3-4672-9746-2e9499d7fcdc';
 const demandId='95ba6d78-4574-4ea6-8741-80cb21fd956f';
 const professionalId='682e7261-1b4d-4579-8fbd-2c8225332526';
-function fixture(){
+function fixture(portfolio){
  const deal={id:dealId,source_kind:'partner_offer',source_id:sourceId,demand_id:demandId,
   teaser_city:'Caxias do Sul',teaser_type:'Casa',status:'prepared',
   sale_price_cents:50000000,expires_at:new Date(Date.now()+86400000).toISOString()};
@@ -45,7 +45,7 @@ function fixture(){
   }
  };
  const fetcher=async()=>{state.transmissions++;return {ok:true,json:async()=>({messages:[{id:'wamid.test'}]})};};
- return {state,service:attachCloudSwitchProfessionals({client,env,rate:async()=>{},fetcher})};
+ return {state,service:attachCloudSwitchProfessionals({client,env,rate:async()=>{},fetcher,portfolio})};
 }
 test('aceita envio somente após revalidar estoque, comprador e opt-in no instante do disparo',async()=>{
  const {service,state}=fixture();
@@ -83,4 +83,16 @@ test('reverifica a confirmação humana do comprador antes de disparar mensagem'
  assert.equal(result.submitted,0);
  assert.equal(state.job.status,'skipped');
  assert.equal(state.transmissions,0);
+});
+
+test('retirada de anúncio da carteira bloqueia convite preparado anteriormente',async()=>{
+ const {state,service}=fixture({resolve:async()=>null,checkDemand:async d=>d});
+ const result=await service.dispatchDeal(dealId);
+ assert.equal(result.skipped,1);assert.equal(state.transmissions,0);
+});
+
+test('revogação no CRM bloqueia o envio mesmo com ficha Switch qualificada',async()=>{
+ const {state,service}=fixture({resolve:async()=>({available:true,authorization_confirmed:true,price_cents:50000000,updated_at:new Date().toISOString()}),checkDemand:async()=>null});
+ const result=await service.dispatchDeal(dealId);
+ assert.equal(result.skipped,1);assert.equal(state.transmissions,0);
 });

@@ -29,7 +29,7 @@ export function validateSwitchPartnerImport(body){
   })};
 }
 export function matchSwitchDemand(requests,offers,{limit=200}={}){
-  if(!Array.isArray(requests)||!Array.isArray(offers)||!Number.isInteger(limit)||limit<1||limit>1000)throw TypeError('Dados de correspondência inválidos.');
+  if(!Array.isArray(requests)||!Array.isArray(offers)||(limit!==Infinity&&(!Number.isInteger(limit)||limit<1||limit>1000)))throw TypeError('Dados de correspondência inválidos.');
   const results=[];
   const eligible=requests.filter(r=>r&&r.status==='qualified'&&['buy','swap','invest'].includes(r.kind));
   for(const demand of eligible){

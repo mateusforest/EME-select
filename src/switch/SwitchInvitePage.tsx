@@ -1,6 +1,8 @@
 import {useEffect,useState,type FormEvent} from 'react';
-import {ArrowLeft,CheckCircle2,ShieldCheck} from 'lucide-react';
+import {CheckCircle2,ShieldCheck} from 'lucide-react';
 import './switch.css';
+import './switch-refinement.css';
+import SwitchHeader from './SwitchHeader';
 type Offer={
  reference:string;city:string;propertyType:string;opportunity:string;estimatedSaleCents:number;
  brokerageBps:number;switchShareBps:number;
@@ -32,7 +34,7 @@ export default function SwitchInvitePage(){
    }catch(e){setError((e as Error).message);}finally{setBusy(false);}
  };
  return <main className="sw-page">
-  <header className="sw-header"><a href="/" className="sw-brand"><span>M</span><span>SELECT<small>SWITCH</small></span></a><a href="/switch" className="sw-back"><ArrowLeft size={17}/>M Switch</a></header>
+  <SwitchHeader/>
   <div className="sw-shell sw-invite-shell">
    <section className="sw-intro"><span className="sw-eyebrow">M SWITCH / OPORTUNIDADE COMERCIAL</span>
      <h1>Uma oportunidade. Condições claras.</h1>

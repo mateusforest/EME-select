@@ -13,13 +13,13 @@ test('cadastro público de comprador mantém opt-in separado e confirma recebime
  await page.getByLabel('Seu nome').fill('Compradora Sintética');
  await page.getByLabel('WhatsApp com DDD').fill('(54) 99999-9999');
  await page.getByLabel('Cidade onde deseja comprar').fill('Caxias do Sul');
- await page.getByLabel('Orçamento máximo previsto').fill('450000');
+ await page.getByLabel('Orçamento máximo previsto').fill('450500');
  await page.getByText('Li e concordo com o uso dos dados informados',{exact:false}).click();
  await page.getByText('Autorizo o contato da equipe M Select',{exact:false}).click();
  await page.getByRole('button',{name:'Solicitar análise'}).click();
  await expect(page.getByRole('heading',{name:'Agora temos um ponto de partida.'})).toBeVisible();
  expect(submitted).toMatchObject({
-  kind:'buy',city:'Caxias do Sul',askingCents:45000000,
+  kind:'buy',city:'Caxias do Sul',askingCents:45050000,
   privacyAccepted:true,contactConsent:true,updatesOptIn:false,consentVersion:SWITCH_CONSENT_VERSION
  });
 });

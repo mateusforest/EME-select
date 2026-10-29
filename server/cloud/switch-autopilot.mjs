@@ -2,6 +2,8 @@ import {randomUUID,randomBytes,createHash} from 'node:crypto';
 import {matchSwitchDemand} from '../../shared/switch-partners.mjs';
 import {switchDealQuote} from '../../shared/switch-deals.mjs';
 import {switchProToken} from './switch-professionals.mjs';
+import {queueSwitchInvite} from './switch-queue.mjs';
+import {allRecords} from '../../shared/staff-inventory.mjs';
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const nonnegative=(value,min,max)=>Number.isInteger(value)&&value>=min&&value<=max;
 const key=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLocaleLowerCase('pt-BR');
@@ -14,16 +16,17 @@ export function switchAutopilotSettings(env){
    nonnegative(brokerage,1,1000)&&nonnegative(share,1,10000);
  return {enabled,brokerageBps:brokerage,switchShareBps:share};
 }
-export function attachSwitchAutopilot({client,env=process.env}){
+export function attachSwitchAutopilot({client,env=process.env,portfolio}){
  const {rest,request}=client;
  async function run(){
    const cfg=switchAutopilotSettings(env);
    if(!cfg.enabled)return {enabled:false,created:0,reason:'Automação de propostas desativada.'};
-   const [requests,offers,professionals]=await Promise.all([
-     rest('eme_switch_requests?select=id,kind,status,city,property_type,asking_cents,target_city,target_budget_cents,demand_reviewed,ownership_reviewed,sharing_authorized,min_acceptable_cents,updated_at&status=eq.qualified&order=created_at.desc&limit=200'),
-     rest('eme_switch_partner_offers?select=id,partner,ref,title,city,property_type,price_cents,available,authorization_confirmed,updated_at&available=is.true&authorization_confirmed=is.true&order=updated_at.desc&limit=300'),
-     rest('eme_switch_professionals?select=id,city,property_type,phone,status,whatsapp_opt_in&status=eq.verified&whatsapp_opt_in=is.true&order=created_at.asc&limit=200')
+   const [loadedRequests,offers,professionals]=await Promise.all([
+     allRecords(rest,'eme_switch_requests?select=id,source,phone,kind,status,city,property_type,asking_cents,target_city,target_budget_cents,demand_reviewed,ownership_reviewed,sharing_authorized,min_acceptable_cents,updated_at&status=eq.qualified&order=created_at.desc,id'),
+     allRecords(rest,'eme_switch_partner_offers?select=id,partner,ref,title,city,property_type,price_cents,available,authorization_confirmed,updated_at&available=is.true&authorization_confirmed=is.true&order=updated_at.desc,id'),
+     allRecords(rest,'eme_switch_professionals?select=id,city,property_type,phone,status,whatsapp_opt_in&status=eq.verified&whatsapp_opt_in=is.true&order=created_at.asc,id')
    ]);
+   const requests=portfolio?(await Promise.all(loadedRequests.map(portfolio.checkDemand))).filter(Boolean):loadedRequests;
    // Não automatizar imóveis sem autorização, sem atualização recente ou sem demanda qualificada.
    const fresh=offers.filter(o=>o.available===true&&o.authorization_confirmed===true&&
      Date.now()-Date.parse(o.updated_at)<7*86400000)
@@ -37,8 +40,8 @@ export function attachSwitchAutopilot({client,env=process.env}){
      .map(r=>({id:r.id,partner:'Proprietário validado',ref:r.id,
        city:r.city,property_type:r.property_type,price_cents:Number(r.min_acceptable_cents),
        available:true,authorization_confirmed:true,source_kind:'switch_request'}));
-   const available=[...direct,...fresh];
-   const matches=matchSwitchDemand(requests.filter(r=>['buy','swap','invest'].includes(r.kind)&&(r.kind!=='buy'||r.demand_reviewed===true)),available,{limit:100});
+   const available=[...direct,...fresh,...(portfolio?await portfolio.offers():[])];
+   const matches=matchSwitchDemand(requests.filter(r=>['buy','swap','invest'].includes(r.kind)&&(r.kind!=='buy'||r.demand_reviewed===true)),available,{limit:Infinity});
    let created=0,skipped=0;
    const booked=new Set();
    for(const candidate of matches){
@@ -72,10 +75,13 @@ export function attachSwitchAutopilot({client,env=process.env}){
      const inserted=await request('/rest/v1/eme_switch_deal_invites?on_conflict=source_kind,source_id,demand_id',{
        method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=representation'},body:record
      });
-     if(!inserted?.length){skipped++;continue;}
-     await rest('eme_switch_outbox','POST',{
-       id:randomUUID(),deal_id:id,professional_id:pro.id,phone:pro.phone,status:'pending'
-     });
+     // Recover a previously committed invitation whose queue insert failed.
+     // Only HMAC-backed autopilot invitations can be safely reconstructed.
+     const deal=inserted?.[0]||(await rest('eme_switch_deal_invites?source_kind=eq.'+record.source_kind+
+       '&source_id=eq.'+record.source_id+'&demand_id=eq.'+record.demand_id+'&select=id,origin,status,expires_at,token_hash'))[0];
+     if(!deal||deal.origin!=='autopilot'||deal.status!=='prepared'||Date.parse(deal.expires_at)<=Date.now()||
+       deal.token_hash!==sha(switchProToken(env,'deal',deal.id))){skipped++;continue;}
+     if(!await queueSwitchInvite(client,deal,pro)){skipped++;continue;}
      booked.add(pro.id);created++;
    }
    return {enabled:true,created,skipped};

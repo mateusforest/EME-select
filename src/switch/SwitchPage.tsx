@@ -1,7 +1,9 @@
 import {SWITCH_CONSENT_VERSION,switchConsentText} from '../../shared/switch-consent.mjs';
-import {useState,type FormEvent} from 'react';
-import {ArrowRight,CheckCircle2,House,Repeat2,TrendingUp} from 'lucide-react';
+import {useEffect,useState,type FormEvent} from 'react';
+import {ArrowRight,ArrowUpRight,CheckCircle2,House,Repeat2,TrendingUp,ShieldCheck} from 'lucide-react';
+import SwitchHeader from './SwitchHeader';
 import './switch.css';
+import './switch-refinement.css';
 
 type Kind = 'swap' | 'sell' | 'buy' | 'invest';
 type SwitchForm = {
@@ -23,6 +25,7 @@ function cents(value:string) {
   return Number.isFinite(amount)&&amount>0?Math.round(amount*100):null;
 }
 export default function SwitchPage(){
+  useEffect(()=>{document.title='M Switch — Novas possibilidades | EME Select';},[]);
   const [kind,setKind]=useState<Kind>('swap'),[form,setForm]=useState<SwitchForm>(empty);
   const [requestId,setRequestId]=useState(()=>crypto.randomUUID());
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[sent,setSent]=useState(false);
@@ -47,18 +50,21 @@ export default function SwitchPage(){
     finally{setBusy(false);}
   }
   return <main className="sw-page">
-    <header className="sw-header"><a href="/" className="sw-brand" aria-label="M Select · início"><span>M</span><span>SELECT<small>SWITCH</small></span></a><a className="sw-back" href="/switch/profissionais">Sou profissional · receber oportunidades <ArrowRight size={15}/></a></header>
+    <a className="sw-skip" href="#switch-form">Ir para o formulário</a>
+    <SwitchHeader/>
     <div className="sw-shell">
       <section className="sw-intro">
-        <span className="sw-eyebrow">M SELECT / NOVAS POSSIBILIDADES</span>
-        <h1>Seu próximo imóvel pode começar pelo que você já tem.</h1>
-        <p>Conte o que você possui ou procura. Nossa equipe analisa possibilidades de venda, troca e investimento e conecta interesses compatíveis.</p>
-        <div className="sw-benefits"><span><Repeat2 size={17}/>Trocas estruturadas</span><span><House size={17}/>Venda com estratégia</span><span><TrendingUp size={17}/>Rede de investidores</span></div>
-        <p className="sw-fine">As combinações são sugestões sujeitas a análise documental, avaliação e negociação. Não garantimos ofertas, preço, venda ou crédito.</p>
+        <span className="sw-eyebrow"><Repeat2 size={16}/> M SWITCH · CONEXÕES IMOBILIÁRIAS</span>
+        <h1>Seu próximo imóvel.<br/><em>Um novo caminho.</em></h1>
+        <p>O que você tem e o que procura podem se conectar. Encontramos possibilidades de compra, venda e troca, com a atenção da EME em cada etapa.</p>
+        <figure className="sw-scene"><img src="/assets/experience/hero-casas-detail.webp" width="1536" height="1024" alt="Arquitetura contemporânea em tons claros"/><figcaption>Cenário conceitual · novas possibilidades</figcaption></figure>
+        <div className="sw-benefits"><span><Repeat2 size={17}/>Trocar</span><span><House size={17}/>Comprar e vender</span><span><TrendingUp size={17}/>Investir</span></div>
+        <a className="sw-professional-link" href="/switch/profissionais">É corretor ou parceiro? Conheça a rede<ArrowUpRight size={16}/></a>
       </section>
-      <section className="sw-card" aria-label="Solicitar análise M Switch">
+      <section className="sw-card" id="switch-form" aria-label="Solicitar análise M Switch">
         {sent?<div className="sw-success" role="status"><CheckCircle2 size={40}/><span className="sw-eyebrow">SOLICITAÇÃO RECEBIDA</span><h2>Agora temos um ponto de partida.</h2><p>Sua ficha foi encaminhada à equipe M Select. Vamos analisar seu interesse e entrar em contato pelos dados informados. O envio não constitui proposta ou compromisso de compra.</p><button type="button" className="sw-submit" onClick={()=>{setForm(empty);setKind('swap');setSent(false);}}>Enviar outra solicitação<ArrowRight size={17}/></button></div>:<>
-          <div className="sw-card-head"><span>01 / SUA OPORTUNIDADE</span><h2>Como podemos ajudar?</h2></div>
+          <div className="sw-card-head"><span>VAMOS ENTENDER SEU MOMENTO</span><h2>Qual é o seu próximo passo?</h2><p>Conte um pouco sobre você. A equipe cuida da conexão.</p></div>
+          {import.meta.env.VITE_SWITCH_VISUAL_PREVIEW&&<p className="sw-preview-note">Prévia local · cadastros e envios desativados</p>}
           <div className="sw-kinds" role="group" aria-label="Tipo de operação">{kinds.map(item=><button type="button" key={item.id} aria-pressed={kind===item.id} className={kind===item.id?'is-active':''} onClick={()=>setKind(item.id)}><strong>{item.name}</strong><small>{item.detail}</small></button>)}</div>
           <form className="sw-form" onSubmit={submit}>
             <div className="sw-two">
@@ -66,9 +72,9 @@ export default function SwitchPage(){
               <label>WhatsApp com DDD<input required type="tel" inputMode="tel" maxLength={25} autoComplete="tel" value={form.phone} onChange={e=>change('phone',e.target.value)} placeholder="(54) 99999-9999"/></label>
               <label>{kind==='invest'?'Cidade onde deseja investir':kind==='buy'?'Cidade onde deseja comprar':'Cidade do seu imóvel'}<input required maxLength={100} value={form.city} onChange={e=>change('city',e.target.value)} placeholder="Cidade / estado"/></label>
               <label>Tipo de imóvel<select required value={form.propertyType} onChange={e=>change('propertyType',e.target.value)}><option>Casa</option><option>Apartamento</option><option>Terreno</option><option>Comercial</option><option>Área rural</option><option>Outro</option></select></label>
-              <label>{label}<input required type="number" min="10000" max="10000000000" step="1000" inputMode="numeric" value={form.asking} onChange={e=>change('asking',e.target.value)} placeholder="Ex.: 450000"/></label>
+              <label>{label}<input required type="number" min="10000" max="10000000000" step="0.01" inputMode="decimal" value={form.asking} onChange={e=>change('asking',e.target.value)} placeholder="Ex.: 450000"/></label>
               {kind==='swap'&&<label>Onde deseja comprar?<input maxLength={100} value={form.targetCity} onChange={e=>change('targetCity',e.target.value)} placeholder="Cidade ou região desejada"/></label>}
-              {kind==='swap'&&<label>Orçamento do imóvel desejado (R$)<input type="number" min="10000" max="10000000000" step="1000" value={form.targetBudget} onChange={e=>change('targetBudget',e.target.value)} placeholder="Ex.: 700000"/></label>}
+              {kind==='swap'&&<label>Orçamento do imóvel desejado (R$)<input type="number" min="10000" max="10000000000" step="0.01" inputMode="decimal" value={form.targetBudget} onChange={e=>change('targetBudget',e.target.value)} placeholder="Ex.: 700000"/></label>}
             </div>
             <label>O que você procura? <small>Opcional</small><textarea rows={3} maxLength={1200} value={form.notes} onChange={e=>change('notes',e.target.value)} placeholder={kind==='invest'?'Região, prazo, tipo de oportunidade…':kind==='buy'?'Bairros, dormitórios, condições e prazo para comprar…':'Fale um pouco sobre a situação e os objetivos da negociação…'}/></label>
             <details className="sw-data-note"><summary>Como usamos seus dados</summary><p>Nome, telefone, informações do imóvel e sua intenção de negociação são utilizados para organizar o atendimento e analisar compatibilidades. O acesso é restrito à equipe responsável. Não compartilhamos seu imóvel ou contato com investidores sem conferência e autorização específicas. Avisos de novas oportunidades são opcionais e podem ser cancelados pelo canal de atendimento da M Select. Você pode solicitar acesso, revisão ou exclusão de dados pelos canais de contato do site.</p></details>
@@ -85,6 +91,8 @@ export default function SwitchPage(){
         </>}
       </section>
     </div>
-    <footer className="sw-footer">M SELECT <span>Uma oportunidade começa com uma boa conexão.</span></footer>
+    <section className="sw-process" aria-label="Como funciona"><div><span className="sw-eyebrow">CONEXÕES COM CRITÉRIO</span><h2>Possibilidades reais.<br/>Pessoas por perto.</h2></div><ol><li><span>01</span><div><h3>Você conta.</h3><p>Entendemos seu imóvel, sua busca e o seu momento.</p></div></li><li><span>02</span><div><h3>A gente conecta.</h3><p>Cruzamos interesses com a carteira e oportunidades de parceiros.</p></div></li><li><span>03</span><div><h3>Decidimos juntos.</h3><p>Um consultor confere as condições e acompanha os próximos passos.</p></div></li></ol></section>
+    <p className="sw-safety"><ShieldCheck size={19}/>As conexões dependem de análise e autorização. Não há garantia de venda, permuta ou crédito.</p>
+    <footer className="sw-footer">EME SELECT <span>Qualidade em cada escolha. Transparência em cada passo.</span><a href="/">Voltar ao site<ArrowUpRight size={14}/></a></footer>
   </main>;
 }
