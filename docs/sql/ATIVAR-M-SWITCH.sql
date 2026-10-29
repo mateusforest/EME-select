@@ -22,6 +22,7 @@ create table if not exists public.eme_switch_requests (
   ownership_reviewed boolean not null default false,
   sharing_authorized boolean not null default false,
   funds_verified boolean not null default false,
+  demand_reviewed boolean not null default false,
   min_acceptable_cents bigint check(min_acceptable_cents between 1000000 and 1000000000000),
   review_note text not null default '' check(char_length(review_note)<=1000),
   reviewed_by uuid references public.eme_profiles(id) on delete set null,
