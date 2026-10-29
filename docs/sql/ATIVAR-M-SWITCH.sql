@@ -198,6 +198,7 @@ create table if not exists public.eme_switch_professionals(
  status text not null default 'pending' check(status in ('pending','verified','paused','rejected')),
  verified_by uuid references public.eme_profiles(id),
  verified_at timestamptz,
+ version bigint not null default 1 check(version >= 1),
  optout_token_hash text not null unique check(length(optout_token_hash)=64 and translate(optout_token_hash,'0123456789abcdef','')=''),
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
