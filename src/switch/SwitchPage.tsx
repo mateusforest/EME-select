@@ -2,6 +2,7 @@ import {SWITCH_CONSENT_VERSION,switchConsentText} from '../../shared/switch-cons
 import {useEffect,useRef,useState,type FormEvent} from 'react';
 import {ArrowRight,ArrowUpRight,CheckCircle2,House,Repeat2,TrendingUp,ShieldCheck,KeyRound,ChevronDown,X} from 'lucide-react';
 import SwitchHeader from './SwitchHeader';
+import SwitchObjectiveArt from './SwitchObjectiveArt';
 import './switch.css';
 import './switch-refinement.css';
 
@@ -36,6 +37,7 @@ export default function SwitchPage(){
   const [kind,setKind]=useState<Kind>('swap'),[form,setForm]=useState<SwitchForm>(empty);
   const [requestId,setRequestId]=useState(()=>crypto.randomUUID());
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[sent,setSent]=useState(false);
+  const [heroKind,setHeroKind]=useState<Kind|null>(null);
   const [opened,setOpened]=useState(false),[details,setDetails]=useState(false);
   const explanationRef=useRef<HTMLHeadingElement>(null),firstField=useRef<HTMLInputElement>(null);
   useEffect(()=>{if(opened)explanationRef.current?.focus({preventScroll:true});},[opened,kind]);
@@ -43,7 +45,7 @@ export default function SwitchPage(){
   function choose(next:Kind){
     if(busy)return;
     if(next!==kind)setForm(current=>({...current,privacyAccepted:false,contactConsent:false,updatesOptIn:false}));
-    setKind(next);setOpened(true);setDetails(false);setSent(false);setError('');
+    setKind(next);setHeroKind(next);setOpened(true);setDetails(false);setSent(false);setError('');
   }
   function close(){if(busy)return;setOpened(false);setDetails(false);document.getElementById('switch-choice-'+kind)?.focus({preventScroll:true});}
   const change=(key:keyof SwitchForm,value:string|boolean)=>setForm(current=>({...current,[key]:value}));
@@ -76,7 +78,7 @@ export default function SwitchPage(){
         <h1>Seu próximo imóvel.<br/><em>Um novo caminho.</em></h1>
         <p>Quem quer vender. Quem quer comprar. Quem vê uma oportunidade.<br/>A EME aproxima os caminhos.</p>
        </div>
-       <figure className="sw-guided-scene"><img src="/assets/experience/hero-casas-detail.webp" alt="Arquitetura contemporânea em tons claros"/><figcaption>Cenário conceitual</figcaption></figure>
+       <SwitchObjectiveArt objective={heroKind}/>
       </section>
       <section id="switch-choices" className="sw-choice-section" aria-labelledby="switch-choice-title">
         <div className="sw-choice-heading"><h2 id="switch-choice-title">O que você quer fazer?</h2><span>Escolha um caminho para começar.</span></div>
