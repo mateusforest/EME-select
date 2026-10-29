@@ -14,7 +14,7 @@ type Request = {
   asking_cents:number;target_city:string;target_budget_cents:number|null;
   notes:string;source:string;status:Status;owner_id:string|null;contact_opt_in:boolean;
   updates_opt_in:boolean;ownership_reviewed:boolean;sharing_authorized:boolean;
-  funds_verified:boolean;min_acceptable_cents:number|null;review_note:string;version:number;created_at:string;
+  funds_verified:boolean;demand_reviewed:boolean;min_acceptable_cents:number|null;review_note:string;version:number;created_at:string;
 };
 type PartnerOffer={id:string;partner:string;ref:string;title:string;city:string;property_type:string;price_cents:number;offer_url:string;available:boolean};
 type Match = {kind:'investor'|'upgrade-target'|'partner-offer'|'internal-offer';assetId:string;investorId:string;score:number;stage:string;requiresBrokerReview:boolean;reasons:string[];flags:string[]};
@@ -25,7 +25,7 @@ const brl=(value:number|null|undefined)=>value==null?'Não informado':(value/100
 function SwitchEditor({item,admin,members,done}:{item:Request;admin:boolean;members:Assignee[];done:(value:Request)=>void}){
  const [status,setStatus]=useState<Status>(item.status),[ownerId,setOwnerId]=useState(item.owner_id||'');
  const [reviewed,setReviewed]=useState(item.ownership_reviewed),[share,setShare]=useState(item.sharing_authorized);
- const [verified,setVerified]=useState(item.funds_verified);
+ const [verified,setVerified]=useState(item.funds_verified),[demandReviewed,setDemandReviewed]=useState(item.demand_reviewed);
  const [minimum,setMinimum]=useState(item.min_acceptable_cents!=null?String(item.min_acceptable_cents/100):'');
  const [note,setNote]=useState(item.review_note||''),[busy,setBusy]=useState(false),[error,setError]=useState('');
  async function submit(e:FormEvent){
@@ -34,7 +34,7 @@ function SwitchEditor({item,admin,members,done}:{item:Request;admin:boolean;memb
    const minimumCents=minimum.trim()?Math.round(Number(minimum)*100):null;
    if(admin&&['sell','swap'].includes(item.kind)&&minimumCents!==null&&(!Number.isSafeInteger(minimumCents)||minimumCents<10000_00))throw Error('Informe o valor mínimo em reais, a partir de R$ 10 mil.');
    const payload={version:item.version,status,note,...(admin?{
-     ownerId:ownerId||null,...(item.kind==='invest'?{fundsVerified:verified}:item.kind==='buy'?{}:{ownershipReviewed:reviewed,sharingAuthorized:share,minAcceptableCents:minimumCents})
+     ownerId:ownerId||null,...(item.kind==='invest'?{fundsVerified:verified}:item.kind==='buy'?{demandReviewed}:{ownershipReviewed:reviewed,sharingAuthorized:share,minAcceptableCents:minimumCents})
    }: {})};
    const response=await api<{request:Request}>('/switch/'+item.id,'PATCH',payload);
    done(response.request);
@@ -50,7 +50,7 @@ function SwitchEditor({item,admin,members,done}:{item:Request;admin:boolean;memb
     {admin&&<label>Responsável<select value={ownerId} onChange={e=>setOwnerId(e.target.value)}><option value="">Fila da gestão</option>{members.map(m=><option value={m.id} key={m.id}>{m.name}</option>)}</select></label>}
    </div>
    {admin&&<fieldset className="sx-verification"><legend><ShieldCheck size={15}/> Conferências da gestão</legend>
-    {item.kind==='invest'?<label><input type="checkbox" checked={verified} onChange={e=>setVerified(e.target.checked)}/> Capacidade declarada e identidade revisadas pela equipe</label>:item.kind==='buy'?<p className="sx-info">Qualificação de comprador: confirme preferência, telefone e orçamento antes de avançar. Não representa crédito aprovado.</p>:<>
+    {item.kind==='invest'?<label><input type="checkbox" checked={verified} onChange={e=>setVerified(e.target.checked)}/> Capacidade declarada e identidade revisadas pela equipe</label>:item.kind==='buy'?<label><input type="checkbox" checked={demandReviewed} onChange={e=>setDemandReviewed(e.target.checked)}/> Confirmei diretamente com o comprador a intenção atual, o orçamento declarado e a forma de pagamento. Não constitui aprovação de crédito.</label>:<>
       <label><input type="checkbox" checked={reviewed} onChange={e=>setReviewed(e.target.checked)}/> Titularidade e situação do imóvel revisadas</label>
       <label><input type="checkbox" checked={share} onChange={e=>setShare(e.target.checked)}/> Autorização específica de apresentação a investidores confirmada</label>
       <label>Valor mínimo aceito pelo proprietário (R$)<input type="number" min="10000" max="10000000000" step="1000" value={minimum} onChange={e=>setMinimum(e.target.value)} placeholder="Confirme com o proprietário"/></label>
