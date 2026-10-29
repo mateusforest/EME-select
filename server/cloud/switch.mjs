@@ -10,7 +10,7 @@ const digest = value => createHash('sha256').update(value).digest('hex');
 const db = 'eme_switch_requests';
 const partnerDb = 'eme_switch_partner_offers';
 const offerColumns = 'id,partner,ref,title,city,property_type,price_cents,offer_url,available,authorization_confirmed,updated_at';
-const columns = 'id,kind,name,phone,city,property_type,asking_cents,target_city,target_budget_cents,notes,source,status,owner_id,contact_opt_in,updates_opt_in,ownership_reviewed,sharing_authorized,funds_verified,min_acceptable_cents,review_note,version,created_at,updated_at';
+const columns = 'id,kind,name,phone,city,property_type,asking_cents,target_city,target_budget_cents,notes,source,status,owner_id,contact_opt_in,updates_opt_in,ownership_reviewed,sharing_authorized,funds_verified,demand_reviewed,min_acceptable_cents,review_note,version,created_at,updated_at';
 
 export function attachCloudSwitch({client,rate}) {
   const {rest,request}=client;
