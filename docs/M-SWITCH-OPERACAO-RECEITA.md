@@ -95,3 +95,13 @@ A fila `eme_switch_outbox` deduplica por convite/profissional, exige opt-in e el
 **Não implementado:** integrações de telefone, e-mail automático, feeds remotos agendados, contratos assinados no próprio portal, pagamento/boleto automático, conciliação financeira ou entrega automática de telefone e dados de comprador. Essas ações dependem de provedores, regras e segurança adicionais.
 
 **Qualidade:** `npm run test:switch` cobre testes de cálculo, consentimento, empresa, tokens, API, banco (PGlite), remetente Meta falso e autopiloto; `npm run build` no CI. A validação de build não comprova integração real com Meta nem Supabase de produção.
+
+## Hardening antes do piloto (28/10/2026)
+
+- Corrigida a coluna de versão de profissionais, ausente na primeira migração, com validação automatizada em PostgreSQL de teste.
+- Adicionado painel administrativo `/api/switch/readiness`: verifica existência das tabelas, configuração Meta, habilitação do webhook, segredo de agendamento e estado do autopiloto, sem revelar credenciais. Esse status técnico **não** substitui verificações jurídicas, contrato e aprovação do template.
+- Acrescentados testes de interface Chromium para cadastro de comprador, responsividade mobile, convite com participação comercial antes de revelar contato e cancelamento de alertas. O build local agora reconhece rotas `/switch` e convites; URLs com token receberam cabeçalho `Referrer-Policy: no-referrer`.
+- Antes de enviar qualquer convite pelo WhatsApp, o worker reconsulta o interesse e orçamento atuais do comprador, a autorização, o preço, a disponibilidade e a atualização da oferta, além do opt-in vigente do profissional; casos incompatíveis são ignorados.
+- O autopiloto agora também identifica **proprietários captados diretamente na M Select** (com titularidade e divulgação revisadas) e cruza seus imóveis com compradores. Essa rota comercial funciona sem importar carteiras de imobiliárias parceiras.
+
+A operação continua em branch/PR de prévia até aplicar SQL, testar o Supabase real, configurar Meta oficial, confirmar licença/contratos e validar consentimentos. **Não há faturamento comprovado nem mensagens enviadas em produção.**
