@@ -54,3 +54,11 @@ test('não permite qualificar enquanto limpa valor mínimo anterior',()=>{
 test('rejeita atualização com versão antiga',()=>{
   assert.throws(()=>switchRevision({version:1,status:'reviewing'},prior,true),e=>e.status===409);
 });
+
+test('comprador só vira demanda comercial após revisão expressa da gestão',()=>{
+ const buyer={...prior,kind:'buy',demand_reviewed:false};
+ assert.throws(()=>switchRevision({version:2,status:'qualified'},buyer,true));
+ assert.throws(()=>switchRevision({version:2,demandReviewed:true},buyer,false),e=>e.status===403);
+ const review=switchRevision({version:2,status:'qualified',demandReviewed:true},buyer,true);
+ assert.deepEqual(review,{status:'qualified',demand_reviewed:true});
+});
