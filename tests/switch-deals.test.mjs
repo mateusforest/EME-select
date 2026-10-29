@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {switchDealQuote,switchOfferDraft,switchOfferAcceptance,switchOfferTeaser,switchDealTransition} from '../shared/switch-deals.mjs';
 const source={id:'a',kind:'sell',status:'qualified',ownership_reviewed:true,sharing_authorized:true,min_acceptable_cents:35000000};
-const target={id:'b',kind:'buy',status:'qualified'};
+const target={id:'b',kind:'buy',status:'qualified',demand_reviewed:true};
 const input={sourceKind:'switch_request',sourceId:'a',demandId:'b',salePriceCents:50000000,brokerageBps:500,switchShareBps:3000};
 test('simulação de corretagem separa bruto, M Switch e parceiro',()=>{
  const result=switchDealQuote(input);
@@ -49,4 +49,8 @@ test('não marca pago antes de fechar nem sem recebimento real',()=>{
  assert.throws(()=>switchDealTransition({status:'introduced'},'paid',{receivedCents:700000}));
  assert.throws(()=>switchDealTransition({status:'closed'},'paid',{receivedCents:0}));
  assert.deepEqual(switchDealTransition({status:'closed'},'paid',{receivedCents:750000}),{status:'paid'});
+});
+
+test('não anuncia comprador sem confirmação humana da intenção declarada',()=>{
+ assert.throws(()=>switchOfferDraft(input,source,{...target,demand_reviewed:false}));
 });
