@@ -34,6 +34,8 @@ test('M Switch SQL: instala, protege dados, audita e registra ciência do convit
     values($1,$2,'Corretor Exemplo','RS 12345','5554988887777','Vacaria','Casa',true,true,$3)`,
     [proId,'934364c2-f4b6-4825-a548-a49c361181d0','b'.repeat(64)]);
   await db.query("update public.eme_switch_professionals set whatsapp_opt_in=false,status='paused' where id=$1",[proId]);
+  const buyerField=await db.query("select column_name from information_schema.columns where table_schema='public' and table_name='eme_switch_requests' and column_name='demand_reviewed'");
+  assert.equal(buyerField.rows.length,1);
   const columns=await db.query("select column_name from information_schema.columns where table_schema='public' and table_name='eme_switch_professionals' and column_name='version'");
   assert.equal(columns.rows.length,1,'Revisão da habilitação precisa de coluna version para controle concorrente');
   const version=await db.query('select version from public.eme_switch_professionals where id=$1',[proId]);
