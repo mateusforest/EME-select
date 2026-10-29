@@ -13,7 +13,7 @@ test('autopiloto comercial é bloqueado por padrão e sem percentuais válidos',
  assert.equal(switchAutopilotSettings(env).enabled,true);
 });
 test('gera no máximo uma proposta idempotente para demanda qualificada e oferta parceira revisada',async()=>{
- const buyer={id:'4da1ca67-d938-47ee-9d4a-0d53cd2d0a89',kind:'buy',status:'qualified',city:'Vacaria',property_type:'Casa',asking_cents:65000000};
+ const buyer={id:'4da1ca67-d938-47ee-9d4a-0d53cd2d0a89',kind:'buy',status:'qualified',demand_reviewed:true,city:'Vacaria',property_type:'Casa',asking_cents:65000000};
  const offer={id:'3e6ddfa5-8aaa-4e10-b6ac-d155c52f8476',partner:'Construtora Demo',ref:'COD100',title:'Casa modelo',
    city:'Vacaria',property_type:'Casa',price_cents:58000000,authorization_confirmed:true,
    available:true,updated_at:new Date().toISOString()};
@@ -50,7 +50,7 @@ test('gera no máximo uma proposta idempotente para demanda qualificada e oferta
 });
 test('não gera ofertas de estoque sem atualização recente ou autorização',async()=>{
  const client={
-  rest:async path=>path.startsWith('eme_switch_requests?')?[{id:'b',kind:'buy',status:'qualified',city:'Vacaria',property_type:'Casa',asking_cents:65000000}]:
+  rest:async path=>path.startsWith('eme_switch_requests?')?[{id:'b',kind:'buy',status:'qualified',demand_reviewed:true,city:'Vacaria',property_type:'Casa',asking_cents:65000000}]:
   path.startsWith('eme_switch_partner_offers?')?[{id:'o',partner:'Demo',ref:'1',city:'Vacaria',property_type:'Casa',price_cents:50000000,
    available:true,authorization_confirmed:false,updated_at:'2026-01-01T00:00:00.000Z'}]:[],
   request:async()=>{throw Error('Nunca deve publicar');}
@@ -85,4 +85,16 @@ test('capta negócio de proprietário direto sem depender de carteira parceira',
  assert.equal(saved[0].source_id,direct.id);
  assert.equal(saved[0].sale_price_cents,37000000);
  assert.equal(jobs.length,1);
+});
+
+test('autopiloto não distribui comprador cujo orçamento não foi confirmado',async()=>{
+ const requests=[{id:'demand-1',kind:'buy',status:'qualified',demand_reviewed:false,city:'Vacaria',property_type:'Casa',asking_cents:60000000}];
+ const offers=[{id:'offer-1',partner:'Exemplo',ref:'im1',city:'Vacaria',property_type:'Casa',price_cents:50000000,available:true,authorization_confirmed:true,updated_at:new Date().toISOString()}];
+ const pros=[{id:'pro-1',city:'Vacaria',property_type:'Casa',phone:'5554999999999',status:'verified',whatsapp_opt_in:true}];
+ const client={
+  rest:async path=>path.startsWith('eme_switch_requests?')?requests:path.startsWith('eme_switch_partner_offers?')?offers:path.startsWith('eme_switch_professionals?')?pros:[],
+  request:async()=>{throw Error('Não pode criar convite de demanda não confirmada.');}
+ };
+ const result=await attachSwitchAutopilot({client,env}).run();
+ assert.equal(result.created,0);
 });
