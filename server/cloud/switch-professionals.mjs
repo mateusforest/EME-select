@@ -130,9 +130,33 @@ export function attachCloudSwitchProfessionals({client,rate,env=process.env,fetc
    const jobs=await rest(outboxTable+'?status=eq.pending&select=*&order=created_at.asc&limit='+(dealId?1:5)+(dealId?'&deal_id=eq.'+dealId:''));
    let submitted=0,skipped=0,failed=0;
    for(const job of jobs){
-     const [deal]=await rest(inviteTable+'?id=eq.'+job.deal_id+'&select=id,teaser_city,teaser_type,status,expires_at');
+     const [deal]=await rest(inviteTable+'?id=eq.'+job.deal_id+'&select=id,teaser_city,teaser_type,status,expires_at,source_kind,source_id,demand_id,sale_price_cents');
      const [pro]=await rest(proTable+'?id=eq.'+job.professional_id+'&select=id,phone,city,property_type,whatsapp_opt_in,status');
-     if(!switchSendEligibility(pro,deal)||pro.phone!==job.phone){
+     // Não divulgar oportunidade que perdeu oferta, orçamento ou autorização desde sua criação.
+     let currentSupply=false,currentDemand=false;
+     if(deal){
+       const [asset,demand]=await Promise.all([
+         rest((deal.source_kind==='partner_offer'?'eme_switch_partner_offers':'eme_switch_requests')+
+           '?id=eq.'+deal.source_id+'&select=*'),
+         rest('eme_switch_requests?id=eq.'+deal.demand_id+
+           '&select=id,kind,status,city,property_type,asking_cents,target_city,target_budget_cents')
+       ]);
+       const source=asset[0],buyer=demand[0];
+       const norm=value=>String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim().toLowerCase();
+       currentSupply=!!source&&(deal.source_kind==='partner_offer'?
+         source.available===true&&source.authorization_confirmed===true&&
+         Date.now()-Date.parse(source.updated_at)<7*86400000&&
+         Number(source.price_cents)<=Number(deal.sale_price_cents):
+         ['sell','swap'].includes(source.kind)&&source.status==='qualified'&&
+         source.ownership_reviewed===true&&source.sharing_authorized===true&&
+         Number(source.min_acceptable_cents)<=Number(deal.sale_price_cents));
+       const city=buyer?.kind==='swap'?buyer.target_city:buyer?.city;
+       const budget=buyer?.kind==='swap'?buyer.target_budget_cents:buyer?.asking_cents;
+       currentDemand=!!buyer&&buyer.status==='qualified'&&['buy','swap','invest'].includes(buyer.kind)&&
+         norm(city)===norm(deal.teaser_city)&&norm(buyer.property_type)===norm(deal.teaser_type)&&
+         Number(budget)>=Number(deal.sale_price_cents);
+     }
+     if(!switchSendEligibility(pro,deal)||pro.phone!==job.phone||!currentSupply||!currentDemand){
        const claim=await rest(outboxTable+'?id=eq.'+job.id+'&status=eq.pending','PATCH',{status:'skipped',updated_at:new Date().toISOString()});
        if(claim.length)skipped++;
        continue;
