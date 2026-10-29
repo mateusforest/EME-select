@@ -24,6 +24,8 @@ export function switchOfferDraft(input,source,target) {
  if(!['switch_request','partner_offer'].includes(input.sourceKind))fail('Origem inválida.');
  if(!source||!target||!['buy','swap','invest'].includes(target.kind)||target.status!=='qualified')fail('A demanda deve estar qualificada.');
  if(target.kind==='buy'&&target.demand_reviewed!==true)fail('A intenção e o orçamento do comprador devem ser confirmados pela gestão.');
+ if(target.kind==='invest'&&target.funds_verified!==true)fail('Confirme a capacidade financeira do investidor.');
+ if(target.kind==='swap'&&(!target.ownership_reviewed||!target.sharing_authorized))fail('Revise o imóvel oferecido na troca.');
  if(target.id===source.id)fail('Selecione duas partes distintas.');
  if(input.sourceKind==='switch_request'){
    if(!['sell','swap'].includes(source.kind)||source.status!=='qualified'||!source.ownership_reviewed||!source.sharing_authorized)fail('Revise o imóvel e a autorização do proprietário.');
@@ -33,6 +35,20 @@ export function switchOfferDraft(input,source,target) {
  if(!Number.isSafeInteger(floor)||quote.salePriceCents<floor)fail('Valor sugerido inferior à referência mínima revisada.');
  const days=integer(input.expiresDays??7,'o prazo',1,14);
  return {...quote,sourceKind:input.sourceKind,sourceId:source.id,demandId:target.id,expiresDays:days};
+}
+export function switchIntroductionReview(deal,source,demand,now=Date.now()) {
+ if(!source||!demand||demand.contact_opt_in!==true||demand.privacy_accepted!==true)fail('Reconfirme a autorização de contato da demanda.');
+ if(deal.source_kind==='switch_request'&&(source.contact_opt_in!==true||source.privacy_accepted!==true))fail('Reconfirme a autorização do proprietário.');
+ switchOfferDraft({sourceKind:deal.source_kind,sourceId:deal.source_id,demandId:deal.demand_id,
+  salePriceCents:Number(deal.sale_price_cents),brokerageBps:deal.brokerage_bps,switchShareBps:deal.switch_share_bps},source,demand);
+ if(deal.source_kind==='partner_offer'){
+  const age=now-Date.parse(source.updated_at);
+  if(!Number.isFinite(age)||age<0||age>7*86400000)fail('Reconfirme a disponibilidade da carteira antes da apresentação.');
+ }
+ const norm=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+ const city=demand.kind==='swap'?demand.target_city:demand.city;
+ const budget=Number(demand.kind==='swap'?demand.target_budget_cents:demand.asking_cents);
+ if(norm(city)!==norm(source.city)||norm(source.property_type)!==norm(demand.property_type)||!Number.isSafeInteger(budget)||budget<Number(deal.sale_price_cents))fail('Reconfirme cidade, tipo e orçamento antes da apresentação.');
 }
 export function switchOfferTeaser(deal){
  // Somente dados comerciais sem identificador do comprador, vendedor ou vínculo público com oferta original.
@@ -74,10 +90,13 @@ export function switchDealTransition(deal,action,details={}){
   if(typeof details.contractReference!=='string'||details.contractReference.trim().length<8||details.contractReference.length>160)fail('Referência do contrato assinado é obrigatória.');
   if(details.licenseChecked!==true)fail('É necessário confirmar a habilitação profissional.');
  }
+ const evidence=(value,label)=>{if(typeof value!=='string'||value.trim().length<8||value.trim().length>160)fail('Informe a referência de '+label+' conferida pela gestão.');};
  if(action==='close'){
-  if(!Number.isSafeInteger(details.actualSaleCents)||details.actualSaleCents<1_000_000)fail('Registre o valor real fechado.');
+  evidence(details.closingReference,'fechamento');
+  if(!Number.isSafeInteger(details.actualSaleCents)||details.actualSaleCents<1_000_000||details.actualSaleCents>1_000_000_000_000)fail('Registre o valor real fechado.');
  }
  if(action==='paid'){
+  evidence(details.paymentReference,'recebimento');
   if(!Number.isSafeInteger(details.receivedCents)||details.receivedCents<0)fail('Informe o valor realmente recebido.');
   if(details.receivedCents===0)fail('Não marque como pago sem recebimento.');
  }

@@ -1,3 +1,4 @@
+import {SWITCH_CONSENT_VERSION,switchConsentText} from '../../shared/switch-consent.mjs';
 import {useState,type FormEvent} from 'react';
 import {ArrowRight,CheckCircle2,House,Repeat2,TrendingUp} from 'lucide-react';
 import './switch.css';
@@ -37,7 +38,7 @@ export default function SwitchPage(){
           askingCents:cents(form.asking),targetCity:form.targetCity,
           targetBudgetCents:cents(form.targetBudget),notes:form.notes,
           contactConsent:form.contactConsent,updatesOptIn:form.updatesOptIn,
-          privacyAccepted:form.privacyAccepted,website:form.website,
+          privacyAccepted:form.privacyAccepted,consentVersion:SWITCH_CONSENT_VERSION,website:form.website,
           source:'switch-web'+(new URLSearchParams(location.search).get('utm_source')?.replace(/[^a-zA-Z0-9 _.:-]/g,'').slice(0,40)?':'+new URLSearchParams(location.search).get('utm_source')!.replace(/[^a-zA-Z0-9 _.:-]/g,'').slice(0,40):'')})});
       const data=await response.json().catch(()=>({error:'Não foi possível confirmar o recebimento.'}));
       if(!response.ok)throw new Error(data.error||'Não foi possível enviar. Tente novamente.');
@@ -72,9 +73,9 @@ export default function SwitchPage(){
             <label>O que você procura? <small>Opcional</small><textarea rows={3} maxLength={1200} value={form.notes} onChange={e=>change('notes',e.target.value)} placeholder={kind==='invest'?'Região, prazo, tipo de oportunidade…':kind==='buy'?'Bairros, dormitórios, condições e prazo para comprar…':'Fale um pouco sobre a situação e os objetivos da negociação…'}/></label>
             <details className="sw-data-note"><summary>Como usamos seus dados</summary><p>Nome, telefone, informações do imóvel e sua intenção de negociação são utilizados para organizar o atendimento e analisar compatibilidades. O acesso é restrito à equipe responsável. Não compartilhamos seu imóvel ou contato com investidores sem conferência e autorização específicas. Avisos de novas oportunidades são opcionais e podem ser cancelados pelo canal de atendimento da M Select. Você pode solicitar acesso, revisão ou exclusão de dados pelos canais de contato do site.</p></details>
             <div className="sw-consents">
-              <label><input type="checkbox" required checked={form.privacyAccepted} onChange={e=>change('privacyAccepted',e.target.checked)}/><span>Li e concordo com o uso dos dados informados para analisar e administrar esta solicitação.</span></label>
-              <label><input type="checkbox" required checked={form.contactConsent} onChange={e=>change('contactConsent',e.target.checked)}/><span>Autorizo o contato da equipe M Select para responder à minha solicitação.</span></label>
-              <label><input type="checkbox" checked={form.updatesOptIn} onChange={e=>change('updatesOptIn',e.target.checked)}/><span>Também quero receber avisos sobre oportunidades compatíveis. Opcional.</span></label>
+              <label><input type="checkbox" required checked={form.privacyAccepted} onChange={e=>change('privacyAccepted',e.target.checked)}/><span>{switchConsentText.privacy}</span></label>
+              <label><input type="checkbox" required checked={form.contactConsent} onChange={e=>change('contactConsent',e.target.checked)}/><span>{switchConsentText.contact}</span></label>
+              <label><input type="checkbox" checked={form.updatesOptIn} onChange={e=>change('updatesOptIn',e.target.checked)}/><span>{switchConsentText.updates}</span></label>
             </div>
             <div className="sw-honeypot" aria-hidden="true"><label>Site<input tabIndex={-1} autoComplete="off" value={form.website} onChange={e=>change('website',e.target.value)}/></label></div>
             {error&&<p className="sw-error" role="alert">{error}</p>}

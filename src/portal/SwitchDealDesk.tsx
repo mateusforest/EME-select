@@ -15,6 +15,7 @@ const draftEmpty={sourceKind:'partner_offer',sourceId:'',demandId:'',professiona
 export default function SwitchDealDesk({matches,requests,offers,professionals}:{matches:Match[];requests:Request[];offers:Partner[];professionals:SwitchProfessional[]}){
  const [draft,setDraft]=useState(draftEmpty),[deals,setDeals]=useState<Deal[]>([]);
  const [link,setLink]=useState(''),[error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false);
+ const [closingRef,setClosingRef]=useState(''),[paymentRef,setPaymentRef]=useState('');
  const [contract,setContract]=useState(''),[license,setLicense]=useState(false),[actual,setActual]=useState(''),[received,setReceived]=useState('');
  const quote=useMemo(()=>{try{return switchDealQuote({
   salePriceCents:Math.round(Number(draft.salePrice)*100),
@@ -53,11 +54,11 @@ export default function SwitchDealDesk({matches,requests,offers,professionals}:{
    try{
     const data:Record<string,unknown>={version:deal.version,action};
     if(action==='contract'){data.contractReference=contract;data.licenseChecked=license;}
-    if(action==='close')data.actualSaleCents=Math.round(Number(actual)*100);
-    if(action==='paid')data.receivedCents=Math.round(Number(received)*100);
+    if(action==='close'){data.actualSaleCents=Math.round(Number(actual)*100);data.closingReference=closingRef;}
+    if(action==='paid'){data.receivedCents=Math.round(Number(received)*100);data.paymentReference=paymentRef;}
     await api('/switch/deals/'+deal.id,'PATCH',data);
     setNotice('Etapa registrada. O histórico permanece no servidor.');
-    setContract('');setLicense(false);setActual('');setReceived('');
+    setContract('');setLicense(false);setActual('');setReceived('');setClosingRef('');setPaymentRef('');
     await refresh();
    }catch(e){setError((e as Error).message);}finally{setBusy(false);}
  }
@@ -108,8 +109,8 @@ export default function SwitchDealDesk({matches,requests,offers,professionals}:{
     <div className="sx-deal-actions">
      {deal.status==='acknowledged'&&<><label>Referência do contrato escrito assinado<input value={contract} onChange={e=>setContract(e.target.value)} placeholder="Arquivo/assinatura verificados"/></label><label className="sx-check"><input type="checkbox" checked={license} onChange={e=>setLicense(e.target.checked)}/> Conferi CRECI e condições assinadas</label><button className="ps-button" disabled={busy||!license||contract.length<8} onClick={()=>void advance(deal,'contract')}>Registrar contrato conferido</button></>}
      {deal.status==='contracted'&&<button className="ps-button" disabled={busy} onClick={()=>void advance(deal,'introduce')}>Autorizar conexão de partes <CheckCircle2 size={15}/></button>}
-     {deal.status==='introduced'&&<><label>Valor efetivo do negócio (R$)<input type="number" min="10000" step="1000" value={actual} onChange={e=>setActual(e.target.value)}/></label><button className="ps-button" disabled={busy||!actual} onClick={()=>void advance(deal,'close')}>Registrar fechamento</button></>}
-     {deal.status==='closed'&&<><label>Participação recebida (R$)<input type="number" min="0" step=".01" value={received} onChange={e=>setReceived(e.target.value)}/></label><button className="ps-button" disabled={busy||!received} onClick={()=>void advance(deal,'paid')}>Registrar recebimento comprovado</button></>}
+     {deal.status==='introduced'&&<><label>Referência do documento de fechamento<input maxLength={160} value={closingRef} onChange={e=>setClosingRef(e.target.value)}/></label><label>Valor efetivo do negócio (R$)<input type="number" min="10000" step="1000" value={actual} onChange={e=>setActual(e.target.value)}/></label><button className="ps-button" disabled={busy||!actual||closingRef.trim().length<8} onClick={()=>void advance(deal,'close')}>Registrar fechamento</button></>}
+     {deal.status==='closed'&&<><label>Referência do comprovante de recebimento<input maxLength={160} value={paymentRef} onChange={e=>setPaymentRef(e.target.value)}/></label><label>Participação recebida (R$)<input type="number" min="0" step=".01" value={received} onChange={e=>setReceived(e.target.value)}/></label><button className="ps-button" disabled={busy||!received||paymentRef.trim().length<8} onClick={()=>void advance(deal,'paid')}>Registrar recebimento comprovado</button></>}
      {!['paid','cancelled'].includes(deal.status)&&<button type="button" className="ps-text-button" disabled={busy} onClick={()=>void advance(deal,'cancel')}>Cancelar oportunidade</button>}
     </div>
    </article>;

@@ -1,3 +1,4 @@
+import {SWITCH_CONSENT_VERSION} from '../shared/switch-consent.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {switchProfessionalEnrollment,switchProfessionalReview,switchSendEligibility} from '../shared/switch-professionals.mjs';
@@ -5,7 +6,7 @@ import {switchProToken,whatsappSwitchReady,sendSwitchWhatsAppTemplate} from '../
 
 const input={requestId:'8c43ee32-d668-4493-b251-aa22a08df956',name:'Corretor de exemplo',
  phone:'(54) 99999-9999',creci:'RS 12345',business:'Imobiliária Exemplo',city:'Vacaria',
- propertyType:'Casa',whatsappOptIn:true,privacyAccepted:true};
+ propertyType:'Casa',whatsappOptIn:true,privacyAccepted:true,consentVersion:SWITCH_CONSENT_VERSION};
 const env={SWITCH_WHATSAPP_ENABLED:'true',WHATSAPP_ACCESS_TOKEN:'token-de-teste-somente-fake',
  WHATSAPP_PHONE_NUMBER_ID:'1234567891011',WHATSAPP_GRAPH_VERSION:'v22.0',
  SWITCH_WHATSAPP_TEMPLATE:'m_switch_convite_profissional',
@@ -13,7 +14,7 @@ const env={SWITCH_WHATSAPP_ENABLED:'true',WHATSAPP_ACCESS_TOKEN:'token-de-teste-
 test('cadastra somente voluntários com aceite explícito para receber ofertas no WhatsApp',()=>{
  const result=switchProfessionalEnrollment(input);
  assert.equal(result.phone,'5554999999999');assert.equal(result.whatsappOptIn,true);
- for(const changed of [{whatsappOptIn:false},{privacyAccepted:false},{website:'spam'}])
+ for(const changed of [{whatsappOptIn:false},{privacyAccepted:false},{website:'spam'},{consentVersion:undefined},{consentVersion:'old'}])
   assert.throws(()=>switchProfessionalEnrollment({...input,...changed}));
 });
 test('somente status verificado autoriza convites e verificação depende de CRECI conferido',()=>{

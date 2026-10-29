@@ -29,6 +29,7 @@ export function attachCloudSwitch({client,rate}) {
       city:item.city,property_type:item.propertyType,asking_cents:item.askingCents,
       target_city:item.targetCity,target_budget_cents:item.targetBudgetCents,notes:item.notes,
       contact_opt_in:item.contactConsent,updates_opt_in:item.updatesOptIn,privacy_accepted:item.privacyAccepted,
+      consent_version:item.consentVersion,consent_recorded_at:new Date().toISOString(),
       source:item.source,status:'new'
     };
     // A única chave de idempotência é o request_id; requests duplicados não viram novas fichas.

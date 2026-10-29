@@ -1,3 +1,4 @@
+import {SWITCH_CONSENT_VERSION} from '../shared/switch-consent.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {switchIntake,switchRevision} from '../shared/switch-intake.mjs';
@@ -6,7 +7,7 @@ const base={
   requestId:id,kind:'swap',name:'Cliente de teste',phone:'(54) 99999-9999',
   city:'Vacaria',propertyType:'Casa',askingCents:35000000,
   targetCity:'Caxias do Sul',targetBudgetCents:65000000,notes:'',
-  contactConsent:true,updatesOptIn:false,privacyAccepted:true,source:'switch-web'
+  contactConsent:true,updatesOptIn:false,privacyAccepted:true,consentVersion:SWITCH_CONSENT_VERSION,source:'switch-web'
 };
 const prior={
   id,kind:'swap',version:2,status:'reviewing',owner_id:null,
@@ -21,7 +22,7 @@ test('entrada aceita troca com consentimento e valor normalizados',()=>{
 });
 test('entrada bloqueia marketing opt-in implícito, falta de autorização, spam e valor inválido',()=>{
   for(const change of [
-    {updatesOptIn:undefined},{contactConsent:false},{privacyAccepted:false},
+    {updatesOptIn:undefined},{contactConsent:false},{privacyAccepted:false},{consentVersion:undefined},{consentVersion:'old'},
     {website:'spam'},{askingCents:-100},{askingCents:34999.2}
   ])assert.throws(()=>switchIntake({...base,...change}));
 });

@@ -5,8 +5,8 @@
 ## Portão 1 — Homologar infraestrutura sem clientes reais
 **Responsável:** administrador da operação / desenvolvedor, com acesso às credenciais.
 
-- [ ] Criar backup do banco e escolher projeto correto no Supabase (sem copiar segredos para o chat).
-- [ ] Revisar e executar `docs/sql/ATIVAR-M-SWITCH.sql` em ambiente de homologação, conferir funções e permissões. A migration contém RLS e 6 tabelas; testes automatizados não substituem a conferência no Supabase real.
+- [ ] Conferir backup/restauração do projeto existente emeselect (vjoajqrwqdeujqaognac); não criar outro projeto (sem copiar segredos para o chat).
+- [ ] Revisar e executar `docs/sql/ATIVAR-M-SWITCH.sql` em ambiente de homologação, conferir funções e permissões. O pacote atualizado contém RLS e 8 tabelas; testes automatizados não substituem a conferência no Supabase real.
 - [ ] Abrir a prévia do PR; acessar `/switch`, `/switch/profissionais` e portal `/acesso-select/equipe/switch`.
 - [ ] Verificar `GET /api/switch/readiness` como administrador: tabelas e segredos básicos. Nunca expor endpoint público.
 - [ ] Simular com números inventados e dados sintéticos: um proprietário com titularidade/autorização revisadas, um comprador com **intenção e orçamento confirmados** e um profissional com CRECI e opt-in revisados. Confirmar matching privado sem dados pessoais expostos.
@@ -44,3 +44,7 @@ Receita recebida líquida; leads com opt-in; origem; compradores verificados; of
 
 ## Critério de decisão
 Se o Supabase ou Meta real falhar, manter o módulo fora de produção. O plano comercial pode avançar apenas com operações lícitas autorizadas e atendimento humano habilitado, sem prometer sistema autônomo ativo.
+
+## Continuação local em 29/10/2026
+
+Projeto Supabase existente identificado e consultado somente em leitura: ainda não há tabelas M Switch. Implementação, SQL aditivo, dry-run e avaliação de QR Code estão em [M-SWITCH-LANCAMENTO-29-10.md](M-SWITCH-LANCAMENTO-29-10.md). Nenhuma migração em produção, mensagem real ou merge foi executado nesta continuação. Usar o pacote SQL atualizado e revisar os gates antes de aplicar.

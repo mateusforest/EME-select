@@ -1,4 +1,5 @@
 // M Switch: validar entradas públicas antes de persistir. Não é avaliação ou proposta.
+import {requireSwitchConsentVersion} from './switch-consent.mjs';
 export const switchKinds = Object.freeze(['sell','swap','buy','invest']);
 export const switchStatuses = Object.freeze(['new','reviewing','qualified','negotiating','closed','archived']);
 const matchId = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
@@ -20,12 +21,13 @@ export function switchPhone(value) {
 }
 export function switchIntake(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) fail('Solicitação inválida.');
-  const allowed=['requestId','kind','name','phone','city','propertyType','askingCents','targetCity','targetBudgetCents','notes','contactConsent','updatesOptIn','privacyAccepted','website','source'];
+  const allowed=['requestId','kind','name','phone','city','propertyType','askingCents','targetCity','targetBudgetCents','notes','contactConsent','updatesOptIn','privacyAccepted','consentVersion','website','source'];
   if (Object.keys(body).some(x => !allowed.includes(x)) || body.website) fail('Solicitação inválida.');
   if (typeof body.requestId !== 'string' || !matchId.test(body.requestId)) fail('Referência de envio inválida.');
   if (!switchKinds.includes(body.kind)) fail('Tipo de operação inválido.');
   if (body.privacyAccepted !== true || body.contactConsent !== true) fail('Confirme a política e a autorização para responder sua solicitação.');
   if (typeof body.updatesOptIn !== 'boolean') fail('Confira suas preferências de contato.');
+  requireSwitchConsentVersion(body.consentVersion);
   const source = body.source == null ? 'site' : t(body.source,'a origem',2,80);
   if (!/^[\p{L}\p{N} _:/.-]+$/u.test(source)) fail('Origem inválida.');
   return {
@@ -39,7 +41,7 @@ export function switchIntake(body) {
     targetCity:['invest','buy'].includes(body.kind) ? '' : t(body.targetCity||'','a cidade desejada',0,100),
     targetBudgetCents:['invest','buy'].includes(body.kind) ? null : switchCents(body.targetBudgetCents,'o orçamento de destino'),
     notes:t(body.notes||'','as observações',0,1200),
-    contactConsent:true,updatesOptIn:body.updatesOptIn,privacyAccepted:true,source
+    contactConsent:true,updatesOptIn:body.updatesOptIn,privacyAccepted:true,consentVersion:body.consentVersion,source
   };
 }
 export function switchRevision(body, prior, isAdmin) {

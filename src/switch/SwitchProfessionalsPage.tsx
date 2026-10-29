@@ -1,3 +1,4 @@
+import {SWITCH_CONSENT_VERSION,switchConsentText} from '../../shared/switch-consent.mjs';
 import {useState,type FormEvent} from 'react';
 import {ArrowLeft,ArrowRight,CheckCircle2,ShieldCheck} from 'lucide-react';
 import './switch.css';
@@ -15,7 +16,7 @@ export default function SwitchProfessionalsPage(){
    const url=isOptOut?'/api/public/switch/professionals/stop':'/api/public/switch/professionals';
    const response=await fetch(url,{method:'POST',credentials:'same-origin',
      headers:{'Content-Type':'application/json'},body:JSON.stringify(isOptOut?{token}:{
-      requestId,name,business,creci,phone,city,propertyType,whatsappOptIn:optIn,privacyAccepted:privacy
+      requestId,name,business,creci,phone,city,propertyType,whatsappOptIn:optIn,privacyAccepted:privacy,consentVersion:SWITCH_CONSENT_VERSION
      })});
    const result=await response.json().catch(()=>({error:'Falha ao processar.'}));
    if(!response.ok)throw Error(result.error||'Não foi possível finalizar.');
@@ -44,8 +45,8 @@ export default function SwitchProfessionalsPage(){
       <label>Cidade de atuação<input required minLength={2} maxLength={100} value={city} onChange={e=>setCity(e.target.value)}/></label>
       <label>Tipo de imóvel<select value={propertyType} onChange={e=>setPropertyType(e.target.value)}><option>Casa</option><option>Apartamento</option><option>Terreno</option><option>Comercial</option><option>Área rural</option><option>Outro</option></select></label>
     </div><div className="sw-consents">
-      <label><input type="checkbox" required checked={optIn} onChange={e=>setOptIn(e.target.checked)}/><span>Quero receber pelo WhatsApp informado convites relevantes da M Select / M Switch com condições comerciais e link para manifestar interesse. Posso cancelar os avisos a qualquer momento.</span></label>
-      <label><input type="checkbox" required checked={privacy} onChange={e=>setPrivacy(e.target.checked)}/><span>Concordo com o uso destes dados para análise profissional, validação de CRECI e gestão dos convites solicitados.</span></label>
+      <label><input type="checkbox" required checked={optIn} onChange={e=>setOptIn(e.target.checked)}/><span>{switchConsentText.professional}</span></label>
+      <label><input type="checkbox" required checked={privacy} onChange={e=>setPrivacy(e.target.checked)}/><span>{switchConsentText.professionalPrivacy}</span></label>
     </div></>}
     {error&&<p className="sw-error" role="alert">{error}</p>}
     <button type="submit" className="sw-submit" disabled={busy}>{busy?'Processando…':isOptOut?'Interromper mensagens':'Solicitar participação na rede'}<ArrowRight size={17}/></button>

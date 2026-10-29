@@ -1,3 +1,4 @@
+import {SWITCH_CONSENT_VERSION} from '../shared/switch-consent.mjs';
 import {test,expect} from '@playwright/test';
 
 test('cadastro público de comprador mantém opt-in separado e confirma recebimento',async({page})=>{
@@ -19,7 +20,7 @@ test('cadastro público de comprador mantém opt-in separado e confirma recebime
  await expect(page.getByRole('heading',{name:'Agora temos um ponto de partida.'})).toBeVisible();
  expect(submitted).toMatchObject({
   kind:'buy',city:'Caxias do Sul',askingCents:45000000,
-  privacyAccepted:true,contactConsent:true,updatesOptIn:false
+  privacyAccepted:true,contactConsent:true,updatesOptIn:false,consentVersion:SWITCH_CONSENT_VERSION
  });
 });
 
@@ -28,6 +29,24 @@ test('página pública no celular evita rolagem horizontal',async({page})=>{
  await page.goto('/switch');
  await expect(page.getByRole('button',{name:/Quero trocar/})).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+});
+
+test('profissional escolhe consentimentos desmarcados e envia a versão apresentada',async({page})=>{
+ let submitted:Record<string,unknown>|null=null;
+ await page.route('**/api/public/switch/professionals',route=>{
+  submitted=route.request().postDataJSON();
+  return route.fulfill({status:201,json:{received:true}});
+ });
+ await page.goto('/switch/profissionais');
+ const optIn=page.getByRole('checkbox').nth(0),privacy=page.getByRole('checkbox').nth(1);
+ await expect(optIn).not.toBeChecked();await expect(privacy).not.toBeChecked();
+ await page.getByLabel('Nome completo').fill('Corretor Sintético');
+ await page.getByLabel('WhatsApp com DDD').fill('(54) 99999-9999');
+ await page.getByLabel('CRECI para conferência').fill('RS TESTE');
+ await optIn.check();await privacy.check();
+ await page.getByRole('button',{name:'Solicitar participação na rede'}).click();
+ await expect(page.getByRole('heading',{name:'Cadastro recebido.'})).toBeVisible();
+ expect(submitted).toMatchObject({whatsappOptIn:true,privacyAccepted:true,consentVersion:SWITCH_CONSENT_VERSION});
 });
 
 test('convite só mostra condições, exige ciência e não divulga contatos de comprador',async({page})=>{

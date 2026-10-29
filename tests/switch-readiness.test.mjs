@@ -22,6 +22,7 @@ test('prontidão reprova tabela ausente e não presume contrato/Meta aprovados',
   });
   assert.equal(res.workflow.databaseReady,false);
   assert.equal(res.pilotCanBeTested,false);
+  assert.equal(res.externalMessagesMayBeSent,false);
   assert.equal(res.workflow.commercialContractReviewed,false);
   assert.equal(res.workflow.providerTemplateApproved,false);
   assert.ok(res.checks.some(c=>c.key==='eme_switch_professionals'&&!c.ready));
@@ -40,4 +41,14 @@ test('prontidão verifica separadamente banco, env e habilitação explícita',a
   assert.equal(on.workflow.schedulerSecretConfigured,true);
   assert.equal(on.workflow.autopilotEnabled,true);
   assert.equal(on.workflow.providerTemplateApproved,false);
+  assert.equal(on.workflow.rlsVerified,false);
+});
+
+test('prontidão reprova schema antigo mesmo quando as tabelas existem',async()=>{
+ const result=await switchReadiness({client:{rest:async path=>{
+  if(path.includes('consent_version')||path.includes('payment_reference'))throw Error('column missing');
+  return [];
+ }},env:{}});
+ assert.equal(result.pilotCanBeTested,false);
+ assert.equal(result.checks.length,8);
 });

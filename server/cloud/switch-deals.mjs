@@ -1,5 +1,5 @@
 import {randomBytes,randomUUID,createHash} from 'node:crypto';
-import {switchDealQuote,switchOfferDraft,switchOfferTeaser,switchOfferAcceptance,switchDealTransition} from '../../shared/switch-deals.mjs';
+import {switchDealQuote,switchOfferDraft,switchIntroductionReview,switchOfferTeaser,switchOfferAcceptance,switchDealTransition} from '../../shared/switch-deals.mjs';
 import {switchProToken} from './switch-professionals.mjs';
 import {switchSendEligibility} from '../../shared/switch-professionals.mjs';
 const err=(status,message)=>{throw Object.assign(new Error(message),{status});};
@@ -7,7 +7,7 @@ const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}
 const tokenFormat=/^[a-zA-Z0-9_-]{43}$/;
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const table='eme_switch_deal_invites';
-const selected='id,public_ref,source_kind,source_id,demand_id,teaser_city,teaser_type,sale_price_cents,brokerage_bps,switch_share_bps,status,recipient_name,recipient_phone,recipient_creci,recipient_business,recipient_marketing_opt_in,acknowledged_at,contract_reference,license_checked,signed_confirmed_at,actual_sale_cents,received_cents,created_by,version,created_at,expires_at';
+const selected='id,public_ref,source_kind,source_id,demand_id,teaser_city,teaser_type,sale_price_cents,brokerage_bps,switch_share_bps,status,recipient_name,recipient_phone,recipient_creci,recipient_business,recipient_marketing_opt_in,acknowledged_at,contract_reference,license_checked,signed_confirmed_at,actual_sale_cents,received_cents,closing_reference,payment_reference,created_by,version,created_at,expires_at';
 export function attachCloudSwitchDeals({client,rate,env=process.env,notifyNow}){
  const {rest,rpc}=client;
  async function publicHandle(path,req,body,send){
@@ -106,23 +106,31 @@ export function attachCloudSwitchDeals({client,rate,env=process.env,notifyNow}){
    }
    if(match[1]&&req.method==='PATCH'){
      if(!uuid.test(match[1])||!body||typeof body!=='object'||Array.isArray(body)||
-       Object.keys(body).some(k=>!['version','action','contractReference','licenseChecked','actualSaleCents','receivedCents'].includes(k)))err(400,'Revisão inválida.');
+       Object.keys(body).some(k=>!['version','action','contractReference','licenseChecked','actualSaleCents','receivedCents','closingReference','paymentReference'].includes(k)))err(400,'Revisão inválida.');
      const [row]=await rest(table+'?id=eq.'+match[1]+'&select='+selected);
      if(!row)err(404,'Oportunidade não encontrada.');
      if(!Number.isSafeInteger(body.version)||body.version!==row.version)err(409,'A oportunidade mudou. Atualize antes de continuar.');
      const transition=switchDealTransition(row,body.action,body);
+     if(body.action==='introduce'){
+       const [[source],[demand]]=await Promise.all([
+         rest((row.source_kind==='partner_offer'?'eme_switch_partner_offers':'eme_switch_requests')+'?id=eq.'+row.source_id+'&select=*'),
+         rest('eme_switch_requests?id=eq.'+row.demand_id+'&select=*')
+       ]);
+       switchIntroductionReview(row,source,demand);
+     }
      const updates={...transition,version:row.version+1,updated_by:user.id,updated_at:new Date().toISOString()};
      if(body.action==='contract'){
        updates.contract_reference=body.contractReference.trim();
        updates.license_checked=true;
        updates.signed_confirmed_at=new Date().toISOString();
      }
-     if(body.action==='close')updates.actual_sale_cents=body.actualSaleCents;
+     if(body.action==='close'){updates.actual_sale_cents=body.actualSaleCents;updates.closing_reference=body.closingReference.trim();}
      if(body.action==='paid'){
        const actualCommission=Math.round(Number(row.actual_sale_cents)*row.brokerage_bps/10000);
        const expectedShare=Math.round(actualCommission*row.switch_share_bps/10000);
        if(body.receivedCents!==expectedShare)err(400,'Para marcar como pago, registre o recebimento integral da participação contratada. Recebimentos parciais exigem conciliação específica.');
        updates.received_cents=body.receivedCents;
+       updates.payment_reference=body.paymentReference.trim();
      }
      const rows=await rest(table+'?id=eq.'+row.id+'&version=eq.'+row.version,'PATCH',updates);
      if(!rows.length)err(409,'A oportunidade mudou. Atualize antes de continuar.');

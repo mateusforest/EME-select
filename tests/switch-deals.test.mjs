@@ -48,7 +48,7 @@ test('aprovação da conexão exige acordo assinado e habilitação revisada',()
 test('não marca pago antes de fechar nem sem recebimento real',()=>{
  assert.throws(()=>switchDealTransition({status:'introduced'},'paid',{receivedCents:700000}));
  assert.throws(()=>switchDealTransition({status:'closed'},'paid',{receivedCents:0}));
- assert.deepEqual(switchDealTransition({status:'closed'},'paid',{receivedCents:750000}),{status:'paid'});
+ assert.deepEqual(switchDealTransition({status:'closed'},'paid',{receivedCents:750000,paymentReference:'comprovante-sintetico'}),{status:'paid'});
 });
 
 test('não anuncia comprador sem confirmação humana da intenção declarada',()=>{

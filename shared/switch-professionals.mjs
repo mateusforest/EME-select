@@ -1,10 +1,12 @@
+import {requireSwitchConsentVersion} from './switch-consent.mjs';
 const fail=(message,status=400)=>{throw Object.assign(new Error(message),{status});};
 const t=(value,label,min,max)=>typeof value==='string'&&value.trim().length>=min&&value.trim().length<=max?value.trim():fail('Confira '+label+'.');
 export function switchProfessionalEnrollment(body){
- if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(k=>!['requestId','name','phone','creci','business','city','propertyType','whatsappOptIn','privacyAccepted','website'].includes(k)))fail('Cadastro inválido.');
+ if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(k=>!['requestId','name','phone','creci','business','city','propertyType','whatsappOptIn','privacyAccepted','consentVersion','website'].includes(k)))fail('Cadastro inválido.');
  if(body.website)fail('Não foi possível validar o envio.');
  if(typeof body.requestId!=='string'||!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(body.requestId))fail('Referência de envio inválida.');
  if(body.whatsappOptIn!==true||body.privacyAccepted!==true)fail('Confirme que deseja receber convites M Select no WhatsApp e o tratamento de dados.');
+ requireSwitchConsentVersion(body.consentVersion);
  const digits=t(body.phone,'o telefone',10,25).replace(/\D/g,'');
  const phone=digits.length===11||digits.length===10?'55'+digits:digits;
  if(!/^55[1-9]{2}9?\d{8}$/.test(phone))fail('Informe WhatsApp com DDD.');
@@ -15,7 +17,7 @@ export function switchProfessionalEnrollment(body){
   phone,creci,business:t(body.business||'','a empresa',0,100),
   city:t(body.city,'a cidade de atuação',2,100),
   propertyType:t(body.propertyType,'o tipo de imóvel',2,60),
-  whatsappOptIn:true,privacyAccepted:true
+  whatsappOptIn:true,privacyAccepted:true,consentVersion:body.consentVersion
  };
 }
 export function switchProfessionalReview(body,prior){

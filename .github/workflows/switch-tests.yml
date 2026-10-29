@@ -12,6 +12,8 @@ on:
       - 'src/portal/SwitchWorkspace.tsx'
       - 'tests/switch-*.test.mjs'
       - 'supabase/migrations/*switch*'
+      - 'docs/sql/*M-SWITCH.sql'
+      - 'scripts/switch-migration-bundle.mjs'
       - '.github/workflows/switch-tests.yml'
   push:
     branches:
@@ -28,6 +30,7 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run test:switch
+      - run: node scripts/switch-migration-bundle.mjs
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test --config playwright.switch.config.ts

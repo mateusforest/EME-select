@@ -1,3 +1,4 @@
+import {SWITCH_CONSENT_VERSION} from '../shared/switch-consent.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {attachCloudSwitch} from '../server/cloud/switch.mjs';
@@ -5,7 +6,7 @@ const leadId='123e4567-e89b-42d3-a456-426614174000';
 const requestId='8c43ee32-d668-4493-b251-aa22a08df956';
 const seller={requestId,kind:'sell',name:'Pessoa de teste',phone:'(54) 99999-9999',
   city:'Vacaria',propertyType:'Casa',askingCents:35000000,targetCity:'',targetBudgetCents:null,
-  contactConsent:true,updatesOptIn:false,privacyAccepted:true,notes:'',source:'switch-web'};
+  contactConsent:true,updatesOptIn:false,privacyAccepted:true,consentVersion:SWITCH_CONSENT_VERSION,notes:'',source:'switch-web'};
 function setup(){
   const records=[],events=[],calls=[];
   const client={

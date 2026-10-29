@@ -14,3 +14,5 @@ export function switchOfferDraft(input:Record<string,unknown>,source:Record<stri
 export function switchOfferTeaser(deal:Record<string,unknown>):Record<string,unknown>;
 export function switchOfferAcceptance(body:Record<string,unknown>):Record<string,unknown>;
 export function switchDealTransition(deal:{status:string},action:string,details?:Record<string,unknown>):{status:string};
+
+export function switchIntroductionReview(deal:Record<string,unknown>,source:Record<string,unknown>,demand:Record<string,unknown>,now?:number):void;

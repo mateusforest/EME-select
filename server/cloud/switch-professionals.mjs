@@ -53,6 +53,7 @@ export function attachCloudSwitchProfessionals({client,rate,env=process.env,fetc
      const record={id,request_id:entry.requestId,name:entry.name,business:entry.business,
        creci:entry.creci,phone:entry.phone,city:entry.city,property_type:entry.propertyType,
        whatsapp_opt_in:true,privacy_accepted:true,optout_token_hash:digest(unsubscribeToken),
+       consent_version:entry.consentVersion,consent_recorded_at:new Date().toISOString(),
        status:'pending',version:1};
      try{
        await request('/rest/v1/'+proTable+'?on_conflict=request_id',{
