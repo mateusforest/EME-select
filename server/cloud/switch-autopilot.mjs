@@ -20,7 +20,7 @@ export function attachSwitchAutopilot({client,env=process.env}){
    const cfg=switchAutopilotSettings(env);
    if(!cfg.enabled)return {enabled:false,created:0,reason:'Automação de propostas desativada.'};
    const [requests,offers,professionals]=await Promise.all([
-     rest('eme_switch_requests?select=id,kind,status,city,property_type,asking_cents,target_city,target_budget_cents,ownership_reviewed,sharing_authorized,min_acceptable_cents,updated_at&status=eq.qualified&order=created_at.desc&limit=200'),
+     rest('eme_switch_requests?select=id,kind,status,city,property_type,asking_cents,target_city,target_budget_cents,demand_reviewed,ownership_reviewed,sharing_authorized,min_acceptable_cents,updated_at&status=eq.qualified&order=created_at.desc&limit=200'),
      rest('eme_switch_partner_offers?select=id,partner,ref,title,city,property_type,price_cents,available,authorization_confirmed,updated_at&available=is.true&authorization_confirmed=is.true&order=updated_at.desc&limit=300'),
      rest('eme_switch_professionals?select=id,city,property_type,phone,status,whatsapp_opt_in&status=eq.verified&whatsapp_opt_in=is.true&order=created_at.asc&limit=200')
    ]);
@@ -38,7 +38,7 @@ export function attachSwitchAutopilot({client,env=process.env}){
        city:r.city,property_type:r.property_type,price_cents:Number(r.min_acceptable_cents),
        available:true,authorization_confirmed:true,source_kind:'switch_request'}));
    const available=[...direct,...fresh];
-   const matches=matchSwitchDemand(requests.filter(r=>['buy','swap','invest'].includes(r.kind)),available,{limit:100});
+   const matches=matchSwitchDemand(requests.filter(r=>['buy','swap','invest'].includes(r.kind)&&(r.kind!=='buy'||r.demand_reviewed===true)),available,{limit:100});
    let created=0,skipped=0;
    const booked=new Set();
    for(const candidate of matches){
