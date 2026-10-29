@@ -1,5 +1,6 @@
 import {randomUUID,createHash,createHmac,timingSafeEqual} from 'node:crypto';
 import {switchProfessionalEnrollment,switchProfessionalReview,switchSendEligibility} from '../../shared/switch-professionals.mjs';
+import {switchReadiness} from './switch-readiness.mjs';
 const fail=(status,message)=>{throw Object.assign(new Error(message),{status});};
 const digest=value=>createHash('sha256').update(value).digest('hex');
 const proTable='eme_switch_professionals';
@@ -77,6 +78,12 @@ export function attachCloudSwitchProfessionals({client,rate,env=process.env,fetc
    return false;
  }
  async function handle(path,req,user,body,send){
+   if(path==='/api/switch/readiness'){
+     if(!user?.active||user.must_change||user.role!=='admin')fail(403,'Somente a gestão consulta a prontidão do sistema.');
+     if(req.method!=='GET')fail(405,'Operação indisponível.');
+     send(200,await switchReadiness({client,env}));
+     return true;
+   }
    if(path==='/api/switch/outbox'){
      if(!user?.active||user.must_change||user.role!=='admin')fail(403,'Acesso da gestão obrigatório.');
      if(req.method!=='GET')fail(405,'Operação indisponível.');
