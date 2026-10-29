@@ -3,6 +3,7 @@ import {ArrowUpRight,Check,RefreshCw,Search,ShieldCheck,Sparkles} from 'lucide-r
 import {api,type TeamUser,type Assignee} from './api';
 import SwitchPartnerImport from './SwitchPartnerImport';
 import SwitchProfessionalRoster,{type SwitchProfessional} from './SwitchProfessionalRoster';
+import SwitchReadinessPanel from './SwitchReadinessPanel';
 import SwitchDealDesk from './SwitchDealDesk';
 import './switch-workspace.css';
 
@@ -106,6 +107,7 @@ export default function SwitchWorkspace({user}:{user:TeamUser}){
     <section className="ps-card sx-detail">{current?<SwitchEditor key={current.id+'-'+current.version} item={current} admin={user.role==='admin'} members={members} done={item=>{setSnapshot(s=>s?{...s,requests:s.requests.map(r=>r.id===item.id?item:r)}:s);void findMatches();}}/>:<p className="sx-info">Selecione uma solicitação para acompanhar.</p>}</section>
    </div>
    {user.role==='admin'&&<section className="ps-card sx-partner-card"><span className="ps-overline">OFERTA EM ESCALA</span><h2>Parceiros e inventário compartilhado</h2><p className="sx-info">{offers.length} ofertas de parceiros no painel, {offers.filter(o=>o.available).length} disponíveis conforme última atualização. A disponibilidade precisa ser reconfirmada em cada negociação.</p><SwitchPartnerImport onImported={()=>{void load();}}/></section>}
+   {user.role==='admin'&&<SwitchReadinessPanel/>}
    {user.role==='admin'&&<SwitchProfessionalRoster changed={setProfessionals}/>}
    {user.role==='admin'&&<SwitchDealDesk matches={matches} requests={requests} offers={offers} professionals={professionals}/>}
    {user.role==='admin'&&<section className="ps-card sx-matches">
