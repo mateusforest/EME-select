@@ -139,7 +139,7 @@ export function attachCloudSwitchProfessionals({client,rate,env=process.env,fetc
          rest((deal.source_kind==='partner_offer'?'eme_switch_partner_offers':'eme_switch_requests')+
            '?id=eq.'+deal.source_id+'&select=*'),
          rest('eme_switch_requests?id=eq.'+deal.demand_id+
-           '&select=id,kind,status,city,property_type,asking_cents,target_city,target_budget_cents')
+           '&select=id,kind,status,city,property_type,asking_cents,target_city,target_budget_cents,demand_reviewed')
        ]);
        const source=asset[0],buyer=demand[0];
        const norm=value=>String(value||'').normalize('NFD').replace(/\p{M}/gu,'').trim().toLowerCase();
@@ -153,6 +153,7 @@ export function attachCloudSwitchProfessionals({client,rate,env=process.env,fetc
        const city=buyer?.kind==='swap'?buyer.target_city:buyer?.city;
        const budget=buyer?.kind==='swap'?buyer.target_budget_cents:buyer?.asking_cents;
        currentDemand=!!buyer&&buyer.status==='qualified'&&['buy','swap','invest'].includes(buyer.kind)&&
+         (buyer.kind!=='buy'||buyer.demand_reviewed===true)&&
          norm(city)===norm(deal.teaser_city)&&norm(buyer.property_type)===norm(deal.teaser_type)&&
          Number(budget)>=Number(deal.sale_price_cents);
      }
