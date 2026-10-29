@@ -29,3 +29,5 @@ jobs:
       - run: npm ci
       - run: npm run test:switch
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --config playwright.switch.config.ts
