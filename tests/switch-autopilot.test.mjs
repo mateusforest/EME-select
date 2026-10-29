@@ -58,3 +58,31 @@ test('não gera ofertas de estoque sem atualização recente ou autorização',a
  const result=await attachSwitchAutopilot({client,env}).run();
  assert.equal(result.created,0);
 });
+
+test('capta negócio de proprietário direto sem depender de carteira parceira',async()=>{
+ const direct={id:'dd4bbcc5-04a5-4715-95af-1a4c6a816ce8',kind:'sell',status:'qualified',
+  city:'Vacaria',property_type:'Casa',asking_cents:38000000,min_acceptable_cents:37000000,
+  ownership_reviewed:true,sharing_authorized:true,updated_at:new Date().toISOString()};
+ const buyer={id:'d664af4d-0c2e-469d-a9be-22c02bab629d',kind:'buy',status:'qualified',
+  city:'Vacaria',property_type:'Casa',asking_cents:45000000};
+ const professional={id:'f9288e7a-0c0a-45c7-a1c3-144335d73125',city:'Vacaria',property_type:'Casa',
+  phone:'5554999999999',status:'verified',whatsapp_opt_in:true};
+ const saved=[],jobs=[];
+ const client={
+  rest:async(path,method='GET',body)=>{
+   if(path.startsWith('eme_switch_requests?'))return [direct,buyer];
+   if(path.startsWith('eme_switch_partner_offers?'))return [];
+   if(path.startsWith('eme_switch_professionals?'))return [professional];
+   if(path.startsWith('eme_switch_outbox?'))return jobs;
+   if(path==='eme_switch_outbox'&&method==='POST'){jobs.push(body);return [body];}
+   throw Error('Unexpected: '+path);
+  },
+  request:async(_path,{body})=>{saved.push(body);return [body];}
+ };
+ const result=await attachSwitchAutopilot({client,env}).run();
+ assert.equal(result.created,1);
+ assert.equal(saved[0].source_kind,'switch_request');
+ assert.equal(saved[0].source_id,direct.id);
+ assert.equal(saved[0].sale_price_cents,37000000);
+ assert.equal(jobs.length,1);
+});
