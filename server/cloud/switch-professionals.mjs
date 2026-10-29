@@ -142,7 +142,7 @@ export function attachCloudSwitchProfessionals({client,rate,env=process.env,fetc
            '&select=id,kind,status,city,property_type,asking_cents,target_city,target_budget_cents')
        ]);
        const source=asset[0],buyer=demand[0];
-       const norm=value=>String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim().toLowerCase();
+       const norm=value=>String(value||'').normalize('NFD').replace(/\p{M}/gu,'').trim().toLowerCase();
        currentSupply=!!source&&(deal.source_kind==='partner_offer'?
          source.available===true&&source.authorization_confirmed===true&&
          Date.now()-Date.parse(source.updated_at)<7*86400000&&
