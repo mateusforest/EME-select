@@ -23,6 +23,7 @@ export function switchOfferDraft(input,source,target) {
  if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(k=>!['sourceKind','sourceId','demandId','salePriceCents','brokerageBps','switchShareBps','expiresDays'].includes(k)))fail('Proposta inválida.');
  if(!['switch_request','partner_offer'].includes(input.sourceKind))fail('Origem inválida.');
  if(!source||!target||!['buy','swap','invest'].includes(target.kind)||target.status!=='qualified')fail('A demanda deve estar qualificada.');
+ if(target.kind==='buy'&&target.demand_reviewed!==true)fail('A intenção e o orçamento do comprador devem ser confirmados pela gestão.');
  if(target.id===source.id)fail('Selecione duas partes distintas.');
  if(input.sourceKind==='switch_request'){
    if(!['sell','swap'].includes(source.kind)||source.status!=='qualified'||!source.ownership_reviewed||!source.sharing_authorized)fail('Revise o imóvel e a autorização do proprietário.');
