@@ -20,20 +20,32 @@ export function attachSwitchAutopilot({client,env=process.env}){
    const cfg=switchAutopilotSettings(env);
    if(!cfg.enabled)return {enabled:false,created:0,reason:'Automação de propostas desativada.'};
    const [requests,offers,professionals]=await Promise.all([
-     rest('eme_switch_requests?select=id,kind,status,city,property_type,asking_cents,target_city,target_budget_cents&status=eq.qualified&order=created_at.desc&limit=200'),
+     rest('eme_switch_requests?select=id,kind,status,city,property_type,asking_cents,target_city,target_budget_cents,ownership_reviewed,sharing_authorized,min_acceptable_cents,updated_at&status=eq.qualified&order=created_at.desc&limit=200'),
      rest('eme_switch_partner_offers?select=id,partner,ref,title,city,property_type,price_cents,available,authorization_confirmed,updated_at&available=is.true&authorization_confirmed=is.true&order=updated_at.desc&limit=300'),
      rest('eme_switch_professionals?select=id,city,property_type,phone,status,whatsapp_opt_in&status=eq.verified&whatsapp_opt_in=is.true&order=created_at.asc&limit=200')
    ]);
    // Não automatizar imóveis sem autorização, sem atualização recente ou sem demanda qualificada.
-   const fresh=offers.filter(o=>Date.now()-Date.parse(o.updated_at)<7*86400000);
-   const matches=matchSwitchDemand(requests.filter(r=>['buy','swap','invest'].includes(r.kind)),fresh,{limit:100});
+   const fresh=offers.filter(o=>o.available===true&&o.authorization_confirmed===true&&
+     Date.now()-Date.parse(o.updated_at)<7*86400000)
+     .map(o=>({...o,source_kind:'partner_offer'}));
+   // Uma autorização direta e verificada de proprietário permite funcionar sem
+   // depender de imobiliárias parceiras. Nunca publicar documentos ou telefones.
+   const direct=requests.filter(r=>['sell','swap'].includes(r.kind)&&
+     r.status==='qualified'&&r.ownership_reviewed===true&&r.sharing_authorized===true&&
+     Number.isSafeInteger(Number(r.min_acceptable_cents))&&Number(r.min_acceptable_cents)>=1000000&&
+     Date.now()-Date.parse(r.updated_at)<7*86400000)
+     .map(r=>({id:r.id,partner:'Proprietário validado',ref:r.id,
+       city:r.city,property_type:r.property_type,price_cents:Number(r.min_acceptable_cents),
+       available:true,authorization_confirmed:true,source_kind:'switch_request'}));
+   const available=[...direct,...fresh];
+   const matches=matchSwitchDemand(requests.filter(r=>['buy','swap','invest'].includes(r.kind)),available,{limit:100});
    let created=0,skipped=0;
    const booked=new Set();
    for(const candidate of matches){
      if(created>=3)break; // máximo três convites por ciclo, não faz spam de rede.
-     const offer=fresh.find(o=>o.id===candidate.assetId);
+     const offer=available.find(o=>o.id===candidate.assetId);
      const demand=requests.find(r=>r.id===candidate.investorId);
-     if(!offer||!demand)continue;
+     if(!offer||!demand||offer.id===demand.id)continue;
      const pool=professionals.filter(p=>!booked.has(p.id)&&key(p.city)===key(offer.city)&&key(p.property_type)===key(offer.property_type));
      let pro=null;
      for(const potential of pool){
@@ -50,7 +62,7 @@ export function attachSwitchAutopilot({client,env=process.env}){
      const id=randomUUID(),token=switchProToken(env,'deal',id);
      const record={
        id,token_hash:sha(token),public_ref:randomBytes(6).toString('hex').toUpperCase(),
-       source_kind:'partner_offer',source_id:offer.id,demand_id:demand.id,
+       source_kind:offer.source_kind,source_id:offer.id,demand_id:demand.id,
        teaser_city:offer.city,teaser_type:offer.property_type,
        sale_price_cents:quote.salePriceCents,brokerage_bps:quote.brokerageBps,
        switch_share_bps:quote.switchShareBps,status:'prepared',origin:'autopilot',
