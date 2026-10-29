@@ -21,7 +21,8 @@ const server = http.createServer(async (req, res) => {
     if(canonicalSelectPath(requested)!==requested){res.writeHead(308,{Location:canonicalSelectPath(requested)+new URL(req.url,'http://127.0.0.1').search});res.end();return;}
     const portalRoute = /^\/acesso-select(?:\/[a-z0-9-]+){0,3}\/?$/.test(requested);
     const submissionRoute = /^\/(?:inovacao|enviar-imovel|apresentar\/(?:g400|cenario))\/?$/.test(requested);
-    const path = resolve(root, `.${requested === '/' || portalRoute || submissionRoute ? '/index.html' : requested}`);
+    const switchRoute = /^\/switch(?:\/(?:profissionais|convite\/[a-zA-Z0-9_-]{43}|sair\/[a-zA-Z0-9_-]{43}))?\/?$/.test(requested);
+    const path = resolve(root, `.${requested === '/' || portalRoute || submissionRoute || switchRoute ? '/index.html' : requested}`);
     if (!path.startsWith(root + sep)) { res.writeHead(403); res.end(); return; }
     const info = await stat(path);
     if (!info.isFile()) { res.writeHead(404); res.end(); return; }

@@ -13,6 +13,7 @@ import FinancingQuick from './FinancingQuick';
 import {BrokerToday,BrokerCommissions} from './BrokerWorkspace';
 import BrokerConversations from './BrokerConversations';
 import LeadsWorkspace from './LeadsWorkspace';
+import SwitchWorkspace from './SwitchWorkspace';
 import type {Listing} from './listingModel';
 import PeopleWorkspace from './PeopleWorkspace';
 import DevelopmentsWorkspace from './DevelopmentsWorkspace';
@@ -104,6 +105,7 @@ export default function TeamWorkspace({user,onSignedOut,onUserChanged}:{user:Tea
   {page==='pessoas'&&user.role==='admin'&&<PeopleWorkspace key={revision}/>}
   {page==='empreendimentos'&&user.role==='admin'&&<DevelopmentsWorkspace/>}
   {page==='leads'&&<LeadsWorkspace user={user}/>}
+   {page==='switch'&&<SwitchWorkspace user={user}/>}
   {page==='imoveis'&&<ListingsWorkspace user={user}/>}
   {page==='propostas'&&<ProposalsWorkspace user={user}/>}
   {page==='padrao'&&<CurationStandard onNavigate={go}/>}

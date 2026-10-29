@@ -1,0 +1,36 @@
+name: M Switch Checks
+on:
+  pull_request:
+    paths:
+      - 'shared/switch-*.mjs'
+      - 'server/cloud/switch*.mjs'
+      - 'server/cloud/whatsapp.mjs'
+      - 'src/portal/Switch*.tsx'
+      - 'vercel.json'
+      - 'package.json'
+      - 'src/switch/**'
+      - 'src/portal/SwitchWorkspace.tsx'
+      - 'tests/switch-*.test.mjs'
+      - 'supabase/migrations/*switch*'
+      - 'docs/sql/*M-SWITCH.sql'
+      - 'scripts/switch-migration-bundle.mjs'
+      - '.github/workflows/switch-tests.yml'
+  push:
+    branches:
+      - feat/m-switch-matching-v1
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run test:switch
+      - run: node scripts/switch-migration-bundle.mjs
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --config playwright.switch.config.ts

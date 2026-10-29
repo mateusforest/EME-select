@@ -13,6 +13,26 @@
       "destination": "/index.html"
     },
     {
+      "source": "/switch/sair/:token",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/switch/profissionais",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/switch/convite/:token",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/switch",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/switch/",
+      "destination": "/index.html"
+    },
+    {
       "source": "/acesso-select/:path*",
       "destination": "/index.html"
     },
@@ -68,6 +88,40 @@
       "source": "/portalselect/:path*",
       "destination": "/acesso-select/equipe/:path*",
       "permanent": true
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/switch/cron",
+      "schedule": "0 12 * * *"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/switch/convite/:token",
+      "headers": [
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store"
+        }
+      ]
+    },
+    {
+      "source": "/switch/sair/:token",
+      "headers": [
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store"
+        }
+      ]
     }
   ]
 }

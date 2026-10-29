@@ -1,0 +1,88 @@
+// M Switch: validar entradas públicas antes de persistir. Não é avaliação ou proposta.
+import {requireSwitchConsentVersion} from './switch-consent.mjs';
+export const switchKinds = Object.freeze(['sell','swap','buy','invest']);
+export const switchStatuses = Object.freeze(['new','reviewing','qualified','negotiating','closed','archived']);
+const matchId = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
+const fail = message => { throw Object.assign(new Error(message), {status:400}); };
+const t = (value, label, min, max) => {
+  if (typeof value !== 'string' || value.trim().length < min || value.trim().length > max) fail('Confira '+label+'.');
+  return value.trim();
+};
+export function switchCents(value, label, required = false) {
+  if (value == null || value === '') {if (required) fail('Informe '+label+'.'); return null;}
+  if (!Number.isSafeInteger(value) || value < 1000000 || value > 1000000000000) fail('Confira '+label+' (valor em centavos).');
+  return value;
+}
+export function switchPhone(value) {
+  const digits = t(value,'o WhatsApp',10,25).replace(/\D/g,'');
+  const normalized = /^[1-9]{2}9?\d{8}$/.test(digits) ? '55'+digits : digits;
+  if (!/^55[1-9]{2}9?\d{8}$/.test(normalized)) fail('Informe WhatsApp brasileiro com DDD.');
+  return normalized;
+}
+export function switchIntake(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) fail('Solicitação inválida.');
+  const allowed=['requestId','kind','name','phone','city','propertyType','askingCents','targetCity','targetBudgetCents','notes','contactConsent','updatesOptIn','privacyAccepted','consentVersion','website','source'];
+  if (Object.keys(body).some(x => !allowed.includes(x)) || body.website) fail('Solicitação inválida.');
+  if (typeof body.requestId !== 'string' || !matchId.test(body.requestId)) fail('Referência de envio inválida.');
+  if (!switchKinds.includes(body.kind)) fail('Tipo de operação inválido.');
+  if (body.privacyAccepted !== true || body.contactConsent !== true) fail('Confirme a política e a autorização para responder sua solicitação.');
+  if (typeof body.updatesOptIn !== 'boolean') fail('Confira suas preferências de contato.');
+  requireSwitchConsentVersion(body.consentVersion);
+  const source = body.source == null ? 'site' : t(body.source,'a origem',2,80);
+  if (!/^[\p{L}\p{N} _:/.-]+$/u.test(source)) fail('Origem inválida.');
+  return {
+    requestId:body.requestId.toLowerCase(),
+    kind:body.kind,
+    name:t(body.name,'o nome',2,100),
+    phone:switchPhone(body.phone),
+    city:t(body.city,'a cidade',2,100),
+    propertyType:t(body.propertyType,'o tipo de imóvel',2,60),
+    askingCents:switchCents(body.askingCents,body.kind==='buy'||body.kind==='invest'?'o orçamento máximo':'o valor aproximado',true),
+    targetCity:['invest','buy'].includes(body.kind) ? '' : t(body.targetCity||'','a cidade desejada',0,100),
+    targetBudgetCents:['invest','buy'].includes(body.kind) ? null : switchCents(body.targetBudgetCents,'o orçamento de destino'),
+    notes:t(body.notes||'','as observações',0,1200),
+    contactConsent:true,updatesOptIn:body.updatesOptIn,privacyAccepted:true,consentVersion:body.consentVersion,source
+  };
+}
+export function switchRevision(body, prior, isAdmin) {
+  if (!body || typeof body!=='object' || Array.isArray(body)) fail('Alteração inválida.');
+  const allowed=['version','status','ownerId','ownershipReviewed','sharingAuthorized','fundsVerified','demandReviewed','minAcceptableCents','note'];
+  if (Object.keys(body).some(x=>!allowed.includes(x))) fail('Campos inválidos.');
+  if (!Number.isSafeInteger(body.version) || body.version!==prior.version) throw Object.assign(new Error('A ficha mudou. Atualize antes de salvar.'),{status:409});
+  if (body.status!==undefined && !switchStatuses.includes(body.status)) fail('Etapa inválida.');
+  if (!isAdmin && ['ownerId','ownershipReviewed','sharingAuthorized','fundsVerified','demandReviewed','minAcceptableCents'].some(k=>Object.hasOwn(body,k))) throw Object.assign(new Error('A revisão documental e financeira exige a gestão.'),{status:403});
+  const out = {};
+  if (body.status!==undefined) out.status=body.status;
+  if (body.ownerId!==undefined) {
+    if (body.ownerId!==null && (typeof body.ownerId!=='string'||!matchId.test(body.ownerId))) fail('Responsável inválido.');
+    out.owner_id=body.ownerId;
+  }
+  if (body.ownershipReviewed!==undefined) {
+    if (typeof body.ownershipReviewed!=='boolean'||['invest','buy'].includes(prior.kind)) fail('Revisão inválida.');
+    out.ownership_reviewed=body.ownershipReviewed;
+  }
+  if (body.sharingAuthorized!==undefined) {
+    if (typeof body.sharingAuthorized!=='boolean'||['invest','buy'].includes(prior.kind)) fail('Autorização inválida.');
+    out.sharing_authorized=body.sharingAuthorized;
+  }
+  if (body.demandReviewed!==undefined) {
+    if (typeof body.demandReviewed!=='boolean'||prior.kind!=='buy') fail('Conferência da demanda inválida.');
+    out.demand_reviewed=body.demandReviewed;
+  }
+  if (body.fundsVerified!==undefined) {
+    if (typeof body.fundsVerified!=='boolean'||prior.kind!=='invest') fail('Conferência financeira inválida.');
+    out.funds_verified=body.fundsVerified;
+  }
+  if (body.minAcceptableCents!==undefined) {
+    if (['invest','buy'].includes(prior.kind)) fail('O valor mínimo só se aplica ao imóvel.');
+    out.min_acceptable_cents=switchCents(body.minAcceptableCents,'o mínimo aceito');
+  }
+  if (body.note!==undefined)out.review_note=t(body.note,'a nota interna',0,1000);
+  if (!Object.keys(out).length) fail('Nenhuma alteração informada.');
+  if (out.status==='qualified') {
+    if (prior.kind==='buy' && !(out.demand_reviewed ?? prior.demand_reviewed)) fail('Confirme com o comprador a intenção, o orçamento declarado e a forma de pagamento antes de qualificar.');
+    if (prior.kind==='invest' && !(out.funds_verified ?? prior.funds_verified)) fail('Confirme a verificação do investidor antes de qualificar.');
+    if (['sell','swap'].includes(prior.kind) && (!(out.ownership_reviewed??prior.ownership_reviewed)||!(out.sharing_authorized??prior.sharing_authorized)||!(Object.hasOwn(out,'min_acceptable_cents')?out.min_acceptable_cents:prior.min_acceptable_cents))) fail('Confira titularidade, autorização e mínimo aceito antes de qualificar.');
+  }
+  return out;
+}

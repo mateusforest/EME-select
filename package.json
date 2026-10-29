@@ -15,7 +15,10 @@
     "test:finance": "node --test tests/finance-domain.test.mjs tests/finance-outlook.test.mjs tests/owner-payment-plan.test.mjs tests/finance-partners.test.mjs tests/finance-guards.test.mjs tests/finance-api.test.mjs tests/finance-schema.test.mjs tests/finance-routing.test.mjs",
     "test:operations": "node --test tests/operations-domain.test.mjs tests/operations-api.test.mjs tests/operations-schema.test.mjs tests/intelligence.test.mjs",
     "test:whatsapp": "node --test tests/whatsapp.test.mjs",
-    "test:leads": "node --test tests/leads.test.mjs tests/leads-cloud.test.mjs"
+    "test:leads": "node --test tests/leads.test.mjs tests/leads-cloud.test.mjs",
+    "test:switch": "node --test tests/switch-matching.test.mjs tests/switch-intake.test.mjs tests/switch-trades.test.mjs tests/switch-cloud.test.mjs tests/switch-partners.test.mjs tests/switch-deals.test.mjs tests/switch-schema.test.mjs tests/switch-professionals.test.mjs tests/switch-autopilot.test.mjs tests/switch-readiness.test.mjs tests/switch-dispatch.test.mjs tests/switch-launch.test.mjs tests/switch-recovery.test.mjs tests/switch-portfolio.test.mjs",
+    "test:switch:dry-run": "node scripts/switch-migration-bundle.mjs && node --test tests/switch-schema.test.mjs tests/switch-launch.test.mjs",
+    "preview:switch": "node scripts/preview-switch.mjs"
   },
   "dependencies": {
     "gsap": "3.15.0",
