@@ -8,6 +8,8 @@ const contactUrl='https://wa.me/5554991578029?text='+encodeURIComponent('Olá! G
 
 export default function FeaturedDevelopment(){
   const [active,setActive]=useState(false);
+  const [selection,setSelection]=useState('');
+  const frameUrl=spatialUrl+(selection?`?${selection}`:'');
   const [loaded,setLoaded]=useState(false);
   const [slow,setSlow]=useState(false);
   const [notice,setNotice]=useState('');
@@ -20,7 +22,7 @@ export default function FeaturedDevelopment(){
     const timer=window.setTimeout(()=>setSlow(true),15000);
     return()=>window.clearTimeout(timer);
   },[active,loaded]);
-  function stop(){setActive(false);setLoaded(false);setSlow(false);setNotice('');requestAnimationFrame(()=>launch.current?.focus({preventScroll:true}));}
+  function stop(){setSelection('');setActive(false);setLoaded(false);setSlow(false);setNotice('');requestAnimationFrame(()=>launch.current?.focus({preventScroll:true}));}
   async function expand(){
     try{if(document.fullscreenElement)await document.exitFullscreen();else await viewer.current?.requestFullscreen();}
     catch{setNotice('Para ampliar, use “Abrir no EME Spatial”.');}
@@ -40,11 +42,11 @@ export default function FeaturedDevelopment(){
         {active?<>
           <div className="moradas-feature__toolbar"><span><Box size={18} aria-hidden="true"/>Moradas da Serra · EME Spatial</span><div><a href={spatialUrl} target="_blank" rel="noopener noreferrer">Abrir no EME Spatial <ArrowUpRight size={16}/></a><button type="button" onClick={expand} aria-label="Ampliar experiência"><Maximize size={18}/></button><button ref={close} type="button" onClick={stop} aria-label="Fechar experiência 3D"><X size={20}/></button></div></div>
           {!loaded&&<p className="moradas-feature__loading" role="status">{slow?'O carregamento está demorando. Você também pode abrir a experiência no EME Spatial.':'Carregando a experiência do EME Spatial…'}</p>}
-          <iframe title="Experiência interativa do Moradas da Serra no EME Spatial" src={spatialUrl} allow="fullscreen" allowFullScreen onLoad={()=>setLoaded(true)} />
+          <iframe title="Experiência interativa do Moradas da Serra no EME Spatial" src={frameUrl} allow="fullscreen" allowFullScreen onLoad={()=>setLoaded(true)} />
           <p className="moradas-feature__hint">Na apresentação, selecione “Explorar em 3D” para girar e aproximar a maquete. <span role="status">{notice}</span></p>
         </>:<>
           <img className="moradas-feature__preview" src="/assets/developments/moradas-da-serra/hero.webp" alt="Prévia conceitual das duas torres do Moradas da Serra e suas áreas de convivência" width="1672" height="941" loading="lazy"/>
-          <MoradasFloorHover onSelect={()=>setActive(true)}/>
+          <MoradasFloorHover onSelect={(tower,floor)=>{setSelection(`tower=${tower}&floor=${floor}`);setActive(true);}}/>
           <span className="moradas-feature__badge"><Box size={22} aria-hidden="true"/>Experiência 3D</span>
           <a className="moradas-feature__expand" href={spatialUrl} target="_blank" rel="noopener noreferrer" aria-label="Abrir Moradas da Serra no EME Spatial em nova aba"><Maximize size={20}/></a>
           <div className="moradas-feature__preview-action"><button className="moradas-feature__cta" ref={launch} type="button" onClick={()=>setActive(true)}><Box size={23} aria-hidden="true"/>Explorar em 3D</button><p>Gire, aproxime e descubra o projeto</p></div>
