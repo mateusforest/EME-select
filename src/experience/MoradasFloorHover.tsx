@@ -1,0 +1,4 @@
+export default function MoradasFloorHover({onSelect}:{onSelect:()=>void}){
+ const towers=[{id:'A',x:[481,615,764],roof:[219,219,216],base:[566,590,537],levels:8},{id:'B',x:[807,1012,1150],roof:[222,222,216],base:[670,706,636],levels:9}];
+ return <svg className="moradas-floor-hover" viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid slice" aria-label="Explorar andares do Moradas da Serra">{towers.flatMap(t=>Array.from({length:t.levels},(_,i)=>{const edge=(f:number)=>t.x.map((x,j)=>[x,t.base[j]+(t.roof[j]-t.base[j])*f/t.levels]);return <polygon key={t.id+i} points={[...edge(i+1),...edge(i).reverse()].map(p=>p.join(',')).join(' ')} tabIndex={0} role="button" aria-label={`Explorar Torre ${t.id}, ${i+1}º andar`} onClick={onSelect} onKeyDown={e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();onSelect();}}}><title>Torre {t.id} · {i+1}º andar · Explorar</title></polygon>}))}</svg>;
+}

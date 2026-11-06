@@ -1,3 +1,4 @@
+import MoradasFloorHover from './MoradasFloorHover';
 import {useEffect,useRef,useState} from 'react';
 import {ArrowRight,ArrowUpRight,BedDouble,Box,Maximize,Trees,X} from 'lucide-react';
 import './featured-development.css';
@@ -43,6 +44,7 @@ export default function FeaturedDevelopment(){
           <p className="moradas-feature__hint">Na apresentação, selecione “Explorar em 3D” para girar e aproximar a maquete. <span role="status">{notice}</span></p>
         </>:<>
           <img className="moradas-feature__preview" src="/assets/developments/moradas-da-serra/hero.webp" alt="Prévia conceitual das duas torres do Moradas da Serra e suas áreas de convivência" width="1672" height="941" loading="lazy"/>
+          <MoradasFloorHover onSelect={()=>setActive(true)}/>
           <span className="moradas-feature__badge"><Box size={22} aria-hidden="true"/>Experiência 3D</span>
           <a className="moradas-feature__expand" href={spatialUrl} target="_blank" rel="noopener noreferrer" aria-label="Abrir Moradas da Serra no EME Spatial em nova aba"><Maximize size={20}/></a>
           <div className="moradas-feature__preview-action"><button className="moradas-feature__cta" ref={launch} type="button" onClick={()=>setActive(true)}><Box size={23} aria-hidden="true"/>Explorar em 3D</button><p>Gire, aproxime e descubra o projeto</p></div>

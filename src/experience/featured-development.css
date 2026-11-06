@@ -42,3 +42,7 @@
 @media(max-width:540px){#eme-continuo #ef-moradas .moradas-feature{padding:38px 20px 24px}#eme-continuo #ef-moradas .moradas-feature h2{font-size:38px}#eme-continuo #ef-moradas .moradas-feature__eyebrow{margin-bottom:22px;font-size:10px}#eme-continuo #ef-moradas .moradas-feature__viewer{min-height:400px}#eme-continuo #ef-moradas .moradas-feature__footer{align-items:flex-start;flex-direction:column;font-size:12px}#eme-continuo #ef-moradas .moradas-feature__toolbar{flex-wrap:wrap}#eme-continuo #ef-moradas .moradas-feature__toolbar>div{width:100%;justify-content:flex-end}#eme-continuo #ef-moradas .moradas-feature__toolbar a{margin-right:auto}#eme-continuo #ef-moradas .moradas-feature__badge{left:12px;top:12px}#eme-continuo #ef-moradas .moradas-feature__expand{right:12px;top:12px}#eme-continuo #ef-moradas .moradas-feature__facts{font-size:12px}}
 @media(prefers-reduced-motion:reduce){#eme-continuo #ef-moradas .moradas-feature__cta{transition:none}}
 
+
+#eme-continuo #ef-moradas .moradas-floor-hover{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+#eme-continuo #ef-moradas .moradas-floor-hover polygon{fill:transparent;stroke:transparent;pointer-events:all;cursor:pointer;outline:none}
+#eme-continuo #ef-moradas .moradas-floor-hover polygon:hover,#eme-continuo #ef-moradas .moradas-floor-hover polygon:focus-visible{fill:#eadba644;stroke:#fff4ce;stroke-width:2;filter:drop-shadow(0 0 5px #ffedb5);vector-effect:non-scaling-stroke}
