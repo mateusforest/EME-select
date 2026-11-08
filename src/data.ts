@@ -90,11 +90,8 @@ export interface Environment {
   markers: SceneMarker[];
 }
 
-export const CONTACT = {
-  phone: '5554991578029',
-  display: '(54) 99157-8029',
-  brand: 'EME Select',
-};
+export {COMPANY_CONTACT as CONTACT} from '../shared/company-contact.mjs';
+import {COMPANY_CONTACT as CONTACT} from '../shared/company-contact.mjs';
 
 export const environments: Environment[] = [
   {

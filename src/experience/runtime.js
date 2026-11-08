@@ -1,3 +1,4 @@
+import {COMPANY_CONTACT} from '../../shared/company-contact.mjs';
 import {renderPropertyConsultants} from './consultants.js';
 import {renderPrice} from './price.js';
 import {markOpportunity,brandOpportunities} from './opportunity-brand.js';
@@ -443,7 +444,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
       'Região: '+region.name,'Cidade: '+region.city,'Estado: '+regionState(region).name,
       'Tipo de imóvel: '+(regionType ? type : 'Ainda estou explorando'),'',
       'Podemos conversar sobre o que procuro e as possibilidades da coleção?'].join('\n');
-    return 'https://wa.me/5554991578029?text='+encodeURIComponent(message);
+    return 'https://wa.me/'+COMPANY_CONTACT.phone+'?text='+encodeURIComponent(message);
   }
   function renderRegionalProperties() {
     const region=regionById(regionId),all=regionalProperties(regionId,''),items=regionalProperties();
@@ -761,7 +762,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     });
     root.querySelector('.ep-chapter-row').hidden = property.photos.length === 1;
     renderPropertyConsultants(root,siteContent.consultantDisplay,property);
-    root.querySelector('.ep-plant').href = 'https://wa.me/5554991578029?text='+encodeURIComponent('Olá! Gostaria da planta e das medidas do imóvel '+property.full+'.');
+    root.querySelector('.ep-plant').href = 'https://wa.me/'+COMPANY_CONTACT.phone+'?text='+encodeURIComponent('Olá! Gostaria da planta e das medidas do imóvel '+property.full+'.');
     const nextProperty = properties[(properties.indexOf(property)+1)%properties.length];
     root.querySelector('.ep-next-title').textContent = nextProperty.title;
     root.querySelector('.ep-next-photo').src = assets[nextProperty.cover];
@@ -988,7 +989,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     root.querySelector('.ef-interest').textContent = moneyFormat.format(calculation.interest);
     root.querySelector('.ef-total').textContent = moneyFormat.format(calculation.total);
     root.querySelector('.ef-monthly-rate').textContent = new Intl.NumberFormat('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4}).format(calculation.monthlyRate*100)+'%';
-    financeWhatsApp.href = 'https://wa.me/5554991578029?text='+encodeURIComponent(financeMessage(byId(selectedId),price,down,rate,months,system,calculation));
+    financeWhatsApp.href = 'https://wa.me/'+COMPANY_CONTACT.phone+'?text='+encodeURIComponent(financeMessage(byId(selectedId),price,down,rate,months,system,calculation));
     financeWhatsApp.setAttribute('aria-disabled','false');
     return true;
   }
@@ -1209,7 +1210,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     if(criteriaText())parts.push('Meu interesse: '+criteriaText());
     if(currentMatches.length)parts.push('Imóveis que conheci:',...currentMatches.slice(0,3).map(p=>p.title+' · '+p.price+' · '+location.origin+'/#/imovel/'+p.id));
     parts.push('Podemos continuar o atendimento?');
-    root.querySelector('.ex-assistant-footer a').href='https://wa.me/5554991578029?text='+encodeURIComponent(parts.join('\n\n'));
+    root.querySelector('.ex-assistant-footer a').href='https://wa.me/'+COMPANY_CONTACT.phone+'?text='+encodeURIComponent(parts.join('\n\n'));
   }
   async function sendChatRequest(request){
     const version=++chatVersion;

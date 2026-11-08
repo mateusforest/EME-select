@@ -4,7 +4,7 @@ import {ArrowRight,ArrowUpRight,BedDouble,Box,Maximize,Trees,X} from 'lucide-rea
 import './featured-development.css';
 
 const spatialUrl=import.meta.env.DEV && import.meta.env.VITE_SPATIAL_PREVIEW_URL || 'https://www.emespatial.com/apresentar/moradas-da-serra';
-const contactUrl='https://wa.me/5554991578029?text='+encodeURIComponent('Olá! Gostaria de conhecer o Moradas da Serra, da DeVille, em Vacaria. Podemos conversar sobre plantas e disponibilidade?');
+const contactUrl='https://wa.me/5554984007919?text='+encodeURIComponent('Olá! Gostaria de conhecer o Moradas da Serra, da DeVille, em Vacaria. Podemos conversar sobre plantas e disponibilidade?');
 
 export default function FeaturedDevelopment(){
   const [active,setActive]=useState(false);
