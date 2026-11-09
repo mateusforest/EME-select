@@ -1,7 +1,8 @@
 import {createHash,randomBytes,timingSafeEqual} from 'node:crypto';
 import {fail} from './domain.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
-const phones=['555499902688','5554984007919'];
+const phones=['555499902688','5554984007919','5554981037089'];
+const normalizePhone=value=>{const n=String(value||'').replace(/\D/g,'');return n==='555481037089'?'5554981037089':n;};
 export function attachStaffWhatsApp({client,hashOf,env=process.env}){
  const enabled=()=>env.EME_STAFF_WHATSAPP_ENABLED==='true';
  return {
@@ -24,7 +25,7 @@ export function attachStaffWhatsApp({client,hashOf,env=process.env}){
     send(200,{enabled:true,...await client.rpc('eme_staff_wa_account',{p_session,p_action:'snapshot'})});return true;
    }
    if(path==='/api/staff-whatsapp/link'&&req.method==='POST'){
-    const phone=String(body?.phone||'').replace(/\D/g,'');
+    const phone=normalizePhone(body?.phone);
     if(!phones.includes(phone))fail(400,'Use um contato autorizado para o teste, com 55 e DDD.');
     const code=randomBytes(8).toString('hex');
     await client.rpc('eme_staff_wa_account',{p_session,p_action:'code',p_phone:phone,p_hash:hash(code)});

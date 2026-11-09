@@ -19,6 +19,7 @@ test('cloud SQL: ownership, expiring single-use codes, deduplication, consent, r
  insert into eme_profiles values('00000000-0000-0000-0000-000000000001',true,false,'corretor'),('00000000-0000-0000-0000-000000000002',true,false,'corretor');
  insert into eme_sessions values('s1','00000000-0000-0000-0000-000000000001',now()+interval '1 hour',now()),('s2','00000000-0000-0000-0000-000000000002',now()+interval '1 hour',now());`);
  await db.exec(readFileSync(new URL('../supabase/migrations/20261109_staff_whatsapp.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../supabase/migrations/20261109_staff_whatsapp_fabricio.sql',import.meta.url),'utf8'));
  const account=async(session,action,phone='',hash='')=>(await db.query('select eme_staff_wa_account($1,$2,$3,$4) as r',[session,action,phone,hash])).rows[0].r;
  let seq=0;const message=async(text,id=String(++seq),code='')=>(await db.query('select eme_staff_wa_message($1,$2,$3,$4,$5) as r',['5554984007919',id,text,text,code])).rows[0].r;
  assert.match((await message('EQUIPE')).reply,/vincule/);
@@ -43,7 +44,16 @@ test('cloud SQL: ownership, expiring single-use codes, deduplication, consent, r
  await db.exec("update eme_profiles set active=true;update eme_staff_wa_codes set expires_at=now()-interval '1 minute'");
  assert.match((await message('VINCULAR 1234567890abcdef',undefined,'b'.repeat(64))).reply,/inválido/);
  await account('s1','unlink');assert.equal((await account('s1','snapshot')).links.length,0);
+ await account('s2','code','5554981037089','c'.repeat(64));
+ const fabricio=(await db.query('select eme_staff_wa_message($1,$2,$3,$4,$5) as r',['5554981037089','fabricio-link','VINCULAR 1234567890abcdef','fabricio-hash','c'.repeat(64)])).rows[0].r;
+ assert.match(fabricio.reply,/foi vinculado/);
+ assert.deepEqual((await account('s2','snapshot')).links,['5554981037089']);
  await db.exec('set role anon');await assert.rejects(db.query('select * from eme_staff_wa_links'),/permission denied/);
  await assert.rejects(account('s1','snapshot'),/permission denied/);
  }finally{await db.close();}
+});
+test('portal accepts the authorized Fabricio number with or without ninth digit',async()=>{
+ const calls=[];const channel=attachStaffWhatsApp({client:{rpc:async(n,b)=>{calls.push(b);return {}; }},hashOf:()=> 'session',env:{EME_STAFF_WHATSAPP_ENABLED:'true'}});
+ for(const phone of ['+55 54 8103-7089','5554981037089'])await channel.handle('/api/staff-whatsapp/link',{method:'POST'},{active:true},{phone},()=>{});
+ assert.ok(calls.every(c=>c.p_phone==='5554981037089'));
 });
