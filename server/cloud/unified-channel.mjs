@@ -11,6 +11,15 @@ export async function advanceChannel({state,phone,text,event,tools,ai,support}){
  if(/^vincular [a-f0-9]{16}$/.test(cmd)){reply=(await support(phone,event,text)).reply;state.mode='staff';state.status='active';state.flow=null;return out();}
  if(['parar','sair'].includes(cmd)){state.status='stopped';state.flow=null;reply='Atendimento automático pausado. Para retomar, envie CLIENTE ou EQUIPE.';return out();}
  if(state.status==='stopped')return out();
+ const registrationMenu=/^(?:cadastro|cadastros|cadastrar|quero cadastrar|novo cadastro)[.!?]*$/.test(cmd);
+ const registrationKind=/\b(?:cadastr\w*|registr\w*|novo|nova|adicionar)\b.*\b(?:lead|cliente|contato)\b/.test(cmd)?'lead':/\b(?:cadastr\w*|registr\w*|novo|nova|adicionar)\b.*\bimovel\b/.test(cmd)?'property':null;
+ if(!state.flow&&(registrationMenu||registrationKind)){
+  const u=await tools.actor(phone);
+  if(!u){reply='Para cadastrar no portal, primeiro vincule seu WhatsApp à sua conta em https://www.emeselect.com/acesso-select/equipe/inteligencia . Depois envie CADASTRAR IMÓVEL ou CADASTRAR CLIENTE.';return out();}
+  state.mode='staff';state.status='active';
+  if(registrationMenu){reply='O que você quer cadastrar?\n\n• CADASTRAR IMÓVEL — ficha inicial para avaliação\n• CADASTRAR CLIENTE — lead e interesse\n• AGENDAR VISITA — solicitação de visita\n\nVou pedir os dados e mostrar um resumo. Só salvo depois do seu SIM.';return out();}
+  state.flow={kind:registrationKind,id:randomUUID(),actorId:u.id,step:0,values:{}};reply=forms[registrationKind][0][1];return out();
+ }
  if(state.mode==='staff'){
   const u=await tools.actor(phone);if(!u){reply='Vincule seu WhatsApp à sua conta ativa no portal para consultar dados ou cadastrar. Acesse https://www.emeselect.com/acesso-select/equipe/inteligencia . Para atendimento ao cliente, envie CLIENTE.';return out();}
   if(cmd==='cancelar'){state.flow=null;reply='Cadastro em andamento cancelado. Nenhuma nova alteração foi realizada.\n\n'+teamMenu;return out();}

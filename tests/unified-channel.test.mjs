@@ -48,3 +48,15 @@ test('real database: cloud leads, property, visit, finance, notification dedupe 
  assert.equal(await rpc('eme_channel_notify',{p_id:randomUUID(),p_phone:'5554999999999',p_body:'Outside pilot',p_actor:admin.id}),false);
  await db.exec('set role anon');await assert.rejects(db.query('select * from eme_channel_actions'),/permission denied/);await assert.rejects(rpc('eme_channel_turn',{...turnArgs,p_action:'begin'}),/permission denied/);await db.exec('reset role');
 });
+
+test('direct registration works from client mode only for linked accounts and still requires SIM',async()=>{
+ let state={},saved=0,linked=true;const tools={actor:async()=>linked?admin:null,prepare:async()=>({}),execute:async()=>{saved++;return {reference:'registered'};}};
+ const send=async text=>{const r=await advanceChannel({state,phone,text,event:randomUUID(),tools,ai:{},support:async()=>({reply:''})});state=r.state;return r.result;};
+ assert.match((await send('cadastro')).reply,/CADASTRAR IMÓVEL/);await send('CLIENTE');
+ await send('Preciso de ajuda para cadastrar um imóvel');assert.equal(state.mode,'staff');assert.equal(state.flow.kind,'property');
+ for(const value of ['Casa de teste','Vacaria','Casa','Venda','PULAR'])await send(value);
+ assert.equal(saved,0);assert.equal(state.flow.confirm,true);await send('SIM');assert.equal(saved,1);
+ await send('CLIENTE');await send('cadastrar cliente');assert.equal(state.flow.kind,'lead');await send('CANCELAR');assert.equal(state.flow,null);
+ await send('CLIENTE');linked=false;assert.match((await send('cadastrar imóvel')).reply,/vincule/);assert.equal(state.flow,null);assert.equal(saved,1);
+ await send('PARAR');linked=true;assert.equal((await send('cadastrar imóvel')).reply,'');assert.equal(state.flow,null);
+});
