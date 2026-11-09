@@ -1,4 +1,5 @@
 import MarketingMaterials from './MarketingMaterials';
+import WhatsAppInbox from './WhatsAppInbox';
 import ProposalsWorkspace from './ProposalsWorkspace';
 import PersonalWorkspace from './PersonalWorkspace';
 import SubmissionsWorkspace from './SubmissionsWorkspace';
@@ -111,6 +112,7 @@ export default function TeamWorkspace({user,onSignedOut,onUserChanged}:{user:Tea
   {page==='padrao'&&<CurationStandard onNavigate={go}/>}
   {pageInfo&&['relacionamento','locacoes','documentos','qualidade'].includes(page)&&<OperationsWorkspace key={page} page={page as 'relacionamento'|'locacoes'|'documentos'|'qualidade'} user={user}/>}
   {page==='inteligencia'&&<IntelligenceWorkspace user={user}/>}
+  {page==='whatsapp'&&user.role==='admin'&&<WhatsAppInbox/>}
   {page==='materiais'&&<MarketingMaterials user={user}/>}
   {page==='empresa-documentos'&&user.role==='admin'&&<CompanyDocuments/>}
   {page==='inovacao'&&user.role==='admin'&&<InnovationWorkspace/>}

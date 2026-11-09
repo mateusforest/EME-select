@@ -14,6 +14,7 @@ export interface PortalNavigationItem {
 }
 
 export const portalNavigation: PortalNavigationItem[] = [
+  {id:'whatsapp',label:'WhatsApp · mensagens',title:'Cada conversa, no mesmo lugar.',description:'Histórico, atendimento humano e automação do canal oficial.',icon:MessageSquare,group:'Operação',status:'active',adminOnly:true},
   {id:'minha-atuacao',label:'Minha atuação',title:'Seus negócios, de perto.',description:'Seu dia, seus leads e suas comissões na mesma conta administrativa.',icon:House,group:'Operação',status:'active',adminOnly:true},
   { id: 'hoje', label: 'Visão geral', title: 'Sua operação, em perspectiva.', description: 'Acompanhe os imóveis, as publicações e os próximos passos.', icon: LayoutDashboard, group: 'Operação', status: 'active' },
   {id:'propostas',label:'Propostas em PDF',title:'Uma proposta para o próximo passo.',description:'Escolha um imóvel, prepare as condições e gere uma apresentação personalizada.',icon:FileText,group:'Operação',status:'active'},
