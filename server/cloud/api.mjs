@@ -1,6 +1,7 @@
 import {attachSwitchChannel} from './switch-channel.mjs';
 import {attachStaffWhatsApp} from './staff-whatsapp.mjs';
 import {attachWhatsAppInbox} from './whatsapp-inbox.mjs';
+import {attachUnifiedChannel} from './unified-channel.mjs';
 import {attachCloudMaterials} from './marketing-materials.mjs';
 import {attachCloudInnovation} from './innovation.mjs';
 import {attachCloudProposals} from './proposals.mjs';
@@ -73,6 +74,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
  const switchChannel=attachSwitchChannel({client,env});
  const staffWhatsApp=attachStaffWhatsApp({client,hashOf,env});
  const whatsappInbox=attachWhatsAppInbox({client,hashOf,env});
+ const unifiedChannel=attachUnifiedChannel({client,ai:intelligence,env});
  const switchPortfolio=attachSwitchPortfolio({client,priceProperties:content.priceProperties});
  const switchOps=attachCloudSwitch({client,portfolio:switchPortfolio,rate:(key,max)=>rpc('eme_limit',{p_key:key,p_max:max})});
  const switchAuto=attachSwitchAutopilot({client,env,portfolio:switchPortfolio});
@@ -117,6 +119,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    let body=null;if(req.method!=='GET'){if(!String(req.headers['content-type']).startsWith('application/json'))fail(415,'Envie JSON.');if(req.body!==undefined){body=typeof req.body==='string'?JSON.parse(req.body):req.body;if(Buffer.byteLength(JSON.stringify(body))>3000000)fail(413,'Arquivo grande demais.');}else{let size=0;const chunks=[];for await(const part of req){size+=part.length;if(size>3000000)fail(413,'Arquivo grande demais.');chunks.push(part);}try{body=JSON.parse(Buffer.concat(chunks));}catch{fail(400,'Solicitação inválida.');}}}
    if(await staffWhatsApp.bridge(path,req,body,send))return;
    if(await whatsappInbox.bridge(path,req,body,send))return;
+   if(await unifiedChannel.bridge(path,req,body,send))return;
    if(await selectAccess.handle(path,req,res,body,send))return;
    if(await content.publicHandle(path,req,res,send))return;
    if(await people.publicHandle(path,req,res,send))return;

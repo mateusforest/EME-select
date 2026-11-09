@@ -1,5 +1,5 @@
 const fields=['nome','objetivo','regiao','tipo','orcamento','prazo','motivacao','essenciais','proximoPasso'];
-export function channelBrief(answers){return fields.filter(k=>answers[k]).map(k=>`${k}: ${answers[k]}`).join('\n');}
+export function channelBrief(answers){const labels={nome:'Nome',objetivo:'Objetivo',regiao:'Região',tipo:'Imóvel',orcamento:'Orçamento',prazo:'Prazo',motivacao:'Motivação',essenciais:'Prioridades',proximoPasso:'Próximo passo'};return fields.filter(k=>answers[k]).map(k=>`*${labels[k]}:* ${answers[k]}`).join('\n');}
 export function readiness(a){
  const reasons=[];
  if(a.objetivo)reasons.push('Objetivo declarado');
