@@ -22,7 +22,7 @@ export function attachStaffWhatsApp({client,hashOf,env=process.env}){
    if(!user?.active||user.must_change)fail(403,'Entre com uma conta ativa da equipe.');
    const p_session=hashOf(req);
    if(path==='/api/staff-whatsapp'&&req.method==='GET'){
-    send(200,{enabled:true,...await client.rpc('eme_staff_wa_account',{p_session,p_action:'snapshot'})});return true;
+    send(200,{enabled:true,...await client.rpc('eme_staff_wa_dashboard',{p_session})});return true;
    }
    if(path==='/api/staff-whatsapp/link'&&req.method==='POST'){
     const phone=normalizePhone(body?.phone);

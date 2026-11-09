@@ -18,8 +18,10 @@ test('cloud SQL: ownership, expiring single-use codes, deduplication, consent, r
  create function eme_limit(text,integer) returns void language sql as 'select';
  insert into eme_profiles values('00000000-0000-0000-0000-000000000001',true,false,'corretor'),('00000000-0000-0000-0000-000000000002',true,false,'corretor');
  insert into eme_sessions values('s1','00000000-0000-0000-0000-000000000001',now()+interval '1 hour',now()),('s2','00000000-0000-0000-0000-000000000002',now()+interval '1 hour',now());`);
+ await db.exec("alter table eme_profiles add column name text default 'Pessoa de teste'");
  await db.exec(readFileSync(new URL('../supabase/migrations/20261109_staff_whatsapp.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../supabase/migrations/20261109_staff_whatsapp_fabricio.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../supabase/migrations/20261109_staff_whatsapp_dashboard.sql',import.meta.url),'utf8'));
  const account=async(session,action,phone='',hash='')=>(await db.query('select eme_staff_wa_account($1,$2,$3,$4) as r',[session,action,phone,hash])).rows[0].r;
  let seq=0;const message=async(text,id=String(++seq),code='')=>(await db.query('select eme_staff_wa_message($1,$2,$3,$4,$5) as r',['5554984007919',id,text,text,code])).rows[0].r;
  assert.match((await message('EQUIPE')).reply,/vincule/);
@@ -48,6 +50,11 @@ test('cloud SQL: ownership, expiring single-use codes, deduplication, consent, r
  const fabricio=(await db.query('select eme_staff_wa_message($1,$2,$3,$4,$5) as r',['5554981037089','fabricio-link','VINCULAR 1234567890abcdef','fabricio-hash','c'.repeat(64)])).rows[0].r;
  assert.match(fabricio.reply,/foi vinculado/);
  assert.deepEqual((await account('s2','snapshot')).links,['5554981037089']);
+ const dashboard=async session=>(await db.query('select eme_staff_wa_dashboard($1) as r',[session])).rows[0].r;
+ const own=await dashboard('s2');assert.equal(own.admin,false);assert.equal(own.contacts.length,1);assert.equal(own.contacts[0].phone,'5554981037089');assert.equal(own.contacts[0].status,'linked');assert.equal(own.requests.length,0);
+ await db.exec("update eme_profiles set role='admin' where id='00000000-0000-0000-0000-000000000001'");
+ const management=await dashboard('s1');assert.equal(management.contacts.length,3);assert.equal(management.requests.length,1);assert.equal(management.admin,true);
+ await assert.rejects(dashboard('invalid'),/UNAUTHORIZED/);
  await db.exec('set role anon');await assert.rejects(db.query('select * from eme_staff_wa_links'),/permission denied/);
  await assert.rejects(account('s1','snapshot'),/permission denied/);
  }finally{await db.close();}
