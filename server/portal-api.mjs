@@ -1,3 +1,4 @@
+import {attachLocalChannel} from './channel-local.mjs';
 import {attachLocalMaterials} from './marketing-materials-local.mjs';
 import {attachLocalInnovation} from './innovation-local.mjs';
 import {attachLocalProposals} from './proposals-local.mjs';
@@ -168,6 +169,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
  const innovation=attachLocalInnovation({db,transaction,consume,audit});
  const materials=attachLocalMaterials({db,transaction,audit,now});
  const proposals=attachLocalProposals({db,transaction,audit,property:listings.readListing});
+  const channel=attachLocalChannel({db,env,ai:intelligence,leads,consume,stamp});
   let hashing = 0;
   async function passwordJob(fn) {
     if (hashing >= 2) fail(503, 'O acesso está ocupado. Tente novamente em alguns instantes.');
@@ -195,6 +197,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
       const isDocumentUpload = path === '/api/operations/commands';
       if (isDocumentUpload) { const access=session(req); if(!access||access.must_change)fail(401,'Entre para registrar a operação.'); }
       const requestBody = req.method === 'GET' ? null : await json(req,isPhotoUpload?11300000:isDocumentUpload?3000000:(path.startsWith('/api/developments/')||path==='/api/people')?120000:/^\/api\/public\/submissions\/[^/]+\/photos$/.test(path)?3000000:32768);
+      if(await channel.bridge(path,req,requestBody,(status,value)=>send(res,status,value)))return true;
       if(await submissionFlow.publicHandle(path,req,requestBody,(status,value)=>send(res,status,value)))return true;
       if(await analytics.publicHandle(path,req,requestBody,(status,value)=>send(res,status,value)))return true;
       if(await innovation.publicHandle(path,req,requestBody,(status,value)=>send(res,status,value)))return true;
@@ -276,6 +279,7 @@ export function createPortalApi({ dbPath, now = () => Date.now(), env=process.en
         send(res,200,{ user:safeUser(db.prepare('SELECT * FROM users WHERE id=?').get(user.id)) }); return true;
       }
       if (user.must_change) fail(403,'Altere a senha inicial antes de continuar.');
+      if(await channel.handle(path,req,user,requestBody,(status,value)=>send(res,status,value)))return true;
       if (finance.handle(path,req,res,user,requestBody)) return true;
       if (await intelligence.handle(path,req,res,user,requestBody)) return true;
       if (await spatial.handle(path,req,res,user,requestBody,(status,value)=>send(res,status,value))) return true;

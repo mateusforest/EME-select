@@ -1,0 +1,93 @@
+-- Pilot channel: accessible only by the portal server, never by browser credentials.
+create table public.eme_staff_wa_links(phone text primary key, user_id uuid not null references public.eme_profiles(id), created_at timestamptz not null default now());
+create table public.eme_staff_wa_codes(hash text primary key, phone text not null, user_id uuid not null references public.eme_profiles(id), expires_at timestamptz not null);
+create table public.eme_staff_wa_state(phone text primary key, pending text, stopped boolean not null default false);
+create table public.eme_staff_wa_events(phone text not null, message_id text not null, content_hash text not null, response jsonb not null, created_at timestamptz not null default now(), primary key(phone,message_id));
+create table public.eme_staff_wa_requests(id uuid primary key default gen_random_uuid(), user_id uuid not null references public.eme_profiles(id), phone text not null, kind text not null default 'suporte', description text not null, status text not null default 'pending_review', created_at timestamptz not null default now());
+create index on public.eme_staff_wa_requests(user_id,created_at desc);
+create index on public.eme_staff_wa_codes(user_id);
+create index on public.eme_staff_wa_links(user_id);
+alter table public.eme_staff_wa_links enable row level security;
+alter table public.eme_staff_wa_codes enable row level security;
+alter table public.eme_staff_wa_state enable row level security;
+alter table public.eme_staff_wa_events enable row level security;
+alter table public.eme_staff_wa_requests enable row level security;
+revoke all on public.eme_staff_wa_links,public.eme_staff_wa_codes,public.eme_staff_wa_state,public.eme_staff_wa_events,public.eme_staff_wa_requests from public,anon,authenticated;
+grant all on public.eme_staff_wa_links,public.eme_staff_wa_codes,public.eme_staff_wa_state,public.eme_staff_wa_events,public.eme_staff_wa_requests to service_role;
+
+create function public.eme_staff_wa_account(p_session text,p_action text,p_phone text default '',p_hash text default '') returns jsonb
+language plpgsql security definer set search_path = public,pg_temp as $$
+declare u public.eme_profiles; result jsonb;
+begin
+ select p.* into u from public.eme_profiles p join public.eme_sessions s on s.user_id=p.id where s.token_hash=p_session and s.expires_at>now() and s.last_seen>now()-interval '30 minutes' and p.active and not p.must_change;
+ if u.id is null then raise exception 'UNAUTHORIZED'; end if;
+ perform pg_advisory_xact_lock(hashtextextended('staff-account:'||u.id,0));
+ if p_action='code' then
+  if p_phone not in ('555499902688','5554984007919') or p_hash !~ '^[a-f0-9]{64}$' then raise exception 'FORBIDDEN'; end if;
+  perform public.eme_limit('staff-code:'||u.id,5);
+  delete from public.eme_staff_wa_codes where user_id=u.id or expires_at<now();
+  insert into public.eme_staff_wa_codes values(p_hash,p_phone,u.id,now()+interval '10 minutes');
+  return jsonb_build_object('ok',true);
+ elsif p_action='unlink' then
+  delete from public.eme_staff_wa_links where user_id=u.id;
+  delete from public.eme_staff_wa_codes where user_id=u.id;
+  return jsonb_build_object('ok',true);
+ elsif p_action='snapshot' then
+  select coalesce(jsonb_agg(to_jsonb(r)),'[]') into result from (select id,phone,kind,description,status,created_at from public.eme_staff_wa_requests where user_id=u.id or u.role='admin' order by created_at desc limit 100) r;
+  return jsonb_build_object('requests',result,'links',(select coalesce(jsonb_agg(phone),'[]') from public.eme_staff_wa_links where user_id=u.id));
+ end if;
+ raise exception 'FORBIDDEN';
+end $$;
+
+create function public.eme_staff_wa_message(p_phone text,p_message_id text,p_text text,p_content_hash text,p_code_hash text default '') returns jsonb
+language plpgsql security definer set search_path = public,pg_temp as $$
+declare ev public.eme_staff_wa_events; st public.eme_staff_wa_state; u public.eme_profiles; c public.eme_staff_wa_codes; reply text; result jsonb; ref uuid; cmd text:=lower(trim(p_text));
+begin
+ if p_phone not in ('555499902688','5554984007919') or length(p_message_id) not between 1 and 150 or length(p_text) not between 1 and 1500 then raise exception 'FORBIDDEN'; end if;
+ perform pg_advisory_xact_lock(hashtextextended('staff-phone:'||p_phone,0));
+ select * into ev from public.eme_staff_wa_events where phone=p_phone and message_id=p_message_id;
+ if found then
+  if ev.content_hash<>p_content_hash then raise exception 'FORBIDDEN'; end if;
+  return ev.response;
+ end if;
+ perform public.eme_limit('staff-message:'||p_phone,35);
+ insert into public.eme_staff_wa_state(phone) values(p_phone) on conflict do nothing;
+ select * into st from public.eme_staff_wa_state where phone=p_phone for update;
+ if cmd in ('parar','sair') then
+  update public.eme_staff_wa_state set stopped=true,pending=null where phone=p_phone;
+  reply:='Atendimento pausado. Quando quiser voltar, envie EQUIPE.';
+ elsif st.stopped and cmd not in ('equipe','recomeçar','recomecar') then reply:='';
+ elsif cmd ~ '^vincular [a-f0-9]{16}$' then
+  select * into c from public.eme_staff_wa_codes where hash=p_code_hash and phone=p_phone and expires_at>now() for update;
+  select * into u from public.eme_profiles where id=c.user_id and active and not must_change;
+  if u.id is null then reply:='Código inválido ou expirado. Entre na sua conta em https://www.emeselect.com/portal/inteligencia e gere outro código em WhatsApp da equipe.';
+  elsif exists(select 1 from public.eme_staff_wa_links where phone=p_phone and user_id<>u.id) then reply:='Este WhatsApp já está vinculado a outra conta. Desvincule pela conta anterior no portal antes de continuar.';
+  else
+   insert into public.eme_staff_wa_links(phone,user_id) values(p_phone,u.id) on conflict(phone) do nothing;
+   delete from public.eme_staff_wa_codes where hash=p_code_hash;
+   update public.eme_staff_wa_state set stopped=false,pending=null where phone=p_phone;
+   reply:='Seu WhatsApp foi vinculado à sua conta da EME Select. Posso registrar solicitações de suporte e pedidos de cadastro para revisão da equipe. Conte o que você precisa; não envie senhas.';
+  end if;
+ else
+  select p.* into u from public.eme_profiles p join public.eme_staff_wa_links l on l.user_id=p.id where l.phone=p_phone and p.active and not p.must_change;
+  if u.id is null then
+   reply:='Para atender você como integrante da equipe, vincule seu WhatsApp à sua conta existente: https://www.emeselect.com/portal/inteligencia . Em WhatsApp da equipe, gere um código e envie aqui VINCULAR seguido do código. Não envie sua senha.';
+  elsif cmd in ('equipe','recomeçar','recomecar','cancelar') then
+   update public.eme_staff_wa_state set stopped=false,pending=null where phone=p_phone;
+   reply:='Olá! Como posso ajudar? Descreva sua dificuldade ou o cadastro que deseja solicitar. Vou preparar o pedido para você conferir antes de registrar no portal.';
+  elsif st.pending is not null and cmd in ('sim','confirmo','confirmar','ok') then
+   insert into public.eme_staff_wa_requests(user_id,phone,description,kind) values(u.id,p_phone,st.pending,case when lower(st.pending) ~ '(cadastr|atualiz|alterar)' then 'cadastro_atualizacao' else 'suporte' end) returning id into ref;
+   update public.eme_staff_wa_state set pending=null where phone=p_phone;
+   reply:='Solicitação registrada no portal para revisão da equipe.'||E'\n\nProtocolo: '||ref||E'\nVocê pode acompanhá-la em WhatsApp da equipe. Nenhum cadastro foi alterado automaticamente.';
+  elsif cmd in ('sim','confirmo','confirmar','ok') then reply:='Não há pedido aguardando confirmação. Conte o que você precisa.';
+  else
+   update public.eme_staff_wa_state set pending=p_text,stopped=false where phone=p_phone;
+   reply:='Vou registrar este pedido no portal para a equipe revisar:'||E'\n\n'||p_text||E'\n\nEstá correto? Responda SIM para registrar, escreva a descrição corrigida ou CANCELAR para desistir. Não inclua senhas ou dados sensíveis.';
+  end if;
+ end if;
+ result:=jsonb_build_object('reply',reply,'answers','{}'::jsonb,'forward',false,'status','active','reference',ref);
+ insert into public.eme_staff_wa_events(phone,message_id,content_hash,response) values(p_phone,p_message_id,p_content_hash,result);
+ return result;
+end $$;
+revoke all on function public.eme_staff_wa_account(text,text,text,text),public.eme_staff_wa_message(text,text,text,text,text) from public,anon,authenticated;
+grant execute on function public.eme_staff_wa_account(text,text,text,text),public.eme_staff_wa_message(text,text,text,text,text) to service_role;

@@ -1,4 +1,5 @@
 import {attachSwitchChannel} from './switch-channel.mjs';
+import {attachStaffWhatsApp} from './staff-whatsapp.mjs';
 import {attachCloudMaterials} from './marketing-materials.mjs';
 import {attachCloudInnovation} from './innovation.mjs';
 import {attachCloudProposals} from './proposals.mjs';
@@ -69,6 +70,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
  const whatsapp=attachCloudWhatsApp({client,env});
  const leads=attachCloudLeads({client,hashOf,ai:intelligence,priceProperties:content.priceProperties});
  const switchChannel=attachSwitchChannel({client,env});
+ const staffWhatsApp=attachStaffWhatsApp({client,hashOf,env});
  const switchPortfolio=attachSwitchPortfolio({client,priceProperties:content.priceProperties});
  const switchOps=attachCloudSwitch({client,portfolio:switchPortfolio,rate:(key,max)=>rpc('eme_limit',{p_key:key,p_max:max})});
  const switchAuto=attachSwitchAutopilot({client,env,portfolio:switchPortfolio});
@@ -111,6 +113,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    if(!allowed.includes(req.headers.host))fail(403,'Host não permitido.');if(!['GET','POST','PATCH'].includes(req.method))fail(405,'Método não permitido.');
    if(req.method!=='GET'&&(![`https://${req.headers.host}`,...(env.EME_TEST_HOST===req.headers.host?[`http://${req.headers.host}`]:[])].includes(req.headers.origin)||req.headers['sec-fetch-site']==='cross-site'))fail(403,'Origem não permitida.');
    let body=null;if(req.method!=='GET'){if(!String(req.headers['content-type']).startsWith('application/json'))fail(415,'Envie JSON.');if(req.body!==undefined){body=typeof req.body==='string'?JSON.parse(req.body):req.body;if(Buffer.byteLength(JSON.stringify(body))>3000000)fail(413,'Arquivo grande demais.');}else{let size=0;const chunks=[];for await(const part of req){size+=part.length;if(size>3000000)fail(413,'Arquivo grande demais.');chunks.push(part);}try{body=JSON.parse(Buffer.concat(chunks));}catch{fail(400,'Solicitação inválida.');}}}
+   if(await staffWhatsApp.bridge(path,req,body,send))return;
    if(await selectAccess.handle(path,req,res,body,send))return;
    if(await content.publicHandle(path,req,res,send))return;
    if(await people.publicHandle(path,req,res,send))return;
@@ -153,6 +156,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
     fields(body,['currentPassword','newPassword']);password(body.newPassword);await rate('password:'+user.id,8);await credentials(user.email,body.currentPassword);await request('/auth/v1/admin/users/'+user.id,{method:'PUT',body:{password:body.newPassword}});await rest('eme_profiles?id=eq.'+user.id,'PATCH',{must_change:false});await rest('eme_sessions?user_id=eq.'+user.id,'DELETE');await openSession(req,res,user.id);return send(200,{user:safe({...user,must_change:false})});
    }
    if(user.must_change)fail(403,'Atualize sua senha inicial.');
+   if(await staffWhatsApp.handle(path,req,user,body,send))return;
    if(await content.handle(path,req,res,user,body,send))return;
    if(await people.handle(path,req,res,user,body,send))return;
    if(await developments.handle(path,req,res,user,body,send))return;
