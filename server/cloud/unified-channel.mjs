@@ -76,6 +76,18 @@ export function attachUnifiedChannel({client,ai,env=process.env}){
   if(expected.length<32||actual.length!==expected.length||!timingSafeEqual(expected,actual))throw Object.assign(Error('Integração não autorizada.'),{status:401});
   if(!pilotPhones.includes(body?.phone)||body?.sessionId!=='eme-oficial-8029')throw Object.assign(Error('Contato fora do teste.'),{status:403});
   if(typeof body.text!=='string'||!body.text.trim()||body.text.length>20000||typeof body.messageId!=='string'||!body.messageId||body.messageId.length>150)throw Object.assign(Error('Mensagem inválida.'),{status:400});
+  if(body.groupId){
+   if(body.groupId!=='120363430024608861@g.us')throw Object.assign(Error('Grupo fora do teste.'),{status:403});
+   const u=await tools.actor(body.phone);
+   if(!u)throw Object.assign(Error('Vincule sua conta no atendimento privado antes de usar o grupo.'),{status:403});
+   const state=body.groupState?.mode==='staff'?body.groupState:{...fresh(),mode:'staff'};
+   const cmd=norm(body.text);
+   const privateOnly=/financeiro|^vincular\b|^cliente$|^consultar |^meus |^minha |^minhas |^(leads|imoveis|agenda)$/.test(cmd);
+   let next;
+   if(privateOnly)next={state,result:{reply:'Para consultas de dados internos, financeiro ou vínculo de conta, fale comigo no privado. Aqui no grupo posso ajudar com CADASTRO, CADASTRAR IMÓVEL, CADASTRAR CLIENTE, AGENDAR VISITA e ANEXAR ÚLTIMO.',mode:'staff',status:'active',forward:false}};
+   else next=await advanceChannel({state,phone:body.phone,text:body.text.trim(),event:'group:'+body.messageId,tools,ai,media:body.media,support:async()=>({reply:'Salve! Sou M, a assistente virtual da EME Select. Marque meu contato e envie CADASTRO para começar. Posso registrar imóveis, clientes e solicitações de visita, e receber fotos e documentos de imóveis. Só salvo depois da sua confirmação. Para consultas e financeiro, me chame no privado.'})});
+   send(200,{...next.result,groupState:next.state});return true;
+  }
   const args={p_phone:body.phone,p_event:body.messageId,p_hash:hash(body.text+JSON.stringify(body.media||null))};const start=await client.rpc('eme_channel_turn',{...args,p_action:'begin'});if(start.cached){send(200,start.cached);return true;}
   try{
    let next;try{next=await advanceChannel({state:start.state,phone:body.phone,text:body.text.trim(),event:body.messageId,tools,ai,support,media:body.media});}
