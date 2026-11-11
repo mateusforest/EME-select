@@ -120,6 +120,11 @@ export function createIntelligence({ store, encryptionKey, env = process.env, fe
     send(200, await snapshot(user)); return true;
   }
   return { handle, studioStatus:status,
+    async channelCapture(input){
+      const settings=resolveAISettings(await store.settings(),env);const apiKey=settings.secret?openKey(settings.secret,encryptionKey):env.OPENAI_API_KEY;
+      if(!settings.enabled||!apiKey)aiFail(503,'Configure a IA na Central de IA.');
+      return requestCapture({...input,apiKey,model:settings.model,fetcher,timeoutMs:40000});
+    },
     async channelConversation(input){
       const settings=resolveAISettings(await store.settings(),env);
       const apiKey=settings.secret?openKey(settings.secret,encryptionKey):env.OPENAI_API_KEY;

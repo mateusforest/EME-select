@@ -1,6 +1,7 @@
 import {attachSwitchChannel} from './switch-channel.mjs';
 import {attachStaffWhatsApp} from './staff-whatsapp.mjs';
 import {attachWhatsAppInbox} from './whatsapp-inbox.mjs';
+import {attachChannelMaterials} from './channel-materials.mjs';
 import {attachUnifiedChannel} from './unified-channel.mjs';
 import {attachCloudMaterials} from './marketing-materials.mjs';
 import {attachCloudInnovation} from './innovation.mjs';
@@ -74,6 +75,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
  const switchChannel=attachSwitchChannel({client,env});
  const staffWhatsApp=attachStaffWhatsApp({client,hashOf,env});
  const whatsappInbox=attachWhatsAppInbox({client,hashOf,env});
+ const channelMaterials=attachChannelMaterials({client,caseFor});
  const unifiedChannel=attachUnifiedChannel({client,ai:intelligence,env});
  const switchPortfolio=attachSwitchPortfolio({client,priceProperties:content.priceProperties});
  const switchOps=attachCloudSwitch({client,portfolio:switchPortfolio,rate:(key,max)=>rpc('eme_limit',{p_key:key,p_max:max})});
@@ -143,7 +145,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    let user=await session(req);
    const photoMatch=path.match(/^\/api\/photos\/([a-f0-9-]{36})$/);
    if(photoMatch&&req.method==='GET'){
-    let rows=await rest('eme_cases?data->photos=cs.'+encodeURIComponent(JSON.stringify([{id:photoMatch[1]}])));if(!rows.length)rows=await rest('eme_cases?data->published->images=cs.'+encodeURIComponent(JSON.stringify([{url:'/api/photos/'+photoMatch[1]}])));const row=rows[0];if(!row)fail(404,'Foto não encontrada.');const originalRequested=new URL(req.url,'https://eme.local').searchParams.get('original')==='1';const isPublic=!originalRequested&&publicAccess(row)&&row.data.published?.images.some(p=>p.url==='/api/photos/'+photoMatch[1]);if(!isPublic&&(!user||user.must_change||row.data.deletedAt||internalKinds.includes(row.data.kind)||originalRequested&&user.role!=='admin'&&user.id!==row.assignee_id)){const customer=!originalRequested?await selectAccess.identity(req):null;if(!customer||!canRead(row,customer.id)||!row.data.published?.images.some(p=>p.url==='/api/photos/'+photoMatch[1]))fail(404,'Foto não encontrada.');}
+    let rows=await rest('eme_cases?data->photos=cs.'+encodeURIComponent(JSON.stringify([{id:photoMatch[1]}])));if(!rows.length)rows=await rest('eme_cases?data->published->images=cs.'+encodeURIComponent(JSON.stringify([{url:'/api/photos/'+photoMatch[1]}])));const row=rows[0];if(!row)fail(404,'Foto não encontrada.');const originalRequested=new URL(req.url,'https://eme.local').searchParams.get('original')==='1';const isPublic=!originalRequested&&publicAccess(row)&&row.data.published?.images.some(p=>p.url==='/api/photos/'+photoMatch[1]);if(!isPublic&&(!user||user.must_change||row.data.deletedAt||internalKinds.includes(row.data.kind)||user.role!=='admin'&&user.id!==row.assignee_id)){const customer=!originalRequested?await selectAccess.identity(req):null;if(!customer||!canRead(row,customer.id)||!row.data.published?.images.some(p=>p.url==='/api/photos/'+photoMatch[1]))fail(404,'Foto não encontrada.');}
     const response=await request('/storage/v1/object/authenticated/eme-property-photos/'+(originalRequested?(row.data.photos.find(p=>p.id===photoMatch[1])?.originalId||photoMatch[1]):photoMatch[1])+'.webp',{raw:true});const bytes=Buffer.from(await response.arrayBuffer());res.setHeader('Content-Type','image/webp');res.end(bytes);return;
    }
    if(path==='/api/auth/session'&&req.method==='GET'){const exists=await rest('eme_profiles?select=id&limit=1');return send(200,{user:user?safe(user):null,needsSetup:exists.length===0,cloud:true,requiresActivation:true});}
@@ -168,6 +170,7 @@ export function createCloudApi({env=process.env,client=createClient(env),aiFetch
    if(await people.handle(path,req,res,user,body,send))return;
    if(await developments.handle(path,req,res,user,body,send))return;
    if(await finance.handle(path,req,res,user,body,send))return;
+   if(await channelMaterials.handle(path,req,res,user,send))return;
    if(await intelligence.handle(path,req,res,user,body,send))return;
    if(await spatial.handle(path,req,res,user,body,send))return;
    if(await operations.handle(path,req,res,user,body,send))return;
