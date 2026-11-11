@@ -8,6 +8,12 @@ export async function propertyInput({flow,text,media,phone,event,u,tools,ai}){
  if(!flow.targetId&&flow.values.price===undefined&&(flow.confirm||flow.materialsOpen)){flow.confirm=false;flow.materialsOpen=false;flow.step=forms.property.findIndex(([k])=>k==='price');return forms.property[flow.step][1];}
  if(media){const f=await tools.receiveMaterial(phone,event,flow,u,media);flow.materialIds=[...new Set([...(flow.materialIds||[]),f.id])];flow.confirm=false;
  return `Recebi ${f.filename}. Está reservado para este cadastro.\n\n`+(flow.materialsOpen?materialsPrompt:forms.property[flow.step][1]);}
+ if(flow.suggestedTitle&&['sim','pode ser','gostei','esse','ok'].includes(cmd)&&flow.step===0&&!flow.confirm){flow.values.title=flow.suggestedTitle;delete flow.suggestedTitle;flow.step=1;return 'Título escolhido: '+flow.values.title+'.\n\n'+forms.property[1][1];}
+ if(/\?|sugest|sugir|suger|me ajud|o que acha|nao sei|como (?:responder|preencher)/.test(cmd)&&!flow.confirm&&text.length<500){
+  const field=forms.property[flow.step]?.[0]||'materials';
+  try{const all=await tools.materials(flow,u);const r=await ai.channelFieldHelp({question:text,field,values:flow.values,photos:all.filter(f=>f.mime_type==='image/webp').slice(0,4)});if(field==='title'&&r.suggestedTitle)flow.suggestedTitle=r.suggestedTitle;return r.reply+(flow.suggestedTitle?'\n\nResponda SIM para usar esse título, ou escreva outro. O cadastro ainda não será salvo.':'');}
+  catch{return 'Posso ajudar, sim. '+(field==='title'?'Ainda preciso de informações do imóvel para sugerir um título específico. Qual é o tipo e em que cidade fica?':forms.property[flow.step]?.[1]||materialsPrompt);}
+ }
  if(cmd==='analisar'||(flow.materialsOpen&&!flow.confirm&&cmd==='2')||text.length>140||text.includes('\n')){
   if(cmd!=='analisar'&&cmd!=='2')flow.sourceText=[flow.sourceText,text].filter(Boolean).join('\n').slice(-20000);
   const all=await tools.materials(flow,u),documents=all.filter(f=>f.mime_type==='application/pdf').slice(0,5).map(f=>({id:f.id,filename:f.filename,mimeType:f.mime_type,contentBase64:f.content_base64}));

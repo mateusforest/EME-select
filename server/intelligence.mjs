@@ -1,5 +1,5 @@
 import {requestChannelConversation} from './channel-conversation.mjs';
-import {requestGroupObservation} from './group-observer.mjs';
+import {requestGroupObservation,requestFieldHelp} from './group-observer.mjs';
 import {requestSubmissionReview} from './submission-review-ai.mjs';
 import {requestBuyerAnalysis} from './buyer-ai.mjs';
 import {requestCapture} from './capture-ai.mjs';
@@ -121,6 +121,11 @@ export function createIntelligence({ store, encryptionKey, env = process.env, fe
     send(200, await snapshot(user)); return true;
   }
   return { handle, studioStatus:status,
+    async channelFieldHelp(input){
+      const settings=resolveAISettings(await store.settings(),env);const apiKey=settings.secret?openKey(settings.secret,encryptionKey):env.OPENAI_API_KEY;
+      if(!settings.enabled||!apiKey)aiFail(503,'Configure a IA na Central de IA.');
+      return requestFieldHelp({...input,apiKey,model:settings.model,fetcher});
+    },
     async groupObservation(input){
       const settings=resolveAISettings(await store.settings(),env);const apiKey=settings.secret?openKey(settings.secret,encryptionKey):env.OPENAI_API_KEY;
       if(!settings.enabled||!apiKey)aiFail(503,'Configure a IA na Central de IA.');

@@ -17,7 +17,7 @@ export async function advanceChannel({state,phone,text,event,tools,ai,support,me
  if(['parar','sair'].includes(cmd)){state.status='stopped';state.flow=null;reply='Atendimento automático pausado. Para retomar, envie CLIENTE ou EQUIPE.';return out();}
  if(state.status==='stopped')return out();
  if(media?.error){reply=String(media.error).slice(0,300);return out();}
- if(media&&state.mode!=='staff'){reply='Para anexar arquivos ao cadastro, envie EQUIPE e depois ANEXAR ÚLTIMO ou CADASTRAR IMÓVEL.';return out();}
+ if(media&&state.mode!=='staff'&&!/\bcadastr\w*\b.*\bimovel\b/.test(cmd)){reply='Para anexar arquivos ao cadastro, envie EQUIPE e depois ANEXAR ÚLTIMO ou CADASTRAR IMÓVEL.';return out();}
  const registrationMenu=/^(?:cadastro|cadastros|cadastrar|quero cadastrar|novo cadastro)[.!?]*$/.test(cmd);
  const registrationKind=/\b(?:cadastr\w*|registr\w*|novo|nova|adicionar)\b.*\b(?:lead|cliente|contato)\b/.test(cmd)?'lead':/\b(?:cadastr\w*|registr\w*|novo|nova|adicionar)\b.*\bimovel\b/.test(cmd)?'property':null;
  if(!state.flow&&(registrationMenu||registrationKind)){
@@ -25,7 +25,7 @@ export async function advanceChannel({state,phone,text,event,tools,ai,support,me
   if(!u){reply='Para cadastrar no portal, primeiro vincule seu WhatsApp à sua conta em https://www.emeselect.com/acesso-select/equipe/inteligencia . Depois envie CADASTRAR IMÓVEL ou CADASTRAR CLIENTE.';return out();}
   state.mode='staff';state.status='active';
   if(registrationMenu){state.registrationMenu=true;reply='O que você quer cadastrar?\n\n1 · CADASTRAR IMÓVEL — ficha inicial para avaliação\n2 · CADASTRAR CLIENTE — lead e interesse\n3 · AGENDAR VISITA — solicitação de visita\n\nVou pedir os dados e mostrar um resumo. Só salvo depois do seu SIM.';return out();}
-  state.registrationMenu=false;state.flow={kind:registrationKind,id:randomUUID(),actorId:u.id,step:0,values:{}};reply=forms[registrationKind][0][1];return out();
+  state.registrationMenu=false;state.flow={kind:registrationKind,id:randomUUID(),actorId:u.id,step:0,values:{}};reply=registrationKind==='property'&&media?await propertyInput({flow:state.flow,text:'',media,phone,event,u,tools,ai}):forms[registrationKind][0][1];return out();
  }
  if(state.mode==='staff'){
   const u=await tools.actor(phone);if(!u){reply='Vincule seu WhatsApp à sua conta ativa no portal para consultar dados ou cadastrar. Acesse https://www.emeselect.com/acesso-select/equipe/inteligencia . Para atendimento ao cliente, envie CLIENTE.';return out();}
