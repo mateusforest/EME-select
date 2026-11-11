@@ -9,7 +9,7 @@ test('conversation switches modes, requires consent, pauses, and confirms staff 
  const send=async text=>{const r=await advanceChannel({state,phone,text,event:randomUUID(),tools,ai,support});state=r.state;return r.result;};
  await send('Olá');assert.equal(state.status,'confirm');assert.equal(writes,0);await send('SIM');assert.equal(writes,1);await send('SIM');assert.equal(writes,1);
  await send('EQUIPE');assert.equal(state.mode,'staff');await send('CONSULTAR LEADS');assert.equal(queries,1);
- await send('CADASTRAR IMÓVEL');for(const s of ['Casa piloto','Vacaria','Casa','Venda','PULAR'])await send(s);await send('PRONTO');assert.equal(state.flow.confirm,true);assert.equal(writes,1);await send('SIM');assert.equal(writes,2);
+ await send('CADASTRAR IMÓVEL');for(const s of ['Casa piloto','Vacaria','Casa','Venda','PULAR','A DEFINIR'])await send(s);await send('PRONTO');assert.equal(state.flow.confirm,true);assert.equal(writes,1);await send('SIM');assert.equal(writes,2);
  await send('CLIENTE');assert.equal(state.mode,'client');await send('PARAR');assert.equal((await send('olá')).reply,'');await send('EQUIPE');assert.equal(state.status,'active');
  await send('CADASTRAR LEAD');await send('CLIENTE');assert.equal(state.flow,null);
 });
@@ -65,7 +65,7 @@ test('direct registration works from client mode only for linked accounts and st
  const send=async text=>{const r=await advanceChannel({state,phone,text,event:randomUUID(),tools,ai:{},support:async()=>({reply:''})});state=r.state;return r.result;};
  assert.match((await send('cadastro')).reply,/CADASTRAR IMÓVEL/);await send('CLIENTE');
  await send('Preciso de ajuda para cadastrar um imóvel');assert.equal(state.mode,'staff');assert.equal(state.flow.kind,'property');
- for(const value of ['Casa de teste','Vacaria','Casa','Venda','PULAR'])await send(value);
+ for(const value of ['Casa de teste','Vacaria','Casa','Venda','PULAR','A DEFINIR'])await send(value);
  await send('PRONTO');assert.equal(saved,0);assert.equal(state.flow.confirm,true);await send('SIM');assert.equal(saved,1);
  await send('CLIENTE');await send('cadastrar cliente');assert.equal(state.flow.kind,'lead');await send('CANCELAR');assert.equal(state.flow,null);
  await send('CLIENTE');linked=false;assert.match((await send('cadastrar imóvel')).reply,/vincule/);assert.equal(state.flow,null);assert.equal(saved,1);

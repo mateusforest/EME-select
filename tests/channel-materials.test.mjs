@@ -13,3 +13,9 @@ test('numbered registration, long text extraction, media, review and explicit co
  await send('CADASTRO');await send('1');assert.equal(state.flow.kind,'property');await send('Tipo: casa\nFinalidade: venda\nCidade: Vacaria\nValor: 450 mil. Informações completas do imóvel.');assert.equal(state.flow.values.extracted.price,450000);assert.equal(state.flow.step,4);await send('PULAR');assert.equal(state.flow.materialsOpen,true);
  await send('[Arquivo recebido]',{mime:'image/png'});assert.deepEqual(state.flow.materialIds,['file']);await send('1');assert.equal(state.flow.confirm,true);assert.equal(saved,0);await send('[Arquivo recebido]',{mime:'image/png'});assert.equal(state.flow.confirm,false);await send('1');await send('1');assert.equal(saved,1);assert.equal(state.flow,null);
 });
+import {propertyPrice,planSummary} from '../server/cloud/channel-tools.mjs';
+test('property price accepts Brazilian currency and explicit unknown, and reaches listing draft',()=>{
+ assert.equal(propertyPrice('R$ 450.000,50'),450000.5);assert.equal(propertyPrice('450 mil'),450000);assert.equal(propertyPrice('1,5 milhão'),1500000);assert.equal(propertyPrice('a definir'),null);assert.throws(()=>propertyPrice('-50'));assert.throws(()=>propertyPrice('zero'));
+ assert.equal(propertyDraft({title:'Casa',city:'Vacaria',type:'Casa',operation:'Venda',price:450000}).price,450000);
+ assert.match(planSummary({values:{price:450000}}),/450.000/);assert.match(planSummary({values:{price:null}}),/A definir/);
+});

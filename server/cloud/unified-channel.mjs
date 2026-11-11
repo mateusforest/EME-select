@@ -51,7 +51,7 @@ export async function advanceChannel({state,phone,text,event,tools,ai,support,me
   }
   const field=forms[flow.kind][flow.step];try{flow.values[field[0]]=field[2](text);}catch(e){reply=e.message+'\n\n'+field[1];return out();}
   flow.step++;
-  if(flow.kind==='property'){while(flow.step<forms.property.length&&flow.values[forms.property[flow.step][0]]!==undefined)flow.step++;if(flow.step===forms.property.length){flow.materialsOpen=true;reply=materialsPrompt;return out();}}
+  if(flow.kind==='property'){if(flow.values.price===undefined&&flow.values.extracted?.price!==undefined)flow.values.price=flow.values.extracted.price;while(flow.step<forms.property.length&&flow.values[forms.property[flow.step][0]]!==undefined)flow.step++;if(flow.step===forms.property.length){flow.materialsOpen=true;reply=materialsPrompt;return out();}}
   if(flow.step<forms[flow.kind].length){reply=forms[flow.kind][flow.step][1];return out();}
   await tools.prepare(flow,u);flow.confirm=true;reply='Confira antes de registrar:\n\n'+planSummary(flow)+'\n\nResponda SIM para cadastrar no portal ou CANCELAR para desistir.';return out();
  }
