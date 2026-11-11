@@ -80,6 +80,10 @@ export function attachUnifiedChannel({client,ai,env=process.env}){
    if(body.groupId!=='120363430024608861@g.us')throw Object.assign(Error('Grupo fora do teste.'),{status:403});
    const u=await tools.actor(body.phone);
    if(!u)throw Object.assign(Error('Vincule sua conta no atendimento privado antes de usar o grupo.'),{status:403});
+   if(body.observe===true){
+    if(!Array.isArray(body.messages)||body.messages.length>30||body.messages.some(m=>!m||typeof m.id!=='string'||m.id.length>150||typeof m.text!=='string'||m.text.length>2000||!pilotPhones.includes(m.phone))||!Array.isArray(body.notes)||body.notes.length>30)throw Object.assign(Error('Contexto inválido.'),{status:400});
+    send(200,await ai.groupObservation({messages:body.messages,notes:body.notes}));return true;
+   }
    const state=body.groupState?.mode==='staff'?body.groupState:{...fresh(),mode:'staff'};
    const cmd=norm(body.text);
    const privateOnly=/financeiro|^vincular\b|^cliente$|^consultar |^meus |^minha |^minhas |^(leads|imoveis|agenda)$/.test(cmd);
