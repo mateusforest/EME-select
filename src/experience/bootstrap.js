@@ -58,7 +58,7 @@ export async function startExperience(){
 function mountBrandArtwork(container){
  // Frame the supplied artwork without redrawing or altering its pixels.
  container.querySelectorAll('.ex-chat-symbol').forEach((symbol,index)=>{
-  symbol.innerHTML=`<svg viewBox="126 114 996 1002" aria-hidden="true" focusable="false"><defs><clipPath id="eme-chat-art-${index}"><ellipse cx="624" cy="615" rx="485" ry="488"/><circle cx="985" cy="932" r="91"/></clipPath></defs><image href="/assets/experience/chat-select-20261022.webp" width="1254" height="1254" clip-path="url(#eme-chat-art-${index})"/></svg>`;
+  symbol.innerHTML=`<svg viewBox="0 0 1254 1254" aria-hidden="true" focusable="false"><defs><clipPath id="eme-chat-art-${index}"><circle cx="627" cy="627" r="610"/></clipPath></defs><image href="/assets/ai/m-avatar-v1.png" width="1254" height="1254" clip-path="url(#eme-chat-art-${index})"/><circle cx="627" cy="627" r="610" fill="none" stroke="#d8c88d" stroke-opacity=".65" stroke-width="12"/></svg>`;
  });
 }
 
