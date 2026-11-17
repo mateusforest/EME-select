@@ -1,0 +1,50 @@
+/* Compact stacked launches: preserve discovery without a sideways carousel. */
+@media(max-width:760px){
+ #eme-continuo .pfh #lancamentos .pfh-launch-heading{padding-top:40px;padding-bottom:22px}
+ #eme-continuo .pfh #lancamentos .pfh-launch-heading .pfh-kicker{margin-bottom:12px}
+ #eme-continuo .pfh #lancamentos .pfh-launch-heading h2{margin:0 0 12px}
+ #eme-continuo .pfh #lancamentos .pfh-launch-heading>p:last-child{font-size:13px;margin:0;max-width:320px}
+ #eme-continuo .pfh #lancamentos .pfh-development{margin-bottom:20px;padding:0 16px}
+ #eme-continuo .pfh #lancamentos .pfh-development :is(.moradas-feature,.veredas-card,.reserved-launch){padding:8px;border-radius:18px;box-shadow:0 8px 24px #213d2908}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature:not(.moradas-feature--active) .moradas-feature__viewer,
+ #eme-continuo .pfh #lancamentos .veredas-cover{min-height:0;height:auto;aspect-ratio:16/10;border-radius:12px}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature__copy,
+ #eme-continuo .pfh #lancamentos .pfh-development :is(.veredas-copy,.reserved-launch-copy){padding:22px 12px 12px}
+ #eme-continuo .pfh #lancamentos .pfh-development :is(.moradas-feature__eyebrow,.veredas-eyebrow,.reserved-launch-kicker){font-size:9px;letter-spacing:.08em;margin:0 0 12px;line-height:1.6}
+ #eme-continuo .pfh #lancamentos .pfh-development :is(.moradas-feature h2,.veredas-copy h2,.reserved-launch-copy h2){font-size:30px;line-height:1.12;margin:0 0 12px}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature .moradas-feature__copy h2{font-size:30px}
+ #eme-continuo .pfh #lancamentos .veredas-copy h2 span{display:none}
+ #eme-continuo .pfh #lancamentos .pfh-development :is(.moradas-feature__location,.veredas-location){font-size:12px;margin:0 0 14px}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature__description,
+ #eme-continuo .pfh #lancamentos .veredas-copy>p:not(.veredas-eyebrow):not(.veredas-location),
+ #eme-continuo .pfh #lancamentos .reserved-launch-copy>p:not(.reserved-launch-kicker):not(.reserved-launch-note){font-size:13px;line-height:1.65;margin:0 0 16px}
+ #eme-continuo .pfh #lancamentos .pfh-development :is(.moradas-feature__facts,.veredas-facts){gap:10px 14px;margin:0 0 18px;padding:12px 0;font-size:11px;line-height:1.5}
+ #eme-continuo .pfh #lancamentos .pfh-development :is(.moradas-feature__facts,.veredas-facts) svg{width:17px;height:17px}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature__signature,
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature__footer>span,
+ #eme-continuo .pfh #lancamentos .reserved-launch-intro{display:none}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature__copy .moradas-feature__cta,
+ #eme-continuo .pfh #lancamentos .pfh-development :is(.veredas-primary,.reserved-launch-cta){min-height:48px;padding:13px 16px;font-size:13px;gap:14px;margin-top:0;border-radius:8px}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature__footer{margin:0 12px;padding:0 0 4px;border:0}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature__footer a,
+ #eme-continuo .pfh #lancamentos .veredas-contact{display:flex;justify-content:center;align-items:center;min-height:44px;width:100%;padding:10px 0;font-size:11px;line-height:1.5}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature__preview-action{bottom:32px;left:12px;right:auto}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature__preview-action .moradas-feature__cta{min-height:44px;padding:10px 14px;font-size:12px}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature__caption{bottom:10px;left:12px;right:12px;font-size:8px}
+ #eme-continuo .pfh #lancamentos .veredas-cover-tag{top:12px;left:12px;padding:7px 9px;font-size:8px}
+ #eme-continuo .pfh #lancamentos .veredas-cover-link{bottom:12px;left:12px;min-height:44px;padding:10px 14px;font-size:12px}
+ #eme-continuo .pfh #lancamentos .reserved-launch-art{min-height:0;height:210px;border-radius:12px}
+ #eme-continuo .pfh #lancamentos .reserved-launch-reveal{gap:12px;padding:18px 12px 32px}
+ #eme-continuo .pfh #lancamentos .reserved-launch-lock{width:32px;height:32px}
+ #eme-continuo .pfh #lancamentos .reserved-launch-lock svg{width:17px;height:17px}
+ #eme-continuo .pfh #lancamentos .reserved-launch-soon{font-size:8px}
+ #eme-continuo .pfh #lancamentos .reserved-launch-visual-title{font-size:clamp(23px,6.7vw,28px)}
+ #eme-continuo .pfh #lancamentos .reserved-launch-line{display:none}
+ #eme-continuo .pfh #lancamentos .reserved-launch-caption{left:12px;bottom:10px;font-size:8px}
+ #eme-continuo .pfh #lancamentos .reserved-launch-note{font-size:10px;margin:12px 0 2px}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature--active .moradas-feature__viewer{min-height:0}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature__toolbar{gap:8px;padding:12px}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature__toolbar>div{flex-wrap:wrap;gap:6px}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature__toolbar button{width:44px;height:44px}
+ #eme-continuo .pfh #lancamentos .pfh-development .moradas-feature__toolbar a{min-height:44px;font-size:11px}
+}

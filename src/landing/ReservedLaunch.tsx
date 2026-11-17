@@ -14,7 +14,7 @@ export default function ReservedLaunch(){
   <div className="reserved-launch-copy">
    <p className="reserved-launch-kicker"><span/>PRÉ-LANÇAMENTO · ATENDIMENTO RESERVADO</p>
    <h2 id="reserved-launch-title">Um novo endereço<br/>está chegando.</h2>
-   <p>Algumas novidades merecem uma conversa antes de serem apresentadas ao mundo.</p>
+   <p className="reserved-launch-intro">Algumas novidades merecem uma conversa antes de serem apresentadas ao mundo.</p>
    <p>Já estamos atendendo interessados. Fale com nossos consultores para conhecer essa oportunidade em uma apresentação individual.</p>
    <a className="reserved-launch-cta" href={contact} target="_blank" rel="noopener noreferrer">Quero saber em primeira mão <ArrowUpRight size={19} aria-hidden="true"/></a>
    <p className="reserved-launch-note"><LockKeyhole size={14} aria-hidden="true"/>Detalhes compartilhados em atendimento privado.</p>
