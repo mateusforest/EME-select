@@ -33,9 +33,9 @@ export default function FeaturedDevelopment(){
         <p className="moradas-feature__eyebrow">Empreendimento em destaque</p>
         <h2>Moradas da Serra</h2>
         <p className="moradas-feature__location">DeVille · Vacaria, RS</p>
-        <p className="moradas-feature__description">Um novo olhar sobre o seu próximo lugar. Conheça o empreendimento e explore cada perspectiva.</p>
+        <p className="moradas-feature__description">Apartamentos de 2 e 3 dormitórios em Vacaria, com espaços de lazer para viver bem todos os dias.</p>
         <ul className="moradas-feature__facts"><li><BedDouble size={22} aria-hidden="true"/>2 e 3 dormitórios</li><li><Trees size={22} aria-hidden="true"/>Lazer e convivência</li></ul>
-        <a className="moradas-feature__cta" href={contactUrl} target="_blank" rel="noopener noreferrer">Quero conhecer <ArrowRight size={20} aria-hidden="true"/></a>
+        <a className="moradas-feature__cta" href={contactUrl} target="_blank" rel="noopener noreferrer">Conhecer apartamentos <ArrowRight size={20} aria-hidden="true"/></a>
         <p className="moradas-feature__signature">Uma seleção EME Select</p>
       </div>
       <div className="moradas-feature__viewer" ref={viewer}>

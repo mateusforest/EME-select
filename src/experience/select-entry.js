@@ -1,8 +1,9 @@
-import {mountAccessWelcome} from './select-welcome.js';
+
 import {mountFeaturedDevelopment} from './moradas-feature';
 import './select-entry.css';
 const arrow='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg>';
 export function mountSelectEntry(root,siteContent){
+ const chat=root.querySelector('.ex-chat-launch');if(chat){chat.classList.add('eme-floating-chat');root.append(chat);}
  const access=root.querySelector('[data-section=owners]');access.removeAttribute('data-section');access.classList.add('es-access');access.textContent='Acesso Select';access.onclick=()=>location.assign('/acesso-select');
  for(const link of root.querySelectorAll('a[href="/acesso-select"]')){link.href='/acesso-select';link.textContent='Acesso Select';}
  const discovery=root.querySelector('.er-discovery');discovery.classList.add('es-discovery');for(const child of discovery.children)child.hidden=true;
@@ -14,5 +15,5 @@ export function mountSelectEntry(root,siteContent){
  panel.querySelector('.es-region').setAttribute('data-region-picker','');discovery.append(panel);
  mountFeaturedDevelopment(panel.querySelector('#ef-moradas'));
  const empty=root.querySelector('.el-empty');if(empty){const alert=document.createElement('a');alert.href='/acesso-select?criar=1&alerta=1';alert.textContent='Criar acesso e autorizar um alerta para minha busca →';empty.append(alert);}
- mountAccessWelcome(root);
+
 }

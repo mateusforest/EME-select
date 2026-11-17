@@ -1,23 +1,30 @@
-import {createPortal} from 'react-dom';
+import HeroProperties from './HeroProperties';
+import {useEffect,useState,type FormEvent} from 'react';
+import {ArrowRight,Menu,X} from 'lucide-react';
+import {properties,type Property} from '../data';
 import TeamProfiles from '../TeamProfiles';
-import {useLayoutEffect,useRef,useState} from 'react';
-import {properties} from '../data';
-import markup from './landing.html?raw';
-import {mountLanding} from './landing-runtime.mjs';
-import './landing.css';
-
+import FeaturedDevelopment from '../experience/FeaturedDevelopment';
+import './property-first.css';
+const price=(p:Property)=>p.price>0?p.price.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0})+(p.operation==='alugar'?' / mês':''):'Consulte o valor';
+const facts=(p:Property)=>[p.area?`${p.area.toLocaleString('pt-BR')} m²`:null,p.bedrooms?`${p.bedrooms} dormitórios`:null,p.parking?`${p.parking} vagas`:null].filter(Boolean).join(' · ');
+function PreviousPrice({p}:{p:Property}){const previous=(p as Property & {originalPrice?:number}).originalPrice;return previous&&previous>p.price?<del className="pfh-old-price">{previous.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0})}</del>:null;}
+function Card({p}:{p:Property}){return <a className="pfh-card" href={'#/imovel/'+p.id}><div><img src={p.image} alt={p.title} loading="lazy"/><span>{p.operation==='alugar'?'Para alugar':'À venda'}</span></div><p>{p.location}</p><h3>{p.title}</h3><small>{facts(p)}</small><PreviousPrice p={p}/><strong>{price(p)}</strong><span className="pfh-card-link">Conhecer imóvel <ArrowRight size={17}/></span></a>}
 export default function LandingPage({route='#/'}:{route?:string}){
-  const host=useRef<HTMLDivElement>(null);
-  const [teamHost,setTeamHost]=useState<HTMLElement|null>(null);
-  useLayoutEffect(()=>{
-    const element=host.current!;
-    element.innerHTML=markup;
-    const team=element.querySelector<HTMLElement>('#ef-equipe')!;team.replaceChildren();setTeamHost(team);
-    window.scrollTo(0,0);
-    document.title='EME Select · Encontre seu lugar';
-    const dispose=mountLanding(element.querySelector<HTMLElement>('#eme-select-completa')!,properties,Object.fromEntries(new URLSearchParams(route.split('?')[1]||'')));
-    if (new URLSearchParams(route.split('?')[1] || '').get('secao') === 'equipe') element.querySelector('#ef-equipe')?.scrollIntoView({block:'start'});
-    return()=>{dispose();element.replaceChildren();};
-  },[route]);
-  return <><div ref={host}/>{teamHost&&createPortal(<TeamProfiles/>,teamHost)}</>;
+ const items=properties.filter(p=>p.isIllustrative===false),hero=items.find(p=>p.type==='Casa')||items[0];
+ const [menu,setMenu]=useState(false),[region,setRegion]=useState(''),[type,setType]=useState(''),[max,setMax]=useState(''),[results,setResults]=useState<Property[]|null>(null);
+ useEffect(()=>{document.title='EME Select · Imóveis escolhidos com cuidado';if(route.includes('secao=equipe'))document.getElementById('consultores')?.scrollIntoView();else window.scrollTo(0,0);},[route]);
+ function search(e:FormEvent){e.preventDefault();setResults(items.filter(p=>(!region||p.location===region)&&(!type||p.type===type)&&(!max||(p.price>0&&p.price<=Number(max)))));requestAnimationFrame(()=>document.getElementById('pfh-results')?.scrollIntoView({behavior:'smooth',block:'start'}));}
+ return <div className="pfh" onClick={e=>{const link=(e.target as HTMLElement).closest('a');const href=link?.getAttribute('href');if(href?.startsWith('#')&&!href.startsWith('#/')){e.preventDefault();document.getElementById(href.slice(1))?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}}}><header className="pfh-header"><a href="#/" aria-label="EME Select início"><img src="/assets/experience/brand-monogram-transparent.webp" alt="EME Select"/></a><a className="pfh-search-shortcut" href="#selecao">Onde você quer morar? <ArrowRight size={18}/></a><button className="pfh-menu" onClick={()=>setMenu(!menu)} aria-label={menu?'Fechar menu':'Abrir menu'} aria-expanded={menu}>{menu?<X/>:<Menu/>}</button><nav className={menu?'is-open':''} onClick={()=>setMenu(false)}><a href="#/colecao">Imóveis</a><a href="#/oportunidades">Oportunidades</a><a href="#consultores">Consultores</a><a className="pfh-access" href="/acesso-select">Acesso Select</a></nav></header>
+ <main><section className="pfh-hero"><div className="pfh-intro"><p className="pfh-kicker">EME SELECT · IMÓVEIS SELECIONADOS</p><h1>Seu próximo lugar,<br/><em>escolhido com cuidado.</em></h1><p>Casas, apartamentos e novos endereços.<br/>Encontre o imóvel que combina com seus planos.</p><div className="pfh-actions"><a className="pfh-button" href="#/colecao">Ver imóveis <ArrowRight size={18}/></a><a className="pfh-text" href="#selecao">Encontrar meu imóvel <ArrowRight size={17}/></a></div></div><HeroProperties items={items}/></section>
+ <section className="pfh-section" id="imoveis"><div className="pfh-section-heading"><div><p className="pfh-kicker">ESCOLHAS PARA CONHECER DE PERTO</p><h2>Uma seleção para começar.</h2></div><a className="pfh-text" href="#/colecao">Ver todos os imóveis <ArrowRight size={17}/></a></div><div className="pfh-grid">{items.filter(p=>p.id!==hero?.id).slice(0,3).map(p=><Card key={p.id} p={p}/>)}</div>{!items.length&&<p>Estamos atualizando nossa seleção. Converse com a equipe sobre o imóvel que você procura.</p>}</section>
+ <section className="pfh-selection pfh-section" id="selecao"><p className="pfh-kicker">DO SEU JEITO</p><h2>Encontre o que combina com você.</h2><p>Um lugar, um tipo de imóvel e um valor que faça sentido.</p><form onSubmit={search}><label>Região<select value={region} onChange={e=>setRegion(e.target.value)}><option value="">Todas as regiões</option>{[...new Set(items.map(p=>p.location))].map(r=><option key={r}>{r}</option>)}</select></label><label>Tipo de imóvel<select value={type} onChange={e=>setType(e.target.value)}><option value="">Todos os tipos</option>{[...new Set(items.map(p=>p.type))].map(t=><option key={t}>{t}</option>)}</select></label><label>Faixa de valor<select value={max} onChange={e=>setMax(e.target.value)}><option value="">Ainda estou definindo</option><option value="400000">Até R$ 400 mil</option><option value="800000">Até R$ 800 mil</option><option value="1500000">Até R$ 1,5 milhão</option><option value="3000000">Até R$ 3 milhões</option></select></label><button className="pfh-button">Ver imóveis <ArrowRight size={18}/></button></form><div id="pfh-results" aria-live="polite">{results&&<><h3>{results.length?`${results.length} imóveis para conhecer`:'Ainda não temos imóveis com essa combinação.'}</h3>{results.length?<div className="pfh-grid">{results.map(p=><Card key={p.id} p={p}/>)}</div>:<p>Ajuste sua busca ou <a href="/acesso-select?criar=1&alerta=1">crie seu acesso para autorizar avisos de novas oportunidades</a>.</p>}</>}</div></section>
+ <section className="pfh-launches" id="lancamentos"><div className="pfh-section pfh-launch-heading"><p className="pfh-kicker">NOVOS ENDEREÇOS</p><h2>Lançamentos</h2><p>Empreendimentos, condomínios e loteamentos para conhecer de perto.</p></div><div className="pfh-development"><FeaturedDevelopment/></div></section>
+ <section className="pfh-select pfh-section"><div><p className="pfh-kicker">ACESSO SELECT</p><h2>Sua seleção, sempre por perto.</h2><p>Salve seus favoritos e acompanhe oportunidades que combinam com você.</p></div><div><a className="pfh-button" href="/acesso-select?criar=1">Criar meu acesso <ArrowRight size={17}/></a><a className="pfh-text" href="/acesso-select">Já sou proprietário · acompanhar meus imóveis</a></div></section>
+ <section className="pfh-section pfh-team" id="consultores"><TeamProfiles/><p className="pfh-signature">Menos é mais. Qualidade em cada escolha. Transparência em cada passo.</p></section>
+ <section className="pfh-owner pfh-section"><div><p className="pfh-kicker">PARA PROPRIETÁRIOS</p><h2>Quer vender seu imóvel?</h2><p>Apresente seu imóvel para a avaliação da nossa equipe.</p></div><a className="pfh-button" href="/enviar-imovel">Divulgue conosco <ArrowRight size={18}/></a></section></main>
+ <footer><img src="/assets/experience/brand-monogram-transparent.webp" alt="EME Select"/><p>Imóveis selecionados. Pessoas por perto.</p><nav><a href="/inovacao">Inovação</a><a href="https://www.emespatial.com">EME Spatial</a><a href="/acesso-select">Acesso Select</a><a href="https://wa.me/5554984007919">Fale com a EME</a></nav><small>© 2026 EME Select</small></footer></div>;
 }
+
+
+
+

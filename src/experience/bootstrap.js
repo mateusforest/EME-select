@@ -1,3 +1,4 @@
+import {mountPropertyLanding} from './property-landing';
 import {mountConsultants} from './consultants.js';
 import {mountAnalytics} from './analytics.js';
 import {mountEcosystem} from './ecosystem.js';
@@ -53,6 +54,7 @@ export async function startExperience(){
  container.querySelectorAll('img').forEach(img=>{img.decoding='async';if(!img.closest('.ec-scene,.ec-header,.innovation-page .hero-image'))img.loading='lazy';});
  addFooter(container);
  mountAnalytics(container);
+ mountPropertyLanding(container,properties);
 }
 
 function mountBrandArtwork(container){
@@ -75,3 +77,4 @@ function addFooter(container){
  footer.insertBefore(privacy,footer.lastElementChild);footer.insertBefore(portal,footer.lastElementChild);
  const innovationPrivacy=privacy.cloneNode(true);innovationPrivacy.className='text-button';innovationPrivacy.onclick=privacy.onclick;container.querySelector('.innovation-page .footer-bottom')?.append(innovationPrivacy);
 }
+
