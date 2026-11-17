@@ -1,0 +1,27 @@
+/* Keep touch, wheel and keyboard scrolling without visible scrollbar tracks. */
+html:has(#eme-continuo),
+body:has(#eme-continuo) {
+  max-width:100%;
+  overflow-x:clip;
+}
+
+html:has(#eme-continuo),
+body:has(#eme-continuo),
+#eme-continuo,
+#eme-continuo * {
+  scrollbar-width:none !important;
+  -ms-overflow-style:none;
+}
+
+html:has(#eme-continuo)::-webkit-scrollbar,
+body:has(#eme-continuo)::-webkit-scrollbar,
+#eme-continuo::-webkit-scrollbar,
+#eme-continuo *::-webkit-scrollbar {
+  display:none;
+  width:0;
+  height:0;
+}
+
+html #eme-continuo .ec-page-scroll {
+  overflow-x:hidden;
+}

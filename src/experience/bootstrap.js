@@ -25,6 +25,7 @@ import './select-refinement.css';
 import './innovation.css';
 import './innovation-integration.css';
 import './property-refinement.css';
+import './scrolling.css';
 
 export async function startExperience(){
  const container=document.getElementById('root');

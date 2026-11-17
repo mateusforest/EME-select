@@ -84,3 +84,31 @@ html #eme-continuo .ep-lightbox :focus-visible{outline:2px solid #e3cd8f;outline
 
 html #eme-continuo .ep-story-copy>div::before,html #eme-continuo .ep-story-copy>div::after{display:none}
 html #eme-continuo .ep-scene-copy .ep-scene-eyebrow{display:none}
+
+/* Comfortable touch targets, safe areas and a usable landscape photo viewport. */
+html #eme-continuo .ep-lightbox{overscroll-behavior:contain}
+html #eme-continuo .epl-header{padding-top:max(14px,env(safe-area-inset-top));padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+html #eme-continuo .ep-lightbox button{touch-action:manipulation}
+@media(max-width:760px){
+ html #eme-continuo .ep-gallery .ex-photo-edge{width:48px;height:48px;top:calc(50% - 24px)}
+ html #eme-continuo .ep-top-actions{gap:8px}
+ html #eme-continuo .ep-top-actions button{min-height:48px;padding:8px 4px}
+ html #eme-continuo .ep-back,html #eme-continuo .ep-all-photos{min-height:44px}
+ html #eme-continuo .ep-section-links{gap:4px 20px;padding:12px 0}
+ html #eme-continuo .ep-section-links a{display:inline-flex;align-items:center;min-height:44px}
+ html #eme-continuo .epl-prev,html #eme-continuo .epl-next{width:48px;height:48px;bottom:12px}
+ html #eme-continuo .epl-stage{padding-bottom:72px}
+ html #eme-continuo .ep-lightbox footer small{margin-top:6px}
+}
+@media(max-height:500px) and (orientation:landscape){
+ html #eme-continuo .epl-header{padding-top:max(6px,env(safe-area-inset-top));padding-bottom:6px;min-height:56px}
+ html #eme-continuo .epl-header>div>span{display:none}
+ html #eme-continuo .epl-header h2{font-size:14px;margin:0;-webkit-line-clamp:1}
+ html #eme-continuo .epl-stage{padding:8px max(72px,env(safe-area-inset-right)) 8px max(72px,env(safe-area-inset-left))}
+ html #eme-continuo .epl-prev,html #eme-continuo .epl-next{width:48px;height:48px;top:calc(50% - 24px);bottom:auto}
+ html #eme-continuo .epl-prev{left:max(12px,env(safe-area-inset-left))}
+ html #eme-continuo .epl-next{right:max(12px,env(safe-area-inset-right))}
+ html #eme-continuo .epl-thumbs,html #eme-continuo .ep-lightbox footer small{display:none}
+ html #eme-continuo .ep-lightbox footer{padding:6px 16px max(8px,env(safe-area-inset-bottom))}
+ html #eme-continuo .epl-caption{margin:0;font-size:12px}
+}

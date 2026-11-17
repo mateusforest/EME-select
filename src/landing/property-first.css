@@ -62,3 +62,21 @@
 html #eme-continuo.has-property-landing .ec-header{max-width:1440px}
 html #eme-continuo .ec-header [data-section=launches]{white-space:nowrap}
 #consultores,#lancamentos,#imoveis{scroll-margin-top:110px}
+
+/* Keep the first property close to the introduction on narrow screens. */
+@media(max-width:650px){
+ .pfh .pfh-hero{padding:24px 20px 36px;gap:24px}
+ .pfh .pfh-intro h1{font-size:clamp(32px,9.2vw,39px);line-height:1.12;margin:18px 0}
+ .pfh .pfh-intro .pfh-kicker{font-size:9px;letter-spacing:.12em;margin-bottom:14px}
+ .pfh .pfh-intro>p:not(.pfh-kicker){font-size:14px;line-height:1.6}
+ .pfh .pfh-actions{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;margin-top:22px;align-items:center}
+ .pfh .pfh-actions a{font-size:12px;gap:8px;min-height:48px}
+ .pfh .pfh-actions .pfh-button{padding:12px 16px}
+ .pfh .pfh-actions .pfh-text{line-height:1.4}
+ .pfh .pfh-actions svg{flex-shrink:0}
+ .pfh .pfh-depth-carousel{padding:32px 2px 0}
+ .pfh .pfh-depth-carousel .pfh-hero-property>div{padding:20px}
+ .pfh .pfh-depth-carousel .pfh-hero-property h2{font-size:22px}
+ .pfh .pfh-carousel-controls{gap:12px}
+ .pfh .pfh-carousel-controls button{width:48px;height:48px;touch-action:manipulation}
+}
