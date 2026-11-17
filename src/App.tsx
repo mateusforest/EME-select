@@ -57,11 +57,11 @@ function Header({ tour, favorites, onFavorites, onContact }: { tour: boolean; fa
         {exploreOpen && <div className="desktop-explore-menu" id="desktop-explore-menu">
           <div><span className="eyebrow">Por ambiente</span>{environments.map(e => <a key={e.id} href={environmentHref(e.id)}>{e.id === 'todos' ? 'Todos os ambientes' : e.name}<ArrowUpRight size={13} /></a>)}</div>
           <div><span className="eyebrow">Por tipo de imóvel</span>{[{ label: 'Casas', type: 'Casa' }, { label: 'Casas em condomínio', type: 'Casa', region: 'condominios' as const }, { label: 'Apartamentos', type: 'Apartamento' }, { label: 'Compactos', type: 'Compacto', operation: 'alugar' as const }, { label: 'Condomínios horizontais', type: 'Condomínio horizontal' }, { label: 'Condomínios verticais', type: 'Condomínio vertical' }, { label: 'Lojas', type: 'Loja' }, { label: 'Salas comerciais', type: 'Sala comercial' }, { label: 'Edifícios corporativos', type: 'Edifício corporativo' }, { label: 'Terrenos urbanos', type: 'Terreno urbano' }, { label: 'Lotes em condomínio', type: 'Lote em condomínio' }, { label: 'Terras agrícolas', type: 'Terra agrícola' }, { label: 'Galpões', type: 'Galpão' }, { label: 'Pavilhões', type: 'Pavilhão' }, { label: 'Centros de distribuição', type: 'Centro de distribuição', operation: 'alugar' as const }].map(item => <a key={`${item.region || 'todos'}:${item.type}`} href={catalogHash({ region: item.region, type: item.type, operation: item.operation || properties.find(property => property.type === item.type)?.operation || 'comprar' })}>{item.label}<ArrowUpRight size={13} /></a>)}</div>
-          <a href="#/colecao">Explorar a coleção completa <ArrowRight size={17} /></a>
+          <a href="#/colecao">Ver todos os imóveis <ArrowRight size={17} /></a>
         </div>}
       </div>
       <a href="#/curadoria" aria-current={hash === '#/curadoria' ? 'page' : undefined}>Nossa curadoria</a>
-      <a href="#/?secao=equipe">Nossa equipe</a>
+      <a href="#/?secao=equipe">Consultores</a>
       <a href="/enviar-imovel">Para proprietários</a>
     </nav>
     <div className="header-actions">
@@ -71,9 +71,9 @@ function Header({ tour, favorites, onFavorites, onContact }: { tour: boolean; fa
       <button className="icon-button mobile-menu-toggle" aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'} aria-expanded={menuOpen} aria-controls="mobile-menu" onClick={() => setMenuOpen(v => !v)}>{menuOpen ? <X size={23} /> : <Menu size={23} />}</button>
     </div>
     {menuOpen && <nav className="mobile-menu" id="mobile-menu" aria-label="Menu móvel">
-      <a href="#/colecao">A coleção completa<ArrowUpRight size={17} /></a>
+      <a href="#/colecao">Todos os imóveis<ArrowUpRight size={17} /></a>
       {environments.map(e => <a key={e.id} href={environmentHref(e.id)}>{e.name}<ArrowUpRight size={17} /></a>)}
-      <a href="#/?secao=equipe">Nossa equipe<ArrowUpRight size={17} /></a><a href="#/curadoria">Nossa curadoria<ArrowUpRight size={17} /></a><a href="/enviar-imovel">Para proprietários<ArrowUpRight size={17} /></a>
+      <a href="#/?secao=equipe">Consultores<ArrowUpRight size={17} /></a><a href="#/curadoria">Nossa curadoria<ArrowUpRight size={17} /></a><a href="/enviar-imovel">Para proprietários<ArrowUpRight size={17} /></a>
       <button onClick={() => { setMenuOpen(false); onContact(); }}>Fale com a EME<MessageCircle size={18} /></button>
     </nav>}
   </header>;
@@ -127,7 +127,7 @@ export default function App() {
     previousRoute.current = currentRoute;
     if (parts[0] === 'colecao') lastCatalog.current = catalogHash(parseCatalogHash(hash));
     if (parts[0] === 'comparar') { setComparison(comparisonIds(hash)); lastCatalog.current = comparisonReturn(hash); }
-    document.title = `${property?.title || (isScene ? environment.name === 'Todos os ambientes' ? 'Seu próximo lugar' : environment.name : parts[0] === 'colecao' ? 'A coleção' : parts[0] === 'comparar' ? 'Comparar imóveis' : parts[0] === 'curadoria' ? 'Nossa curadoria' : parts[0] === 'proprietarios' ? 'Para proprietários' : 'Página não encontrada')} — EME Select`;
+    document.title = `${property?.title || (isScene ? environment.name === 'Todos os ambientes' ? 'Seu próximo lugar' : environment.name : parts[0] === 'colecao' ? 'Imóveis' : parts[0] === 'comparar' ? 'Comparar imóveis' : parts[0] === 'curadoria' ? 'Nossa curadoria' : parts[0] === 'proprietarios' ? 'Para proprietários' : 'Página não encontrada')} — EME Select`;
   }, [hash]);
   useEffect(() => { if (!toast) return; const timer = window.setTimeout(() => setToast(''), 4000); return () => window.clearTimeout(timer); }, [toast]);
   useEffect(() => { const handler = (event: MessageEvent) => { if (event.origin === window.location.origin && event.source === frameRef.current?.contentWindow && event.data?.type === 'eme-select:close-intro') setModal(null); }; window.addEventListener('message', handler); return () => window.removeEventListener('message', handler); }, []);

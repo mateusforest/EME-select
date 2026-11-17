@@ -1,5 +1,6 @@
 import {COMPANY_CONTACT} from '../../shared/company-contact.mjs';
 import {renderPropertyConsultants} from './consultants.js';
+import {createPropertyLightbox} from './property-lightbox.js';
 import {renderPrice} from './price.js';
 import {markOpportunity,brandOpportunities} from './opportunity-brand.js';
 import {createHeaderVoice} from './header-voice.js';
@@ -403,7 +404,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   function setRegionPicker(open,opener=collectionToggle,focus=false) {
     if(open) regionPickerOpener=opener;
     regionPicker.hidden=!open;
-    collectionToggle.setAttribute('aria-expanded',String(open));
+    if(collectionToggle.hasAttribute('data-region-picker'))collectionToggle.setAttribute('aria-expanded',String(open));
     if(open) {
       const current=regionById(regionId);
       regionPicker.querySelectorAll('.er-state-group').forEach(group=>group.open=group.dataset.state===(view==='region'?current.stateId:homeStateId));
@@ -484,7 +485,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     regionPage.querySelector('.er-breadcrumb-city').textContent=region.name;
     regionPage.querySelector('.er-state-label').textContent=state.name;
     regionPage.querySelector('#eme-region-title').textContent=region.name+'.';
-    regionPage.querySelector('.er-municipality').textContent=region.id==='vacaria' ? 'A coleção EME Select na cidade' : region.context;
+    regionPage.querySelector('.er-municipality').textContent=region.id==='vacaria' ? 'Imóveis EME Select na cidade' : region.context;
     const image=regionPage.querySelector('.er-landscape');image.src=assets[region.asset];image.alt=region.imageAlt;image.loading='eager';
     if(region.id==='praia-de-palmas'&&region.asset){image.srcset='/assets/experience/palmas-1200.webp 1200w, /assets/experience/palmas-2400.webp 2400w';image.sizes='(max-width:760px) 100vw, 65vw';}else{image.removeAttribute('srcset');image.removeAttribute('sizes');}
     regionPage.querySelector('.er-landmark').hidden=region.id!=='vacaria'||!region.asset;
@@ -661,7 +662,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     home.hidden = false;
     if (resetFilter) { filterType = null; favoritesOnly = false; }
     renderCollection();
-    if (scroll) scrollToElement(section ? root.querySelector('#eme-full-'+section) : root);
+    if (scroll) {const target=section ? root.querySelector(({team:'#consultores',launches:'#lancamentos',collection:'#imoveis'})[section]||'#eme-full-'+section) : root;scrollToElement(target||root);}
   }
 
   const photoDimensions = Object.fromEntries(properties.flatMap(p=>p.photos.map(photo=>[photo.asset,[photo.width,photo.height]])));
@@ -694,8 +695,14 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     status.textContent = property.title+'. '+photo.name;
   }
 
+  const photoViewer = createPropertyLightbox({root,onChange:index=>{setPhoto(index,false);save();}});
+  function expandPhotos(){
+    const property=byId(selectedId);
+    photoViewer.open({title:property.title,photos:property.photos.map(photo=>({...photo,src:assets[photo.asset]})),index:photoIndex});
+  }
+
   function renderProperty() {
-    const back=root.querySelector('.ep-back');back.replaceChildren(element('span','','←'),document.createTextNode(propertyOriginOpportunities ? ' Voltar às oportunidades' : propertyOriginRegion ? ' Voltar a '+regionById(propertyOriginRegion).name : propertyOriginCatalog&&catalog.isSearch()?' Voltar à busca':' Voltar à coleção'));
+    const back=root.querySelector('.ep-back');back.replaceChildren(element('span','','←'),document.createTextNode(propertyOriginOpportunities ? ' Voltar às oportunidades' : propertyOriginRegion ? ' Voltar a '+regionById(propertyOriginRegion).name : propertyOriginCatalog&&catalog.isSearch()?' Voltar à busca':' Voltar aos imóveis'));
     const property = byId(selectedId);
     propertyPage.setAttribute('aria-label',property.title);
     root.querySelector('.ep-finance').hidden = property.operation === 'alugar' || !Number.isFinite(property.searchFacts.price);
@@ -715,14 +722,7 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
       pair.append(dt,dd);
       facts.appendChild(pair);
     });
-    const storyTitle = root.querySelector('.ep-story-title');
-    const pause = property.storyTitle.indexOf('. ');
-    storyTitle.textContent = pause < 0 ? property.storyTitle : property.storyTitle.slice(0,pause+1);
-    if(pause >= 0) {
-      const continuation = document.createElement('span');
-      continuation.textContent = property.storyTitle.slice(pause+2);
-      storyTitle.appendChild(continuation);
-    }
+    root.querySelector('.ep-story-title').textContent='Sobre o imóvel';
     const highlights = root.querySelector('.ep-story-copy');
     highlights.replaceChildren();
     property.highlights.forEach(([title,text])=>{
@@ -843,6 +843,9 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     }
     if (target.closest('.ec-featured-photo,.ec-open-property')) { openProperty(featuredId); return; }
     if (target.closest('.ep-back')) { if(propertyOriginOpportunities){showOpportunities(undefined,{returning:true});}else if(propertyOriginRegion){showRegion(propertyOriginRegion,{reset:false,returning:true});}else{showCatalog(propertyOriginCatalog?undefined:'',{returning:propertyOriginCatalog});} return; }
+    if(target.closest('.ep-expand-photo')){expandPhotos();return;}
+    const sectionLink=target.closest('.ep-section-links a');
+    if(sectionLink){event.preventDefault();scrollToElement(root.querySelector(sectionLink.getAttribute('href')));return;}
     const chapter = target.closest('[data-chapter]');
     if (chapter) { setPhoto(Number(chapter.dataset.chapter)); scrollToElement(root.querySelector('.ep-gallery')); save(); return; }
     if (target.closest('.ep-prev,.ex-photo-prev')) { setPhoto(photoIndex-1); save(); return; }
@@ -1465,9 +1468,9 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
     const readingLine=header.getBoundingClientRect().bottom+90;
     let current='collection';
     if(view==='home') {
-      for(const section of ['opportunities','team','owners']) {
-        const target=root.querySelector('#eme-full-'+section);
-        if(target.getClientRects().length && target.getBoundingClientRect().top<=readingLine)current=section;
+      for(const section of ['launches','team']) {
+        const target=root.querySelector(section==='team'?'#consultores':'#lancamentos');
+        if(target?.getClientRects().length && target.getBoundingClientRect().top<=readingLine)current=section;
       }
     } else if(view==='innovation')current='innovation';
     else if(view==='opportunities'||(view==='property'&&propertyOriginOpportunities))current='opportunities';
@@ -1498,17 +1501,19 @@ const experienceState={widgetState:{privateContent:{version:'eme-experience-4',.
   gallery.addEventListener('pointerdown',event=>{
     if (event.target.closest('button') || byId(selectedId).photos.length < 2) return;
     if (event.pointerType === 'mouse') event.preventDefault();
-    photoGesture={id:event.pointerId,x:event.clientX,y:event.clientY};
+    photoGesture={id:event.pointerId,x:event.clientX,y:event.clientY,photo:event.target===galleryImage};
     gallery.setPointerCapture(event.pointerId);
   });
   gallery.addEventListener('dragstart',event=>event.preventDefault());
   gallery.addEventListener('pointerup',event=>{
     if (!photoGesture || photoGesture.id !== event.pointerId) return;
     if (gallery.hasPointerCapture(event.pointerId)) gallery.releasePointerCapture(event.pointerId);
+    const tapped=photoGesture.photo&&Math.abs(event.clientX-photoGesture.x)<8&&Math.abs(event.clientY-photoGesture.y)<8;
     finishPhotoGesture(event.clientX,event.clientY);
+    if(tapped)expandPhotos();
   });
   gallery.addEventListener('pointercancel',()=>{photoGesture=null;});
-  gallery.addEventListener('touchstart',event=>{if(event.target.closest('button'))return;const touch=event.touches[0];if(touch)photoGesture={x:touch.clientX,y:touch.clientY};},{passive:true});
+  gallery.addEventListener('touchstart',event=>{if(event.target.closest('button'))return;const touch=event.touches[0];if(touch)photoGesture={...photoGesture,x:touch.clientX,y:touch.clientY};},{passive:true});
   gallery.addEventListener('touchend',event=>{const touch=event.changedTouches[0];if(touch)finishPhotoGesture(touch.clientX,touch.clientY);},{passive:true});
   gallery.addEventListener('mousedown',event=>{if(event.target.closest('button'))return;event.preventDefault();if(!photoGesture)photoGesture={x:event.clientX,y:event.clientY};});
   document.addEventListener('mouseup',event=>finishPhotoGesture(event.clientX,event.clientY));

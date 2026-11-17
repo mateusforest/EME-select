@@ -1,0 +1,86 @@
+/* A clear reading order: photos, price and facts, then description and contact. */
+html #eme-continuo .ec-property{max-width:1320px;width:calc(100% - 64px);margin:auto}
+html #eme-continuo .ep-intro{padding:12px 0 26px;max-width:1000px}
+html #eme-continuo .ep-title{font-size:clamp(26px,2.8vw,42px);line-height:1.2;max-width:1000px}
+html #eme-continuo .ep-summary{font-size:14px;color:#6b7e71;margin-top:12px}
+html #eme-continuo .ep-gallery,html #eme-continuo .ep-gallery[data-orientation=portrait]{grid-template-columns:minmax(0,1.8fr) minmax(300px,1fr);gap:28px;align-items:start}
+html #eme-continuo .ep-media-column{min-width:0}
+html #eme-continuo .ep-photo-stage,html #eme-continuo .ep-gallery[data-orientation=portrait] .ep-photo-stage{width:100%;height:clamp(320px,35vw,500px);border-radius:14px}
+html #eme-continuo .ep-photo{cursor:zoom-in}
+html #eme-continuo .ep-expand-photo{position:absolute;right:14px;top:14px;z-index:4;display:flex;align-items:center;gap:8px;padding:10px 14px;min-height:44px;border:1px solid #ffffff66;border-radius:8px;background:#fffdf7ed;color:#183e2e;font:inherit;font-size:13px;cursor:pointer;box-shadow:0 4px 18px #132e2218}
+html #eme-continuo .ep-expand-photo svg{width:17px;height:17px}
+html #eme-continuo .ep-gallery .ex-photo-edge{top:calc(50% - 22px);bottom:auto;border-radius:50%;background:#fffdf7eb;color:#173e32}
+html #eme-continuo .ep-photo-count{font-size:12px;pointer-events:none}
+html #eme-continuo .ep-detail-panel{padding:28px;background:#fffdf7;border:1px solid #d9dfd2;border-radius:14px;gap:24px}
+html #eme-continuo .ep-price{font-size:clamp(26px,2.5vw,38px);margin:10px 0 22px}
+html #eme-continuo .ep-visit-button{font-size:15px;min-height:50px;border-radius:8px}
+html #eme-continuo .ep-facts{display:grid;grid-template-columns:1fr 1fr;gap:18px 20px;padding:24px 0;margin:0;border-top:1px solid #e1e5da;border-bottom:1px solid #e1e5da}
+html #eme-continuo .ep-facts>div{padding:0;border:0;min-width:0}
+html #eme-continuo .ep-facts dt{font-size:12px;color:#738374;margin-bottom:6px}
+html #eme-continuo .ep-facts dd{font-size:18px;line-height:1.3;margin:0}
+html #eme-continuo .ep-top-actions{margin:0;gap:16px;flex-wrap:wrap}
+html #eme-continuo .ep-top-actions button{font-size:12px;min-height:40px}
+html #eme-continuo .ep-save{border:0;padding:0}
+html #eme-continuo .ep-scene-copy,html #eme-continuo .ep-gallery[data-orientation=portrait] .ep-scene-copy{padding:12px 0 0;margin:0;border:0;display:flex;gap:12px;align-items:baseline}
+html #eme-continuo .ep-scene-copy h2{font-size:14px;letter-spacing:0;margin:0;line-height:1.5}
+html #eme-continuo .ep-scene-copy p,html #eme-continuo .ep-scene-eyebrow{display:none}
+html #eme-continuo .ep-chapter-row{margin:18px 0 0}
+html #eme-continuo .ep-chapters{grid-auto-columns:100px}
+html #eme-continuo .ep-chapter{height:76px;border-radius:7px}
+html #eme-continuo .ep-chapters.is-expanded{grid-template-columns:repeat(auto-fill,minmax(90px,1fr))}
+html #eme-continuo .ep-section-links{display:flex;gap:28px;flex-wrap:wrap;margin-top:36px;padding:20px 0;border-top:1px solid #d9dfd2;border-bottom:1px solid #d9dfd2;font-size:13px}
+html #eme-continuo .ep-section-links a{text-decoration:none;color:#385b46;min-height:24px}
+html #eme-continuo .ep-story{display:block;background:none;padding:38px 0}
+html #eme-continuo .ep-story h2,html #eme-continuo .ep-dossier h2{font-size:28px;line-height:1.2;margin:0 0 22px}
+html #eme-continuo .ep-story .ec-eyebrow,html #eme-continuo .ep-story-copy h3{display:none}
+html #eme-continuo .ep-story-copy{max-width:880px;display:grid;gap:14px}
+html #eme-continuo .ep-story-copy>div{border:0;padding:0}
+html #eme-continuo .ep-story-copy p{font-size:15px;line-height:1.8;white-space:pre-line;margin:0}
+html #eme-continuo .ep-dossier{padding:28px 0 42px}
+html #eme-continuo .ep-visit{border-radius:16px;padding:32px;gap:32px}
+html #eme-continuo .ep-visit h2{font-size:30px}
+html #eme-continuo .ep-next-property{padding:40px 0}
+html #eme-continuo .ep-lightbox{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;background:#0e211b;color:#f6f3e8;overflow:hidden;box-sizing:border-box}
+html #eme-continuo .ep-lightbox[open]{display:grid;grid-template-rows:auto minmax(0,1fr) auto}
+.ep-lightbox::backdrop{background:#0e211b}
+html #eme-continuo .epl-header{display:flex;justify-content:space-between;align-items:center;padding:18px 28px;gap:20px;border-bottom:1px solid #ffffff1c}
+html #eme-continuo .epl-header span{font-size:10px;letter-spacing:.14em;color:#d7c58e}
+html #eme-continuo .epl-header h2{font-size:17px;line-height:1.4;letter-spacing:0;margin:7px 0 0;color:inherit;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+html #eme-continuo .ep-lightbox button{font:inherit;color:inherit;cursor:pointer}
+html #eme-continuo .epl-close{flex-shrink:0;display:flex;align-items:center;gap:14px;background:#ffffff12;border:1px solid #ffffff30;border-radius:8px;padding:10px 16px;min-height:44px;font-size:13px}
+html #eme-continuo .epl-close span{font-size:25px;line-height:1;color:inherit}
+html #eme-continuo .epl-stage{position:relative;min-height:0;display:flex;align-items:center;justify-content:center;padding:16px 72px;touch-action:pan-y}
+html #eme-continuo .epl-stage>img{width:100%;height:100%;object-fit:contain;min-height:0;user-select:none}
+html #eme-continuo .epl-stage>img[hidden]{display:none}
+html #eme-continuo .epl-status{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:#0e211bed;color:#eee9d9;padding:8px 16px;font-size:13px;text-align:center;border-radius:6px}
+html #eme-continuo .epl-status:empty{display:none}
+html #eme-continuo .epl-prev,html #eme-continuo .epl-next{position:absolute;top:calc(50% - 24px);width:48px;height:48px;border:1px solid #ffffff30;border-radius:50%;background:#183c30dc;font-size:32px;display:grid;place-items:center}
+html #eme-continuo .epl-prev{left:16px}html #eme-continuo .epl-next{right:16px}
+html #eme-continuo .ep-lightbox button:disabled{opacity:.25;cursor:default}
+html #eme-continuo .ep-lightbox footer{padding:10px 24px 16px;text-align:center;min-width:0}
+html #eme-continuo .epl-caption{font-size:13px;margin-bottom:12px}
+html #eme-continuo .epl-thumbs{display:flex;gap:8px;overflow-x:auto;max-width:880px;margin:auto;padding:4px;scrollbar-width:thin}
+html #eme-continuo .epl-thumbs button{width:74px;height:52px;flex-shrink:0;padding:0;border:2px solid transparent;border-radius:6px;overflow:hidden;background:none;opacity:.6}
+html #eme-continuo .epl-thumbs button[aria-pressed=true]{border-color:#e3cd8f;opacity:1}
+html #eme-continuo .epl-thumbs img{width:100%;height:100%;object-fit:cover}
+html #eme-continuo .ep-lightbox footer small{display:block;font-size:11px;color:#9eb4a7;margin-top:10px}
+html #eme-continuo .ep-lightbox :focus-visible{outline:2px solid #e3cd8f;outline-offset:3px}
+@media(max-width:760px){
+ html #eme-continuo .ec-property{width:calc(100% - 32px)}
+ html #eme-continuo .ep-gallery,html #eme-continuo .ep-gallery[data-orientation=portrait]{display:flex;gap:22px}
+ html #eme-continuo .ep-media-column{width:100%}
+ html #eme-continuo .ep-photo-stage,html #eme-continuo .ep-gallery[data-orientation=portrait] .ep-photo-stage{height:300px}
+ html #eme-continuo .ep-detail-panel{width:100%;padding:22px;gap:18px}
+ html #eme-continuo .ep-section-links{gap:14px 22px;margin-top:24px;font-size:12px}
+ html #eme-continuo .ep-visit{padding:24px 18px}
+ html #eme-continuo .epl-header{padding:14px 16px;gap:12px}
+ html #eme-continuo .epl-header h2{font-size:14px}
+ html #eme-continuo .epl-close{padding:8px 10px;font-size:12px;gap:8px}
+ html #eme-continuo .epl-stage{padding:12px}
+ html #eme-continuo .epl-prev,html #eme-continuo .epl-next{width:40px;height:40px;top:auto;bottom:18px;font-size:27px}
+ html #eme-continuo .ep-lightbox footer{padding:8px 12px max(12px,env(safe-area-inset-bottom))}
+ html #eme-continuo .epl-thumbs button{width:60px;height:44px}
+}
+
+html #eme-continuo .ep-story-copy>div::before,html #eme-continuo .ep-story-copy>div::after{display:none}
+html #eme-continuo .ep-scene-copy .ep-scene-eyebrow{display:none}

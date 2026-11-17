@@ -8,10 +8,10 @@
     <form class="ex-search" role="search" aria-label="Busca natural de imóveis"><i data-lucide="search" aria-hidden="true"></i><input type="search" name="query" aria-label="O que você procura?" placeholder="O que você procura?" autocomplete="off"><button type="button" class="ex-microphone cursor-interaction" aria-label="Buscar por voz"><i data-lucide="mic" aria-hidden="true"></i></button><button type="submit" class="ex-search-submit cursor-interaction" aria-label="Enviar busca"><i data-lucide="arrow-up-right" aria-hidden="true"></i></button></form>
     <button type="button" class="ex-menu-toggle ec-text-button cursor-interaction" aria-expanded="false" aria-controls="eme-navigation">Menu <i data-lucide="chevron-down" aria-hidden="true"></i></button>
     <nav id="eme-navigation" aria-label="Navegação principal">
-      <button type="button" class="ec-text-button er-collection-toggle cursor-interaction" data-region-picker aria-current="location" aria-expanded="false" aria-controls="eme-region-navigation">A coleção</button>
+      <button type="button" class="ec-text-button er-collection-toggle cursor-interaction" data-section="collection">Imóveis</button>
       <button type="button" class="ec-text-button cursor-interaction" data-section="opportunities">Oportunidades</button>
       <button type="button" class="ec-text-button cursor-interaction" data-section="team">Consultores</button>
-      <button type="button" data-section="innovation">Inovação</button>
+      <button type="button" class="ec-text-button" data-section="launches">Lançamentos</button>
       <button type="button" class="ec-text-button cursor-interaction" data-section="owners">Proprietários</button>
     </nav>
     <button type="button" class="ex-chat-launch cursor-interaction" data-assistant="chat" aria-label="Abrir chat EME — online" aria-expanded="false" aria-controls="eme-chat" data-tooltip="Converse com a EME"><span class="ex-chat-symbol" aria-hidden="true"></span><span class="ex-online-dot" aria-hidden="true"></span></button>
@@ -65,7 +65,7 @@
       <div class="ec-continuation-copy"><p>Qualidade em cada escolha.<br>Transparência em cada passo.</p><button type="button" class="ec-link ec-plain cursor-interaction" data-section="innovation"><span>Conheça o ecossistema EME</span><svg class="eme-direction-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></button></div>
     </section>
     <section class="ec-collection-section ec-pad" id="eme-full-collection" aria-label="A coleção de imóveis">
-      <div class="ec-section-top"><div><p class="ec-eyebrow">A COLEÇÃO EME SELECT</p><h2 class="ec-section-title">Da inspiração<br>ao endereço.</h2></div><div class="ec-collection-context"><a class="el-all-link ec-link" href="#/colecao" data-section="collection">Ver todos os imóveis ↗︎</a><p class="ec-collection-count">03 imóveis para conhecer</p><button type="button" class="ec-reset-collection ec-plain ec-link cursor-interaction" hidden>Ver a seleção completa ↗︎</button></div></div>
+      <div class="ec-section-top"><div><p class="ec-eyebrow">IMÓVEIS EME SELECT</p><h2 class="ec-section-title">Da inspiração<br>ao endereço.</h2></div><div class="ec-collection-context"><a class="el-all-link ec-link" href="#/colecao" data-section="collection">Ver todos os imóveis ↗︎</a><p class="ec-collection-count">03 imóveis para conhecer</p><button type="button" class="ec-reset-collection ec-plain ec-link cursor-interaction" hidden>Ver a seleção completa ↗︎</button></div></div>
       <div class="ec-featured-wrap" id="eme-full-opportunities">
         <div class="eo-preview-heading"><h2>Oportunidades</h2><a href="#/oportunidades" data-section="opportunities">Explorar oportunidades <svg class="eme-direction-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></a></div>
         <article class="ec-featured" aria-label="Oportunidade da coleção">
@@ -106,9 +106,9 @@
   <section class="eo-contact"><i data-lucide="gem" aria-hidden="true"></i><div><h2>Uma oportunidade começa a fazer sentido<br> quando combina com você.</h2><p>Converse sobre os detalhes, as condições e os próximos passos.</p></div><button type="button" class="ec-link ec-plain" data-assistant="chat">Conversar com M<i data-lucide="arrow-up-right" aria-hidden="true"></i></button><a href="#/colecao" data-section="collection">Ver todos os imóveis ↗︎</a></section>
 </main>
 <main class="el-catalog" aria-labelledby="eme-catalog-title" hidden>
-  <div class="el-heading"><button type="button" class="ec-link ec-plain el-home">← Página inicial</button><p class="ec-eyebrow">A COLEÇÃO EME SELECT</p><h1 id="eme-catalog-title" tabindex="-1">Todos os imóveis.<br><span>O seu próximo lugar.</span></h1><p>Explore a seleção no seu ritmo. Encontre o que combina com seus planos.</p></div>
+  <div class="el-heading"><button type="button" class="ec-link ec-plain el-home">← Página inicial</button><p class="ec-eyebrow">IMÓVEIS EME SELECT</p><h1 id="eme-catalog-title" tabindex="-1">Todos os imóveis.<br><span>O seu próximo lugar.</span></h1><p>Explore a seleção no seu ritmo. Encontre o que combina com seus planos.</p></div>
   <div class="el-layout">
-    <details class="el-filter-panel" open><summary><i data-lucide="sliders-horizontal" aria-hidden="true"></i>Refinar a coleção<i data-lucide="chevron-down" aria-hidden="true"></i></summary>
+    <details class="el-filter-panel" open><summary><i data-lucide="sliders-horizontal" aria-hidden="true"></i>Filtrar imóveis<i data-lucide="chevron-down" aria-hidden="true"></i></summary>
       <form class="el-filters" aria-label="Filtros da coleção">
         <label>O que você procura?<input name="q" type="search" placeholder="Bairro, lareira, jardim…" maxlength="180"></label>
         <label>Finalidade<select name="operation"><option value="">Comprar ou alugar</option><option value="comprar">Comprar</option><option value="alugar">Alugar</option></select></label>
@@ -123,12 +123,12 @@
         <button type="button" class="ec-action el-apply">Ver imóveis<i data-lucide="arrow-up-right" aria-hidden="true"></i></button><button type="button" class="el-clear">Limpar filtros</button>
       </form>
     </details>
-    <section class="el-results" aria-label="Imóveis da coleção"><div class="el-results-bar"><p class="el-count" role="status"></p><label>Ordenar por<select class="el-sort"><option value="selection">Seleção EME</option><option value="price-asc">Menor valor</option><option value="price-desc">Maior valor</option><option value="area-desc">Maior área</option></select></label></div><div class="el-active-filters" aria-label="Filtros aplicados"></div><div class="el-grid"></div><div class="el-empty" hidden><i data-lucide="scan-search" aria-hidden="true"></i><h2>Vamos ampliar as possibilidades?</h2><p>Nenhum imóvel reúne esses critérios na coleção atual. Ajuste os filtros ou conte à EME o que você procura.</p><button type="button" class="ec-action el-clear">Ver toda a coleção<i data-lucide="arrow-up-right" aria-hidden="true"></i></button><button type="button" class="ec-link ec-plain" data-assistant="chat">Conversar com M · 24 horas ↗︎</button></div></section>
+    <section class="el-results" aria-label="Lista de imóveis"><div class="el-results-bar"><p class="el-count" role="status"></p><label>Ordenar por<select class="el-sort"><option value="selection">Seleção EME</option><option value="price-asc">Menor valor</option><option value="price-desc">Maior valor</option><option value="area-desc">Maior área</option></select></label></div><div class="el-active-filters" aria-label="Filtros aplicados"></div><div class="el-grid"></div><div class="el-empty" hidden><i data-lucide="scan-search" aria-hidden="true"></i><h2>Vamos ampliar as possibilidades?</h2><p>Nenhum imóvel reúne esses critérios na coleção atual. Ajuste os filtros ou conte à EME o que você procura.</p><button type="button" class="ec-action el-clear">Ver toda a coleção<i data-lucide="arrow-up-right" aria-hidden="true"></i></button><button type="button" class="ec-link ec-plain" data-assistant="chat">Conversar com M · 24 horas ↗︎</button></div></section>
   </div>
 </main>
 <main class="er-region" aria-label="Imóveis por região" hidden>
   <div class="er-location-bar">
-    <div class="er-breadcrumb" aria-label="Localização na coleção"><button type="button" data-section="collection" class="cursor-interaction">A coleção</button><i data-lucide="chevron-right" aria-hidden="true"></i><button type="button" class="er-state-link cursor-interaction" data-region-picker></button><i data-lucide="chevron-right" aria-hidden="true"></i><span class="er-breadcrumb-city"></span></div>
+    <div class="er-breadcrumb" aria-label="Localização na coleção"><button type="button" data-section="collection" class="cursor-interaction">Imóveis</button><i data-lucide="chevron-right" aria-hidden="true"></i><button type="button" class="er-state-link cursor-interaction" data-region-picker></button><i data-lucide="chevron-right" aria-hidden="true"></i><span class="er-breadcrumb-city"></span></div>
     <button type="button" class="er-change cursor-interaction" data-region-picker><i data-lucide="map-pinned" aria-hidden="true"></i>Trocar região</button>
   </div>
   <section class="er-hero" aria-labelledby="eme-region-title">
@@ -148,22 +148,23 @@
 
   <main class="ec-property" aria-label="Imóvel selecionado" hidden>
     <div class="ep-top ec-pad">
-      <button type="button" class="ep-back ec-plain ec-link cursor-interaction"><span aria-hidden="true">←</span> Voltar à coleção</button>
+      <button type="button" class="ep-back ec-plain ec-link cursor-interaction"><span aria-hidden="true">←</span> Voltar aos imóveis</button>
       <div class="ep-top-actions">
         <button type="button" class="ep-finance ec-plain ec-link cursor-interaction" aria-haspopup="dialog" aria-controls="eme-finance"><i data-lucide="calculator" aria-hidden="true"></i><span>Simular financiamento</span></button>
         <button type="button" class="ep-save ec-plain ec-link cursor-interaction" aria-pressed="false"><i data-lucide="heart" aria-hidden="true"></i><span>Salvar imóvel</span></button>
       </div>
     </div>
-    <section class="ep-intro ec-pad"><div><p class="ep-location ec-eyebrow"></p><h1 class="ep-title"></h1><p class="ep-summary"></p></div><div class="ep-price-block"><span>À venda</span><p class="ep-price"></p><button type="button" class="ep-visit-button ec-action cursor-interaction">Quero conhecer <svg class="eme-direction-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></button></div></section>
+    <section class="ep-intro ec-pad"><div><p class="ep-location ec-eyebrow"></p><h1 class="ep-title"></h1><p class="ep-summary"></p></div><div class="ep-price-block"><span>À venda</span><p class="ep-price"></p><button type="button" class="ep-visit-button ec-action cursor-interaction">Agendar visita <svg class="eme-direction-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></button></div></section>
     <section class="ep-tour ec-pad" aria-label="Fotografias do imóvel">
       <figure class="ep-gallery">
         <div class="ep-photo-stage">
           <img class="ep-photo" alt="" draggable="false" decoding="async">
+          <button type="button" class="ep-expand-photo" aria-haspopup="dialog" aria-controls="eme-property-photos"><i data-lucide="maximize" aria-hidden="true"></i> Ampliar fotos</button>
           <button type="button" class="ex-photo-edge ex-photo-prev cursor-interaction" aria-label="Foto anterior"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
           <button type="button" class="ex-photo-edge ex-photo-next cursor-interaction" aria-label="Próxima foto"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
         </div>
         <figcaption class="ep-scene-copy">
-          <span class="ep-scene-eyebrow">PERCURSO DO IMÓVEL</span>
+          <span class="ep-scene-eyebrow">FOTOGRAFIAS</span>
           <h2></h2><p></p>
           <div class="ep-gallery-controls"><div>
             <button type="button" class="ep-prev cursor-interaction" aria-label="Ver foto anterior">← <span>Anterior</span></button>
@@ -173,15 +174,16 @@
         </figcaption>
       </figure>
       <div class="ep-chapter-row">
-        <div class="ep-chapter-heading"><h3>Conheça os ambientes</h3><span>Um novo olhar a cada foto.</span></div>
+        <div class="ep-chapter-heading"><h3>Fotos do imóvel</h3><span>Um novo olhar a cada foto.</span></div>
         <div class="ep-chapters" aria-label="Miniaturas das fotografias"></div>
       </div>
     </section>
     <section class="ep-essentials ec-pad" aria-label="Informações essenciais"><dl class="ep-facts"></dl></section>
+    <nav class="ep-section-links" aria-label="Nesta página"><a href="#sobre-imovel">Sobre o imóvel</a><a href="#detalhes-imovel">Detalhes e localização</a><a href="#contato-imovel">Falar com a equipe</a></nav>
     <div class="ex-invitation ec-pad" data-invitation="property" hidden></div>
-    <section class="ep-story ec-pad" aria-label="O que observar neste imóvel"><div><p class="ec-eyebrow">O QUE OBSERVAR</p><h2 class="ep-story-title"></h2></div><div class="ep-story-copy"></div></section>
-    <section class="ep-dossier ec-pad" aria-label="Informações para a sua decisão"><div class="ep-dossier-top"><h2>Para conhecer por inteiro.</h2><a class="ep-plant ec-link" target="_blank" rel="noopener">Solicitar planta e medidas <svg class="eme-direction-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></a></div><div class="ep-accordions"></div></section>
-    <section class="ep-visit ec-pad" aria-label="Planeje sua visita"><div><p class="ec-eyebrow">DO PRIMEIRO OLHAR À VISITA</p><h2>Vamos conhecer<br>esse lugar?</h2><p>Combine um horário com a equipe e confira de perto o que importa para você.</p></div><div class="ep-person"><img data-asset="douglas" alt="Douglas Maraschin" loading="lazy"><div><h3>Douglas Maraschin</h3><p>Atendimento EME Select<br>CRECI 90291 F / RS</p></div><a class="ep-contact ec-action" target="_blank" rel="noopener">Conversar sobre este imóvel <svg class="eme-direction-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></a><small>Consulte disponibilidade e condições com a equipe.</small></div></section>
+    <section id="sobre-imovel" class="ep-story ec-pad" aria-label="O que observar neste imóvel"><div><p class="ec-eyebrow">O QUE OBSERVAR</p><h2 class="ep-story-title"></h2></div><div class="ep-story-copy"></div></section>
+    <section id="detalhes-imovel" class="ep-dossier ec-pad" aria-label="Informações para a sua decisão"><div class="ep-dossier-top"><h2>Detalhes e localização.</h2><a class="ep-plant ec-link" target="_blank" rel="noopener">Solicitar planta e medidas <svg class="eme-direction-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></a></div><div class="ep-accordions"></div></section>
+    <section id="contato-imovel" class="ep-visit ec-pad" aria-label="Planeje sua visita"><div><p class="ec-eyebrow">DO PRIMEIRO OLHAR À VISITA</p><h2>Vamos conhecer<br>esse lugar?</h2><p>Combine um horário com a equipe e confira de perto o que importa para você.</p></div><div class="ep-person"><img data-asset="douglas" alt="Douglas Maraschin" loading="lazy"><div><h3>Douglas Maraschin</h3><p>Atendimento EME Select<br>CRECI 90291 F / RS</p></div><a class="ep-contact ec-action" target="_blank" rel="noopener">Conversar sobre este imóvel <svg class="eme-direction-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></a><small>Consulte disponibilidade e condições com a equipe.</small></div></section>
     <section class="ep-next-property ec-pad" aria-label="Continue a descoberta"><div><p class="ec-eyebrow">OUTRO LUGAR, OUTRA POSSIBILIDADE</p><h2 class="ep-next-title"></h2><button type="button" class="ep-next-open ec-plain ec-link cursor-interaction">Continuar a descoberta <span aria-hidden="true">→</span></button></div><button type="button" class="ep-next-image ec-plain cursor-interaction" aria-label="Conhecer o próximo imóvel"><img class="ep-next-photo" alt="" loading="lazy"></button></section>
   </main>
   <footer class="ec-footer ec-pad"><button type="button" class="ec-brand cursor-interaction" aria-label="EME Select — início"><span class="ec-mark" aria-hidden="true"></span></button><p>Imóveis selecionados.<br>Rio Grande do Sul · Santa Catarina.</p><a href="https://www.emespatial.com/" target="_blank" rel="noopener">EME Spatial ↗︎</a><span>© 2026 EME Select</span></footer>

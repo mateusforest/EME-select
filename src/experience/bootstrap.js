@@ -24,6 +24,7 @@ import './consultants.css';
 import './select-refinement.css';
 import './innovation.css';
 import './innovation-integration.css';
+import './property-refinement.css';
 
 export async function startExperience(){
  const container=document.getElementById('root');
@@ -39,7 +40,11 @@ export async function startExperience(){
  container.innerHTML=template;
  const gallery=container.querySelector('.ep-gallery');
  const panel=document.createElement('div');panel.className='ep-detail-panel';
- panel.append(container.querySelector('.ep-price-block'),container.querySelector('.ep-top-actions'),container.querySelector('.ep-scene-copy'));gallery.append(panel);
+ panel.append(container.querySelector('.ep-price-block'),container.querySelector('.ep-facts'),container.querySelector('.ep-top-actions'));
+ const media=document.createElement('div');media.className='ep-media-column';
+ media.append(container.querySelector('.ep-photo-stage'),container.querySelector('.ep-scene-copy'),container.querySelector('.ep-chapter-row'));
+ gallery.append(media,panel);
+ container.querySelector('.ep-essentials').hidden=true;
  container.querySelector('.ep-photo-stage').append(container.querySelector('.ep-photo-count'));
  const allPhotos=document.createElement('button');allPhotos.type='button';allPhotos.className='ep-all-photos ec-plain';allPhotos.textContent='Ver todas as fotos →';allPhotos.setAttribute('aria-expanded','false');
  allPhotos.onclick=()=>{const expanded=allPhotos.getAttribute('aria-expanded')!=='true';allPhotos.setAttribute('aria-expanded',String(expanded));container.querySelector('.ep-chapters').classList.toggle('is-expanded',expanded);allPhotos.textContent=expanded?'Recolher fotos ↑':'Ver todas as fotos →';};

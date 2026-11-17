@@ -6,7 +6,7 @@ export default function SwitchHeader(){
       <img src="/assets/experience/brand-monogram-transparent.webp" width="46" height="34" alt=""/><small>SELECT</small>
     </a>
     <nav aria-label="Navegação principal">
-      <a href="/">A coleção</a><a href="/inovacao">Inovação</a><a href="/switch" aria-current="page">M Switch</a>
+      <a href="/#/colecao">Imóveis</a><a href="/inovacao">Inovação</a><a href="/switch" aria-current="page">M Switch</a>
     </nav>
     <a className="sw-access" href="/acesso-select">Acesso Select<ArrowUpRight size={15}/></a>
   </header>;

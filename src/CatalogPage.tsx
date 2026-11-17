@@ -77,7 +77,7 @@ export default function CatalogPage({ state, favorites, comparison, onFavorite, 
 
     <section className="catalog-intro" aria-labelledby="catalog-title">
       <div>
-        <p className="eyebrow">A coleção EME Select</p>
+        <p className="eyebrow">Imóveis EME Select</p>
         <h1 id="catalog-title">{state.type ? (state.type==='Condomínio horizontal'?'Casas em condomínio':state.type==='Condomínio vertical'?'Condomínios verticais':collectionLabels[state.type]||state.type) : 'Encontre o seu lugar.'}</h1>
         <p>Explore possibilidades. Perceba os detalhes. Escolha o que faz sentido para você.</p>
       </div>
