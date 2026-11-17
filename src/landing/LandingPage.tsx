@@ -5,6 +5,7 @@ import {properties,type Property} from '../data';
 import TeamProfiles from '../TeamProfiles';
 import FeaturedDevelopment from '../experience/FeaturedDevelopment';
 import './property-first.css';
+import './team-cards.css';
 const price=(p:Property)=>p.price>0?p.price.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0})+(p.operation==='alugar'?' / mês':''):'Consulte o valor';
 const facts=(p:Property)=>[p.area?`${p.area.toLocaleString('pt-BR')} m²`:null,p.bedrooms?`${p.bedrooms} dormitórios`:null,p.parking?`${p.parking} vagas`:null].filter(Boolean).join(' · ');
 function PreviousPrice({p}:{p:Property}){const previous=(p as Property & {originalPrice?:number}).originalPrice;return previous&&previous>p.price?<del className="pfh-old-price">{previous.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0})}</del>:null;}
