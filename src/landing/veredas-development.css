@@ -1,0 +1,28 @@
+.veredas-card{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);padding:12px;background:#faf9f3;border:1px solid #d7dece;border-radius:24px;box-shadow:0 20px 55px #213d2910;overflow:hidden}
+.veredas-cover{position:relative;min-height:530px;width:100%;padding:0;border:0;border-radius:16px;overflow:hidden;cursor:pointer;background:#233f30;text-align:left;color:#fff;font:inherit}
+.veredas-cover>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:54% center;transition:transform .4s}
+.veredas-cover:hover>img{transform:scale(1.025)}
+.veredas-cover::after{content:'';position:absolute;inset:0;background:linear-gradient(#173e3233,transparent 35%,#102c2480);pointer-events:none}
+.veredas-cover-tag,.veredas-cover-link{position:absolute;z-index:1;left:24px}
+.veredas-cover-tag{color:#fff8e7!important;top:24px;font-size:10px;letter-spacing:.16em;padding:10px 12px;background:#173e32dd;border-radius:5px}
+.veredas-cover-link{bottom:26px;display:flex;align-items:center;gap:20px;font-size:13px;background:#faf9f3ed;color:#214531;padding:13px 17px;border-radius:8px}
+.veredas-copy{padding:42px 38px;align-self:center;min-width:0}
+.pfh .veredas-eyebrow,.veredas-dialog .veredas-eyebrow{font-size:10px;color:#9a793a;letter-spacing:.14em;margin:0 0 22px}
+.pfh .veredas-copy h2{font-size:clamp(36px,3.5vw,52px);margin:0 0 18px}
+.veredas-copy h2 span{display:block;font-size:clamp(21px,2vw,27px);line-height:1.3;color:#70816d;letter-spacing:-.035em;margin-top:12px}
+.pfh .veredas-copy .veredas-location{font-size:14px;margin:0 0 22px}
+.pfh .veredas-copy>p:not(.veredas-eyebrow):not(.veredas-location){font-size:15px;line-height:1.8;color:#607565}
+.veredas-facts{display:flex;gap:16px;flex-wrap:wrap;list-style:none;margin:26px 0;padding:18px 0;border-block:1px solid #d7dece;font-size:12px;color:#355541}
+.veredas-facts li{display:flex;align-items:center;gap:8px}.veredas-facts svg{color:#a38347;flex-shrink:0}
+.veredas-primary{display:flex;align-items:center;justify-content:space-between;gap:20px;width:100%;min-height:52px;padding:16px 22px;border:1px solid #194332;border-radius:10px;background:#194332;color:#f5f0dc!important;font:inherit;font-size:14px;text-decoration:none;cursor:pointer;box-sizing:border-box}
+.veredas-contact{display:flex;align-items:center;justify-content:center;gap:10px;padding:18px 0 0;font-size:12px;color:#526c55}
+.veredas-dialog{font-family:Manrope,Arial,sans-serif;border-radius:16px;scrollbar-width:none;color:#173e32}.veredas-dialog::-webkit-scrollbar{display:none}
+.veredas-dialog .dialog-top h2{font:inherit;font-size:24px}.veredas-dialog .icon-button{min-height:44px;min-width:44px}
+.veredas-gallery>img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:12px}
+.veredas-gallery-controls{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 0}
+.veredas-gallery-controls button{display:grid;place-items:center;min-width:44px;min-height:44px;border:1px solid #d7dece;border-radius:50%;background:transparent;color:#173e32;cursor:pointer}
+.veredas-gallery-controls span{font-size:12px;text-align:center;color:#607565}
+.veredas-details{padding:22px 0 8px}.veredas-details h3{font:inherit;font-size:30px;letter-spacing:-.04em;line-height:1.2;margin:0 0 20px}.veredas-details p{font-size:14px;line-height:1.8;color:#607565}.veredas-details .veredas-photo-note{font-size:12px;padding:16px;background:#edf0e6;border-radius:8px;margin:22px 0}
+@media(max-width:900px){.veredas-card{grid-template-columns:1fr}.veredas-cover{min-height:340px}.veredas-copy{padding:28px 20px}.veredas-cover>img{object-position:center}.veredas-facts{gap:12px}}
+@media(max-width:480px){.veredas-cover{min-height:270px}.veredas-cover-tag,.veredas-cover-link{left:16px}.veredas-copy{padding:26px 12px 12px}.veredas-dialog.dialog--wide{width:calc(100% - 24px)}.veredas-dialog .dialog-content{padding:16px}.veredas-dialog .dialog-top{padding:12px 16px}.veredas-dialog .dialog-top h2{font-size:21px}.veredas-details h3{font-size:26px}.veredas-details .veredas-primary{font-size:13px;padding:14px 16px}}
+@media(prefers-reduced-motion:reduce){.veredas-cover>img{transition:none}}
