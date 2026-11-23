@@ -16,20 +16,20 @@ export interface PortalNavigationItem {
 export const portalNavigation: PortalNavigationItem[] = [
   {id:'whatsapp',label:'WhatsApp · mensagens',title:'Cada conversa, no mesmo lugar.',description:'Histórico, atendimento humano e automação do canal oficial.',icon:MessageSquare,group:'Operação',status:'active',adminOnly:true},
   {id:'minha-atuacao',label:'Minha atuação',title:'Seus negócios, de perto.',description:'Seu dia, seus leads e suas comissões na mesma conta administrativa.',icon:House,group:'Operação',status:'active',adminOnly:true},
-  { id: 'hoje', label: 'Visão geral', title: 'Sua operação, em perspectiva.', description: 'Acompanhe os imóveis, as publicações e os próximos passos.', icon: LayoutDashboard, group: 'Operação', status: 'active' },
-  {id:'propostas',label:'Propostas em PDF',title:'Uma proposta para o próximo passo.',description:'Escolha um imóvel, prepare as condições e gere uma apresentação personalizada.',icon:FileText,group:'Operação',status:'active'},
+  { id: 'hoje', label: 'Início', title: 'O que vamos fazer hoje?', description: 'Acompanhe os imóveis, as publicações e os próximos passos.', icon: LayoutDashboard, group: 'Operação', status: 'active' },
+  {id:'propostas',label:'Propostas',title:'Propostas comerciais',description:'Escolha um imóvel, prepare as condições e gere uma apresentação personalizada.',icon:FileText,group:'Operação',status:'active'},
   {id:'materiais',label:'Materiais de divulgação',title:'Tudo para apresentar o próximo lugar.',description:'Criativos, vídeos e apresentações organizados por imóvel e corretor.',icon:FileText,group:'Operação',status:'active'},
-  { id: 'imoveis', label: 'Imóveis e captações', title: 'Da captação ao anúncio.', description: 'Uma ficha por imóvel. Materiais, cadastro e publicação.', icon: House, group: 'Operação', status: 'active' },
+  { id: 'imoveis', label: 'Imóveis', title: 'Imóveis e captações', description: 'Uma ficha por imóvel. Materiais, cadastro e publicação.', icon: House, group: 'Operação', status: 'active' },
   { id: 'empreendimentos', label: 'Empreendimentos', title: 'Uma experiência completa. Unidade por unidade.', description: 'Moradas da Serra / DeVille: plantas, unidades e disponibilidade publicada.', icon: House, group: 'Site e conteúdo', status: 'active', adminOnly: true },
   { id: 'avaliacoes', secondary: true, label: 'Avaliações', title: 'Cada imóvel começa com uma boa leitura.', description: 'Cadastro, responsável, curadoria e histórico em um só lugar.', icon: ClipboardCheck, group: 'Operação', status: 'active' },
   { id: 'switch', label: 'M Switch', title: 'Negócios que se conectam.', description: 'Vendas, trocas, investidores e oportunidades de negociação.', icon: Sparkles, group: 'Operação', status: 'active' },
-  { id: 'leads', label: 'Leads e entrada', title: 'Cada interesse, acompanhado.', description: 'Entrada do site, distribuição e histórico dos contatos.', icon: MessageSquare, group: 'Operação', status: 'active' },
-  { id: 'relacionamento', label: 'Atendimento e visitas', title: 'Toda conversa merece continuidade.', description: 'Histórico de contatos, agenda de visitas e controle de chaves.', icon: MessageSquare, group: 'Operação', status: 'active' },
+  { id: 'leads', label: 'Leads', title: 'Leads e atendimento', description: 'Entrada do site, distribuição e histórico dos contatos.', icon: MessageSquare, group: 'Operação', status: 'active' },
+  { id: 'relacionamento', label: 'Agenda e atendimentos', title: 'Agenda e atendimentos', description: 'Histórico de contatos, agenda de visitas e controle de chaves.', icon: MessageSquare, group: 'Operação', status: 'active' },
   { id: 'locacoes', label: 'Locações', title: 'Cuidar também é acompanhar.', description: 'Contratos, manutenção e compromissos da administração mensal.', icon: KeyRound, group: 'Operação', status: 'active' },
   { id: 'documentos', label: 'Documentos dos imóveis', title: 'Informação organizada. Acesso responsável.', description: 'Documentos privados, versões, validade e revisão da equipe.', icon: FileText, group: 'Operação', status: 'active' },
   { id: 'comissoes', label: 'Minhas comissões', title: 'Clareza em cada conquista.', description: 'Participações, potencial e pagamentos individuais.', icon: Wallet, group: 'Operação', brokerOnly: true, status: 'active' },
   { id: 'conversas', label: 'Conversas internas', title: 'O contexto fica com o negócio.', description: 'Registros internos por imóvel, compartilhados com a gestão e a carteira autorizada.', icon: MessageSquare, group: 'Equipe', status: 'active' },
-  { id: 'financeiro', label: 'Central financeira', title: 'Clareza para cuidar do crescimento.', description: 'Receitas, despesas, caixa e resultado da EME.', icon: Wallet, group: 'Gestão', status: 'active', adminOnly: true },
+  { id: 'financeiro', label: 'Financeiro', title: 'Financeiro da imobiliária', description: 'Receitas, despesas, caixa e resultado da EME.', icon: Wallet, group: 'Gestão', status: 'active', adminOnly: true },
   { id: 'padrao', label: 'Critérios de seleção', title: 'O que faz um imóvel ser EME.', description: 'Os critérios utilizados nas novas avaliações, por tipo de imóvel.', icon: SlidersHorizontal, group: 'Gestão', status: 'active' },
   { id: 'inteligencia', label: 'M e ferramentas de IA', title: 'Inteligência para o seu trabalho.', description: 'M no site, conexão de IA e análises internas com revisão da equipe.', icon: Sparkles, group: 'Gestão', status: 'active' },
   { id: 'qualidade', label: 'Qualidade do atendimento', title: 'Um padrão que se constrói em equipe.', description: 'Evidências de atendimento para orientar e desenvolver a equipe.', icon: ShieldCheck, group: 'Equipe', status: 'active', adminOnly: true },
@@ -53,8 +53,8 @@ export function portalNavigationForRole(role: 'admin' | 'corretor'): PortalNavig
   const available = portalNavigation.filter(item => (!item.adminOnly || role === 'admin') && (!item.brokerOnly || role === 'corretor'));
   if (role === 'admin') return available;
   const presentation: Record<string, Partial<PortalNavigationItem>> = {
-    hoje: {label:'Meu dia', title:'Sua carteira, em perspectiva.', description:'Seus imóveis, contatos e próximos passos, em um só lugar.'},
-    imoveis: {label:'Carteira de imóveis', group:'Carteira', description:'Todos os imóveis da imobiliária, disponíveis para o seu atendimento.'},
+    hoje: {label:'Meu dia', title:'O que vamos fazer hoje?', description:'Seus imóveis, contatos e próximos passos, em um só lugar.'},
+    imoveis: {label:'Imóveis', group:'Carteira', description:'Todos os imóveis da imobiliária, disponíveis para o seu atendimento.'},
     propostas: {group:'Carteira'},
     materiais: {group:'Carteira'},
     avaliacoes: {group:'Carteira'},
@@ -70,3 +70,16 @@ export function portalNavigationForRole(role: 'admin' | 'corretor'): PortalNavig
   return available.map(item => ({...item,...presentation[item.id]}));
 }
 export const portalPageFromPath = (path: string) => path.replace(/^\/acesso-select\/equipe\/?/, '').replace(/\/+$/, '') || 'hoje';
+
+// The complete route catalogue remains available; the daily navigation is deliberately short.
+export function portalMenuForRole(role: 'admin' | 'corretor') {
+  const available = portalNavigationForRole(role);
+  const ids = ['hoje', 'imoveis', 'leads', 'relacionamento', 'propostas', role === 'admin' ? 'financeiro' : 'comissoes'];
+  const primary = ids.map(id => available.find(item => item.id === id)!).filter(Boolean);
+  const sections = [
+    {label: 'Ferramentas', ids: ['whatsapp','switch','materiais','conversas','locacoes','documentos','inteligencia','padrao']},
+    {label: 'Administração', ids: ['clientes','envios','equipe','minha-atuacao','empresa-documentos','qualidade']},
+    {label: 'Site e conteúdo', ids: ['site','empreendimentos','pessoas','oportunidades','regioes','desempenho','inovacao']},
+  ].map(section => ({label: section.label, items: section.ids.map(id => available.find(item => item.id === id)).filter((item): item is PortalNavigationItem => Boolean(item))})).filter(section => section.items.length);
+  return {primary, sections};
+}

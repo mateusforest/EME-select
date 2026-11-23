@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {portalNavigationForRole,portalNavigation,portalPath,portalPageFromPath} from '../src/portal/portalNavigation.ts';
+import {portalMenuForRole,portalNavigationForRole,portalNavigation,portalPath,portalPageFromPath} from '../src/portal/portalNavigation.ts';
 
 test('broker navigation preserves working routes without exposing administrative areas',()=>{
  const items=portalNavigationForRole('corretor');
@@ -18,5 +18,17 @@ test('broker presentation does not mutate the shared administrative navigation',
  assert.ok(admin.some(item=>item.id==='financeiro'));
  assert.ok(admin.some(item=>item.id==='empresa-documentos'));
  assert.ok(!admin.some(item=>item.id==='comissoes'));
- assert.equal(admin.find(item=>item.id==='leads').label,'Leads e entrada');
+ assert.equal(admin.find(item=>item.id==='leads').label,'Leads');
+});
+
+
+test('compact menu keeps every permitted destination reachable without duplicates',()=>{
+ for(const role of ['admin','corretor']){
+  const menu=portalMenuForRole(role);
+  assert.equal(menu.primary.length,6);
+  const ids=[...menu.primary,...menu.sections.flatMap(s=>s.items)].map(item=>item.id);
+  assert.equal(new Set(ids).size,ids.length);
+  const expected=portalNavigationForRole(role).filter(item=>!item.secondary&&item.id!=='conta').map(item=>item.id);
+  assert.deepEqual([...ids].sort(),expected.sort());
+ }
 });
